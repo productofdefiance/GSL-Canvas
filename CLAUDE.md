@@ -1,10 +1,11 @@
 # GSL Canvas
 
-A React dashboard that tells the story of Anish's EA FC25 career save (the GSL universe).
-Owner: Anish (creative director, no coding background). Footer on every screen: "Developed by Anish & Claude".
+A React dashboard that tells the story of the user's EA FC25 career save (the GSL universe).
+Owner: the user (creative director, no coding background). Footer on every screen: the "Developed by … & Claude"
+credit (exact text in App.js; leave it as it is).
 
 **Read first:** the living handoff, https://claude.ai/code/artifact/cbb051f0-7e60-42d2-a83c-b0d8d7951145
-(current state, rules R1–R13, conventions, open items, how Anish works). Keep it current as you work.
+(current state, rules R1–R13, conventions, open items, how the user works). Keep it current as you work.
 
 ## Project layout
 
@@ -22,14 +23,14 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 | test/ | Test kit: `test/setup.sh`, then `cd test && npm run check` (see test/README.md). Test-only dependencies live in test/package.json |
 | CLAUDE.md | This file |
 
-Any restructure is one deliberate step, agreed with Anish, checked in StackBlitz (his preview), then recorded
+Any restructure is one deliberate step, agreed with the user, checked in StackBlitz (the user's preview), then recorded
 here and in the living handoff.
 
 Libraries: React, d3, lucide-react only. Ask before adding anything.
 
 ## How work runs
 
-- Nothing is built until Anish says so. Stress-test ideas first; push back plainly; no empty praise.
+- Nothing is built until the user says so. Stress-test ideas first; push back plainly; no empty praise.
 - Before replacing a component, list everything it does; check each item after the build.
 - One branch and one pull request per build, titled with the canvas version (e.g. "Canvas v52.01: …").
 - Every build bumps the canvas version in App.js (`VERSION_TAG`, `PUBLISHED`) and each changed file's own
@@ -37,6 +38,8 @@ Libraries: React, d3, lucide-react only. Ask before adding anything.
 - The pull request description is the build message: what's in, what changed beyond the notes and why,
   checks run, known gaps.
 - Ask before changing any convention (file structure, delivery, naming).
+- The repo is public: no personal details (names, emails, private notes, screenshots) in files, commit
+  messages or pull requests. Refer to the owner as "the user".
 
 ## Code rules
 
