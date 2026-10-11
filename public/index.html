@@ -1,0 +1,197 @@
+<!--
+  GSL CANVAS — public/index.html
+  Version:  Canvas v51.07 (sandbox) · 2026-10-07, 01:30 UTC
+  v51.07: division colours (--c-div1…4; bright partners in dark mode) and
+  .gsl-divstrip / .gsl-divchip / .gsl-divbar / .gsl-divtext.
+  v51.06: dark mode (.gsl-dark swaps every colour variable; League only for
+  now), home / away colours (--c-home, --c-away), .gsl-keep.
+  v51.05: four font roles: --font-text (pages), --font-title (page titles,
+  .gsl-title), --font-big (big numbers, .gsl-big) and --font-small (small
+  numbers: tabular-nums). Playfair Display added. Units styling removed.
+  v51.04: League Spartan added; number font choices (Atkinson, League
+  Spartan); big-number spacing 0 / +0.02 / +0.04 / +0.06em; units
+  played down (data-units); the score dash is lighter weight only.
+  v51.03: lab settings for the score dash and big-number spacing
+  (data-dash, data-big-track), and the styles for .gsl-dash / .gsl-wdl.
+  v51.01: design tokens, step 1.
+   - Fonts: Lexend, Outfit and Atkinson Hyperlegible Next from Google Fonts.
+     --font-text is every page's font; --font-num is used by anything with
+     lined-up digits (tabular-nums). The Footer switcher picks between them.
+   - Colours: every Tailwind colour scale now reads from a CSS variable
+     (--c-slate-500 and so on), set to Tailwind's own values, so nothing
+     looks different. A palette trial changes these values only.
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@200..800&family=Lexend:wght@100..900&family=Outfit:wght@100..900&family=Playfair+Display:wght@600&display=swap">
+<style>
+:root {
+  /* Fonts. Device = Tailwind's default stack (what the canvas used before v51). */
+  --font-device: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-text: "Lexend", var(--font-device);
+  --font-title: "Lexend", var(--font-device);
+  --font-big: "Outfit", var(--font-device);
+  --font-small: "Atkinson Hyperlegible Next", var(--font-device);
+  /* Big numbers' letter spacing (v51.03 lab: +0.01em or 0). */
+  --big-track: 0.02em;
+  /* Colour scales: Tailwind 3.4 defaults, as "R G B". */
+  --c-slate-50: 248 250 252; --c-slate-100: 241 245 249; --c-slate-200: 226 232 240; --c-slate-300: 203 213 225; --c-slate-400: 148 163 184; --c-slate-500: 100 116 139; --c-slate-600: 71 85 105; --c-slate-700: 51 65 85; --c-slate-800: 30 41 59; --c-slate-900: 15 23 42; --c-slate-950: 2 6 23;
+  --c-gray-50: 249 250 251; --c-gray-100: 243 244 246; --c-gray-200: 229 231 235; --c-gray-300: 209 213 219; --c-gray-400: 156 163 175; --c-gray-500: 107 114 128; --c-gray-600: 75 85 99; --c-gray-700: 55 65 81; --c-gray-800: 31 41 55; --c-gray-900: 17 24 39; --c-gray-950: 3 7 18;
+  --c-zinc-50: 250 250 250; --c-zinc-100: 244 244 245; --c-zinc-200: 228 228 231; --c-zinc-300: 212 212 216; --c-zinc-400: 161 161 170; --c-zinc-500: 113 113 122; --c-zinc-600: 82 82 91; --c-zinc-700: 63 63 70; --c-zinc-800: 39 39 42; --c-zinc-900: 24 24 27; --c-zinc-950: 9 9 11;
+  --c-neutral-50: 250 250 250; --c-neutral-100: 245 245 245; --c-neutral-200: 229 229 229; --c-neutral-300: 212 212 212; --c-neutral-400: 163 163 163; --c-neutral-500: 115 115 115; --c-neutral-600: 82 82 82; --c-neutral-700: 64 64 64; --c-neutral-800: 38 38 38; --c-neutral-900: 23 23 23; --c-neutral-950: 10 10 10;
+  --c-stone-50: 250 250 249; --c-stone-100: 245 245 244; --c-stone-200: 231 229 228; --c-stone-300: 214 211 209; --c-stone-400: 168 162 158; --c-stone-500: 120 113 108; --c-stone-600: 87 83 78; --c-stone-700: 68 64 60; --c-stone-800: 41 37 36; --c-stone-900: 28 25 23; --c-stone-950: 12 10 9;
+  --c-red-50: 254 242 242; --c-red-100: 254 226 226; --c-red-200: 254 202 202; --c-red-300: 252 165 165; --c-red-400: 248 113 113; --c-red-500: 239 68 68; --c-red-600: 220 38 38; --c-red-700: 185 28 28; --c-red-800: 153 27 27; --c-red-900: 127 29 29; --c-red-950: 69 10 10;
+  --c-orange-50: 255 247 237; --c-orange-100: 255 237 213; --c-orange-200: 254 215 170; --c-orange-300: 253 186 116; --c-orange-400: 251 146 60; --c-orange-500: 249 115 22; --c-orange-600: 234 88 12; --c-orange-700: 194 65 12; --c-orange-800: 154 52 18; --c-orange-900: 124 45 18; --c-orange-950: 67 20 7;
+  --c-amber-50: 255 251 235; --c-amber-100: 254 243 199; --c-amber-200: 253 230 138; --c-amber-300: 252 211 77; --c-amber-400: 251 191 36; --c-amber-500: 245 158 11; --c-amber-600: 217 119 6; --c-amber-700: 180 83 9; --c-amber-800: 146 64 14; --c-amber-900: 120 53 15; --c-amber-950: 69 26 3;
+  --c-yellow-50: 254 252 232; --c-yellow-100: 254 249 195; --c-yellow-200: 254 240 138; --c-yellow-300: 253 224 71; --c-yellow-400: 250 204 21; --c-yellow-500: 234 179 8; --c-yellow-600: 202 138 4; --c-yellow-700: 161 98 7; --c-yellow-800: 133 77 14; --c-yellow-900: 113 63 18; --c-yellow-950: 66 32 6;
+  --c-lime-50: 247 254 231; --c-lime-100: 236 252 203; --c-lime-200: 217 249 157; --c-lime-300: 190 242 100; --c-lime-400: 163 230 53; --c-lime-500: 132 204 22; --c-lime-600: 101 163 13; --c-lime-700: 77 124 15; --c-lime-800: 63 98 18; --c-lime-900: 54 83 20; --c-lime-950: 26 46 5;
+  --c-green-50: 240 253 244; --c-green-100: 220 252 231; --c-green-200: 187 247 208; --c-green-300: 134 239 172; --c-green-400: 74 222 128; --c-green-500: 34 197 94; --c-green-600: 22 163 74; --c-green-700: 21 128 61; --c-green-800: 22 101 52; --c-green-900: 20 83 45; --c-green-950: 5 46 22;
+  --c-emerald-50: 236 253 245; --c-emerald-100: 209 250 229; --c-emerald-200: 167 243 208; --c-emerald-300: 110 231 183; --c-emerald-400: 52 211 153; --c-emerald-500: 16 185 129; --c-emerald-600: 5 150 105; --c-emerald-700: 4 120 87; --c-emerald-800: 6 95 70; --c-emerald-900: 6 78 59; --c-emerald-950: 2 44 34;
+  --c-teal-50: 240 253 250; --c-teal-100: 204 251 241; --c-teal-200: 153 246 228; --c-teal-300: 94 234 212; --c-teal-400: 45 212 191; --c-teal-500: 20 184 166; --c-teal-600: 13 148 136; --c-teal-700: 15 118 110; --c-teal-800: 17 94 89; --c-teal-900: 19 78 74; --c-teal-950: 4 47 46;
+  --c-cyan-50: 236 254 255; --c-cyan-100: 207 250 254; --c-cyan-200: 165 243 252; --c-cyan-300: 103 232 249; --c-cyan-400: 34 211 238; --c-cyan-500: 6 182 212; --c-cyan-600: 8 145 178; --c-cyan-700: 14 116 144; --c-cyan-800: 21 94 117; --c-cyan-900: 22 78 99; --c-cyan-950: 8 51 68;
+  --c-sky-50: 240 249 255; --c-sky-100: 224 242 254; --c-sky-200: 186 230 253; --c-sky-300: 125 211 252; --c-sky-400: 56 189 248; --c-sky-500: 14 165 233; --c-sky-600: 2 132 199; --c-sky-700: 3 105 161; --c-sky-800: 7 89 133; --c-sky-900: 12 74 110; --c-sky-950: 8 47 73;
+  --c-blue-50: 239 246 255; --c-blue-100: 219 234 254; --c-blue-200: 191 219 254; --c-blue-300: 147 197 253; --c-blue-400: 96 165 250; --c-blue-500: 59 130 246; --c-blue-600: 37 99 235; --c-blue-700: 29 78 216; --c-blue-800: 30 64 175; --c-blue-900: 30 58 138; --c-blue-950: 23 37 84;
+  --c-indigo-50: 238 242 255; --c-indigo-100: 224 231 255; --c-indigo-200: 199 210 254; --c-indigo-300: 165 180 252; --c-indigo-400: 129 140 248; --c-indigo-500: 99 102 241; --c-indigo-600: 79 70 229; --c-indigo-700: 67 56 202; --c-indigo-800: 55 48 163; --c-indigo-900: 49 46 129; --c-indigo-950: 30 27 75;
+  --c-violet-50: 245 243 255; --c-violet-100: 237 233 254; --c-violet-200: 221 214 254; --c-violet-300: 196 181 253; --c-violet-400: 167 139 250; --c-violet-500: 139 92 246; --c-violet-600: 124 58 237; --c-violet-700: 109 40 217; --c-violet-800: 91 33 182; --c-violet-900: 76 29 149; --c-violet-950: 46 16 101;
+  --c-purple-50: 250 245 255; --c-purple-100: 243 232 255; --c-purple-200: 233 213 255; --c-purple-300: 216 180 254; --c-purple-400: 192 132 252; --c-purple-500: 168 85 247; --c-purple-600: 147 51 234; --c-purple-700: 126 34 206; --c-purple-800: 107 33 168; --c-purple-900: 88 28 135; --c-purple-950: 59 7 100;
+  --c-fuchsia-50: 253 244 255; --c-fuchsia-100: 250 232 255; --c-fuchsia-200: 245 208 254; --c-fuchsia-300: 240 171 252; --c-fuchsia-400: 232 121 249; --c-fuchsia-500: 217 70 239; --c-fuchsia-600: 192 38 211; --c-fuchsia-700: 162 28 175; --c-fuchsia-800: 134 25 143; --c-fuchsia-900: 112 26 117; --c-fuchsia-950: 74 4 78;
+  --c-pink-50: 253 242 248; --c-pink-100: 252 231 243; --c-pink-200: 251 207 232; --c-pink-300: 249 168 212; --c-pink-400: 244 114 182; --c-pink-500: 236 72 153; --c-pink-600: 219 39 119; --c-pink-700: 190 24 93; --c-pink-800: 157 23 77; --c-pink-900: 131 24 67; --c-pink-950: 80 7 36;
+  --c-rose-50: 255 241 242; --c-rose-100: 255 228 230; --c-rose-200: 254 205 211; --c-rose-300: 253 164 175; --c-rose-400: 251 113 133; --c-rose-500: 244 63 94; --c-rose-600: 225 29 72; --c-rose-700: 190 18 60; --c-rose-800: 159 18 57; --c-rose-900: 136 19 55; --c-rose-950: 76 5 25;
+}
+html[data-font-text="atkinson"] { --font-text: "Atkinson Hyperlegible Next", var(--font-device); }
+html[data-font-text="device"] { --font-text: var(--font-device); }
+html[data-font-title="outfit"] { --font-title: "Outfit", var(--font-device); }
+html[data-font-title="playfair"] { --font-title: "Playfair Display", Georgia, serif; }
+html[data-font-title="device"] { --font-title: var(--font-device); }
+html[data-font-big="atkinson"] { --font-big: "Atkinson Hyperlegible Next", var(--font-device); }
+html[data-font-big="lexend"] { --font-big: "Lexend", var(--font-device); }
+html[data-font-big="device"] { --font-big: var(--font-device); }
+html[data-font-small="outfit"] { --font-small: "Outfit", var(--font-device); }
+html[data-font-small="lexend"] { --font-small: "Lexend", var(--font-device); }
+html[data-font-small="device"] { --font-small: var(--font-device); }
+/* Numbers: big numbers (.gsl-big) use the big-number font; anything else
+   with lined-up digits (tabular-nums) uses the small-number font. */
+.tabular-nums:not(.gsl-big) { font-family: var(--font-small); }
+.gsl-big.gsl-big { font-family: var(--font-big); }
+/* Page titles (.gsl-title). Playfair is set at 600. */
+.gsl-title.gsl-title { font-family: var(--font-title); }
+html[data-font-title="playfair"] .gsl-title { font-weight: 600; letter-spacing: 0; }
+html[data-big-track="m2"] { --big-track: -0.02em; }
+html[data-big-track="m1"] { --big-track: -0.01em; }
+html[data-big-track="t0"] { --big-track: 0em; }
+html[data-big-track="t4"] { --big-track: 0.04em; }
+html[data-big-track="t6"] { --big-track: 0.06em; }
+html[data-big-track="t10"] { --big-track: 0.1em; }
+/* Scorelines (v51.04): the dash is spaced and lighter in weight (no fade). */
+.gsl-dash { display: inline-block; margin: 0 0.2em; font-weight: 300; }
+/* W / D / L records: dots played down. */
+.gsl-wdl { letter-spacing: 0.02em; }
+.gsl-sep { display: inline-block; margin: 0 0.3em; opacity: 0.4; font-weight: 500; }
+
+/* ── v51.06: home / away (provisional blue pair) ── */
+:root { --c-home: 30 58 138; --c-away: 56 189 248;
+  /* v51.07: division colours (deep for light mode) */
+  --c-div1: 59 31 114; --c-div2: 156 122 22; --c-div3: 70 80 90; --c-div4: 124 63 36; }
+/* Division strip, chip, bar and text: style="--d: var(--c-div1)" picks the division */
+.gsl-divstrip, .gsl-divchip { background-color: rgb(var(--d)); color: #fff; }
+.gsl-divbar { background-color: rgb(var(--d)); }
+.gsl-divtext { color: rgb(var(--d)); }
+/* ── v51.06: dark mode. App puts .gsl-dark on <html> only while a page that
+   has been converted is open (League first). Every Tailwind colour reads a
+   CSS variable, so dark mode swaps the variables: greys run light-to-dark in
+   reverse; colour tints (50-300) darken, text shades (700-950) lighten,
+   fills (400-600) stay. White surfaces become the dark card colour.
+   .gsl-keep marks things that keep their own look in both modes (hover
+   cards, the main bar). ── */
+.gsl-dark {
+  --c-slate-50: 30 41 59; --c-slate-100: 30 41 59; --c-slate-200: 51 65 85; --c-slate-300: 71 85 105; --c-slate-400: 100 116 139; --c-slate-500: 148 163 184; --c-slate-600: 203 213 225; --c-slate-700: 226 232 240; --c-slate-800: 241 245 249; --c-slate-900: 241 245 249; --c-slate-950: 248 250 252;
+  --c-gray-50: 30 41 59; --c-gray-100: 30 41 59; --c-gray-200: 51 65 85; --c-gray-300: 71 85 105; --c-gray-400: 100 116 139; --c-gray-500: 148 163 184; --c-gray-600: 203 213 225; --c-gray-700: 226 232 240; --c-gray-800: 241 245 249; --c-gray-900: 241 245 249; --c-gray-950: 248 250 252;
+  --c-zinc-50: 30 41 59; --c-zinc-100: 30 41 59; --c-zinc-200: 51 65 85; --c-zinc-300: 71 85 105; --c-zinc-400: 100 116 139; --c-zinc-500: 148 163 184; --c-zinc-600: 203 213 225; --c-zinc-700: 226 232 240; --c-zinc-800: 241 245 249; --c-zinc-900: 241 245 249; --c-zinc-950: 248 250 252;
+  --c-neutral-50: 30 41 59; --c-neutral-100: 30 41 59; --c-neutral-200: 51 65 85; --c-neutral-300: 71 85 105; --c-neutral-400: 100 116 139; --c-neutral-500: 148 163 184; --c-neutral-600: 203 213 225; --c-neutral-700: 226 232 240; --c-neutral-800: 241 245 249; --c-neutral-900: 241 245 249; --c-neutral-950: 248 250 252;
+  --c-stone-50: 30 41 59; --c-stone-100: 30 41 59; --c-stone-200: 51 65 85; --c-stone-300: 71 85 105; --c-stone-400: 100 116 139; --c-stone-500: 148 163 184; --c-stone-600: 203 213 225; --c-stone-700: 226 232 240; --c-stone-800: 241 245 249; --c-stone-900: 241 245 249; --c-stone-950: 248 250 252;
+  --c-red-50: 46 29 46; --c-red-100: 64 33 48; --c-red-200: 91 38 51; --c-red-300: 155 77 85; --c-red-400: 248 113 113; --c-red-500: 239 68 68; --c-red-600: 220 38 38; --c-red-700: 252 165 165; --c-red-800: 254 202 202; --c-red-900: 254 226 226; --c-red-950: 254 242 242;
+  --c-orange-50: 48 36 39; --c-orange-100: 66 43 38; --c-orange-200: 95 54 35; --c-orange-300: 157 97 53; --c-orange-400: 251 146 60; --c-orange-500: 249 115 22; --c-orange-600: 234 88 12; --c-orange-700: 253 186 116; --c-orange-800: 254 215 170; --c-orange-900: 255 237 213; --c-orange-950: 255 247 237;
+  --c-amber-50: 47 42 38; --c-amber-100: 66 53 35; --c-amber-200: 93 69 31; --c-amber-300: 157 124 38; --c-amber-400: 251 191 36; --c-amber-500: 245 158 11; --c-amber-600: 217 119 6; --c-amber-700: 252 211 77; --c-amber-800: 253 230 138; --c-amber-900: 254 243 199; --c-amber-950: 255 251 235;
+  --c-yellow-50: 46 45 37; --c-yellow-100: 63 57 35; --c-yellow-200: 89 76 30; --c-yellow-300: 156 132 29; --c-yellow-400: 250 204 21; --c-yellow-500: 234 179 8; --c-yellow-600: 202 138 4; --c-yellow-700: 253 224 71; --c-yellow-800: 254 240 138; --c-yellow-900: 254 249 195; --c-yellow-950: 254 252 232;
+  --c-lime-50: 31 48 39; --c-lime-100: 41 63 38; --c-lime-200: 55 85 35; --c-lime-300: 104 147 49; --c-lime-400: 163 230 53; --c-lime-500: 132 204 22; --c-lime-600: 101 163 13; --c-lime-700: 190 242 100; --c-lime-800: 217 249 157; --c-lime-900: 236 252 203; --c-lime-950: 247 254 231;
+  --c-green-50: 18 47 49; --c-green-100: 19 61 53; --c-green-200: 21 82 60; --c-green-300: 50 142 94; --c-green-400: 74 222 128; --c-green-500: 34 197 94; --c-green-600: 22 163 74; --c-green-700: 134 239 172; --c-green-800: 187 247 208; --c-green-900: 220 252 231; --c-green-950: 240 253 244;
+  --c-emerald-50: 15 46 54; --c-emerald-100: 15 59 61; --c-emerald-200: 15 78 72; --c-emerald-300: 37 136 109; --c-emerald-400: 52 211 153; --c-emerald-500: 16 185 129; --c-emerald-600: 5 150 105; --c-emerald-700: 110 231 183; --c-emerald-800: 167 243 208; --c-emerald-900: 209 250 229; --c-emerald-950: 236 253 245;
+  --c-teal-50: 16 46 59; --c-teal-100: 16 58 69; --c-teal-200: 17 78 84; --c-teal-300: 33 136 131; --c-teal-400: 45 212 191; --c-teal-500: 20 184 166; --c-teal-600: 13 148 136; --c-teal-700: 94 234 212; --c-teal-800: 153 246 228; --c-teal-900: 204 251 241; --c-teal-950: 240 253 250;
+  --c-cyan-50: 14 45 66; --c-cyan-100: 13 58 79; --c-cyan-200: 12 77 100; --c-cyan-300: 26 136 160; --c-cyan-400: 34 211 238; --c-cyan-500: 6 182 212; --c-cyan-600: 8 145 178; --c-cyan-700: 103 232 249; --c-cyan-800: 165 243 252; --c-cyan-900: 207 250 254; --c-cyan-950: 236 254 255;
+  --c-sky-50: 15 43 69; --c-sky-100: 15 54 84; --c-sky-200: 15 71 107; --c-sky-300: 40 123 166; --c-sky-400: 56 189 248; --c-sky-500: 14 165 233; --c-sky-600: 2 132 199; --c-sky-700: 125 211 252; --c-sky-800: 186 230 253; --c-sky-900: 224 242 254; --c-sky-950: 240 249 255;
+  --c-blue-50: 21 38 71; --c-blue-100: 25 47 87; --c-blue-200: 30 59 111; --c-blue-300: 64 108 167; --c-blue-400: 96 165 250; --c-blue-500: 59 130 246; --c-blue-600: 37 99 235; --c-blue-700: 147 197 253; --c-blue-800: 191 219 254; --c-blue-900: 219 234 254; --c-blue-950: 239 246 255;
+  --c-indigo-50: 27 34 70; --c-indigo-100: 33 40 86; --c-indigo-200: 44 50 110; --c-indigo-300: 83 93 166; --c-indigo-400: 129 140 248; --c-indigo-500: 99 102 241; --c-indigo-600: 79 70 229; --c-indigo-700: 165 180 252; --c-indigo-800: 199 210 254; --c-indigo-900: 224 231 255; --c-indigo-950: 238 242 255;
+  --c-violet-50: 32 33 71; --c-violet-100: 42 38 87; --c-violet-200: 57 46 111; --c-violet-300: 106 93 167; --c-violet-400: 167 139 250; --c-violet-500: 139 92 246; --c-violet-600: 124 58 237; --c-violet-700: 196 181 253; --c-violet-800: 221 214 254; --c-violet-900: 237 233 254; --c-violet-950: 245 243 255;
+  --c-purple-50: 36 32 71; --c-purple-100: 49 37 87; --c-purple-200: 67 44 112; --c-purple-300: 121 88 168; --c-purple-400: 192 132 252; --c-purple-500: 168 85 247; --c-purple-600: 147 51 234; --c-purple-700: 216 180 254; --c-purple-800: 233 213 255; --c-purple-900: 243 232 255; --c-purple-950: 250 245 255;
+  --c-fuchsia-50: 43 30 70; --c-fuchsia-100: 59 33 85; --c-fuchsia-200: 84 39 109; --c-fuchsia-300: 145 82 166; --c-fuchsia-400: 232 121 249; --c-fuchsia-500: 217 70 239; --c-fuchsia-600: 192 38 211; --c-fuchsia-700: 240 171 252; --c-fuchsia-800: 245 208 254; --c-fuchsia-900: 250 232 255; --c-fuchsia-950: 253 244 255;
+  --c-pink-50: 46 30 58; --c-pink-100: 64 34 66; --c-pink-200: 90 40 80; --c-pink-300: 152 78 126; --c-pink-400: 244 114 182; --c-pink-500: 236 72 153; --c-pink-600: 219 39 119; --c-pink-700: 249 168 212; --c-pink-800: 251 207 232; --c-pink-900: 252 231 243; --c-pink-950: 253 242 248;
+  --c-rose-50: 47 29 49; --c-rose-100: 65 32 53; --c-rose-200: 93 37 60; --c-rose-300: 157 77 97; --c-rose-400: 251 113 133; --c-rose-500: 244 63 94; --c-rose-600: 225 29 72; --c-rose-700: 253 164 175; --c-rose-800: 254 205 211; --c-rose-900: 255 228 230; --c-rose-950: 255 241 242;
+  --c-home: 107 138 230; --c-away: 125 211 252;
+  --c-div1: 139 108 240; --c-div2: 212 178 74; --c-div3: 154 165 177; --c-div4: 199 123 78;
+  color-scheme: dark;
+}
+.gsl-dark body, .gsl-dark .gsl-page { background-color: rgb(2 6 23); }
+.gsl-dark .bg-white { background-color: rgb(15 23 42); }
+.gsl-dark .bg-white\/95 { background-color: rgb(15 23 42 / 0.95); }
+.gsl-dark .bg-white\/80 { background-color: rgb(15 23 42 / 0.8); }
+.gsl-dark .bg-white\/60 { background-color: rgb(15 23 42 / 0.6); }
+.gsl-dark .hover\:bg-white\/60:hover { background-color: rgb(51 65 85 / 0.6); }
+.gsl-dark .shadow-md, .gsl-dark .shadow-sm, .gsl-dark .shadow-xs { --tw-shadow-color: rgb(0 0 0 / 0.4); }
+.gsl-dark .from-white { --tw-gradient-from: rgb(15 23 42) var(--tw-gradient-from-position); --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.gsl-dark .via-white { --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), rgb(15 23 42) var(--tw-gradient-via-position), var(--tw-gradient-to); }
+.gsl-dark .to-white { --tw-gradient-to: rgb(15 23 42) var(--tw-gradient-to-position); }
+.gsl-dark .gsl-divstrip, .gsl-dark .gsl-divchip { background-color: rgb(var(--d) / 0.18); color: rgb(var(--d)); }
+.gsl-dark .gsl-edge { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.18); }
+/* Things that keep their light-mode look in dark mode */
+.gsl-dark .gsl-keep {
+  --c-slate-50: 248 250 252; --c-slate-100: 241 245 249; --c-slate-200: 226 232 240; --c-slate-300: 203 213 225; --c-slate-400: 148 163 184; --c-slate-500: 100 116 139; --c-slate-600: 71 85 105; --c-slate-700: 51 65 85; --c-slate-800: 30 41 59; --c-slate-900: 15 23 42; --c-slate-950: 2 6 23;
+  --c-gray-50: 249 250 251; --c-gray-100: 243 244 246; --c-gray-200: 229 231 235; --c-gray-300: 209 213 219; --c-gray-400: 156 163 175; --c-gray-500: 107 114 128; --c-gray-600: 75 85 99; --c-gray-700: 55 65 81; --c-gray-800: 31 41 55; --c-gray-900: 17 24 39; --c-gray-950: 3 7 18;
+  --c-zinc-50: 250 250 250; --c-zinc-100: 244 244 245; --c-zinc-200: 228 228 231; --c-zinc-300: 212 212 216; --c-zinc-400: 161 161 170; --c-zinc-500: 113 113 122; --c-zinc-600: 82 82 91; --c-zinc-700: 63 63 70; --c-zinc-800: 39 39 42; --c-zinc-900: 24 24 27; --c-zinc-950: 9 9 11;
+  --c-neutral-50: 250 250 250; --c-neutral-100: 245 245 245; --c-neutral-200: 229 229 229; --c-neutral-300: 212 212 212; --c-neutral-400: 163 163 163; --c-neutral-500: 115 115 115; --c-neutral-600: 82 82 82; --c-neutral-700: 64 64 64; --c-neutral-800: 38 38 38; --c-neutral-900: 23 23 23; --c-neutral-950: 10 10 10;
+  --c-stone-50: 250 250 249; --c-stone-100: 245 245 244; --c-stone-200: 231 229 228; --c-stone-300: 214 211 209; --c-stone-400: 168 162 158; --c-stone-500: 120 113 108; --c-stone-600: 87 83 78; --c-stone-700: 68 64 60; --c-stone-800: 41 37 36; --c-stone-900: 28 25 23; --c-stone-950: 12 10 9;
+  --c-red-50: 254 242 242; --c-red-100: 254 226 226; --c-red-200: 254 202 202; --c-red-300: 252 165 165; --c-red-400: 248 113 113; --c-red-500: 239 68 68; --c-red-600: 220 38 38; --c-red-700: 185 28 28; --c-red-800: 153 27 27; --c-red-900: 127 29 29; --c-red-950: 69 10 10;
+  --c-orange-50: 255 247 237; --c-orange-100: 255 237 213; --c-orange-200: 254 215 170; --c-orange-300: 253 186 116; --c-orange-400: 251 146 60; --c-orange-500: 249 115 22; --c-orange-600: 234 88 12; --c-orange-700: 194 65 12; --c-orange-800: 154 52 18; --c-orange-900: 124 45 18; --c-orange-950: 67 20 7;
+  --c-amber-50: 255 251 235; --c-amber-100: 254 243 199; --c-amber-200: 253 230 138; --c-amber-300: 252 211 77; --c-amber-400: 251 191 36; --c-amber-500: 245 158 11; --c-amber-600: 217 119 6; --c-amber-700: 180 83 9; --c-amber-800: 146 64 14; --c-amber-900: 120 53 15; --c-amber-950: 69 26 3;
+  --c-yellow-50: 254 252 232; --c-yellow-100: 254 249 195; --c-yellow-200: 254 240 138; --c-yellow-300: 253 224 71; --c-yellow-400: 250 204 21; --c-yellow-500: 234 179 8; --c-yellow-600: 202 138 4; --c-yellow-700: 161 98 7; --c-yellow-800: 133 77 14; --c-yellow-900: 113 63 18; --c-yellow-950: 66 32 6;
+  --c-lime-50: 247 254 231; --c-lime-100: 236 252 203; --c-lime-200: 217 249 157; --c-lime-300: 190 242 100; --c-lime-400: 163 230 53; --c-lime-500: 132 204 22; --c-lime-600: 101 163 13; --c-lime-700: 77 124 15; --c-lime-800: 63 98 18; --c-lime-900: 54 83 20; --c-lime-950: 26 46 5;
+  --c-green-50: 240 253 244; --c-green-100: 220 252 231; --c-green-200: 187 247 208; --c-green-300: 134 239 172; --c-green-400: 74 222 128; --c-green-500: 34 197 94; --c-green-600: 22 163 74; --c-green-700: 21 128 61; --c-green-800: 22 101 52; --c-green-900: 20 83 45; --c-green-950: 5 46 22;
+  --c-emerald-50: 236 253 245; --c-emerald-100: 209 250 229; --c-emerald-200: 167 243 208; --c-emerald-300: 110 231 183; --c-emerald-400: 52 211 153; --c-emerald-500: 16 185 129; --c-emerald-600: 5 150 105; --c-emerald-700: 4 120 87; --c-emerald-800: 6 95 70; --c-emerald-900: 6 78 59; --c-emerald-950: 2 44 34;
+  --c-teal-50: 240 253 250; --c-teal-100: 204 251 241; --c-teal-200: 153 246 228; --c-teal-300: 94 234 212; --c-teal-400: 45 212 191; --c-teal-500: 20 184 166; --c-teal-600: 13 148 136; --c-teal-700: 15 118 110; --c-teal-800: 17 94 89; --c-teal-900: 19 78 74; --c-teal-950: 4 47 46;
+  --c-cyan-50: 236 254 255; --c-cyan-100: 207 250 254; --c-cyan-200: 165 243 252; --c-cyan-300: 103 232 249; --c-cyan-400: 34 211 238; --c-cyan-500: 6 182 212; --c-cyan-600: 8 145 178; --c-cyan-700: 14 116 144; --c-cyan-800: 21 94 117; --c-cyan-900: 22 78 99; --c-cyan-950: 8 51 68;
+  --c-sky-50: 240 249 255; --c-sky-100: 224 242 254; --c-sky-200: 186 230 253; --c-sky-300: 125 211 252; --c-sky-400: 56 189 248; --c-sky-500: 14 165 233; --c-sky-600: 2 132 199; --c-sky-700: 3 105 161; --c-sky-800: 7 89 133; --c-sky-900: 12 74 110; --c-sky-950: 8 47 73;
+  --c-blue-50: 239 246 255; --c-blue-100: 219 234 254; --c-blue-200: 191 219 254; --c-blue-300: 147 197 253; --c-blue-400: 96 165 250; --c-blue-500: 59 130 246; --c-blue-600: 37 99 235; --c-blue-700: 29 78 216; --c-blue-800: 30 64 175; --c-blue-900: 30 58 138; --c-blue-950: 23 37 84;
+  --c-indigo-50: 238 242 255; --c-indigo-100: 224 231 255; --c-indigo-200: 199 210 254; --c-indigo-300: 165 180 252; --c-indigo-400: 129 140 248; --c-indigo-500: 99 102 241; --c-indigo-600: 79 70 229; --c-indigo-700: 67 56 202; --c-indigo-800: 55 48 163; --c-indigo-900: 49 46 129; --c-indigo-950: 30 27 75;
+  --c-violet-50: 245 243 255; --c-violet-100: 237 233 254; --c-violet-200: 221 214 254; --c-violet-300: 196 181 253; --c-violet-400: 167 139 250; --c-violet-500: 139 92 246; --c-violet-600: 124 58 237; --c-violet-700: 109 40 217; --c-violet-800: 91 33 182; --c-violet-900: 76 29 149; --c-violet-950: 46 16 101;
+  --c-purple-50: 250 245 255; --c-purple-100: 243 232 255; --c-purple-200: 233 213 255; --c-purple-300: 216 180 254; --c-purple-400: 192 132 252; --c-purple-500: 168 85 247; --c-purple-600: 147 51 234; --c-purple-700: 126 34 206; --c-purple-800: 107 33 168; --c-purple-900: 88 28 135; --c-purple-950: 59 7 100;
+  --c-fuchsia-50: 253 244 255; --c-fuchsia-100: 250 232 255; --c-fuchsia-200: 245 208 254; --c-fuchsia-300: 240 171 252; --c-fuchsia-400: 232 121 249; --c-fuchsia-500: 217 70 239; --c-fuchsia-600: 192 38 211; --c-fuchsia-700: 162 28 175; --c-fuchsia-800: 134 25 143; --c-fuchsia-900: 112 26 117; --c-fuchsia-950: 74 4 78;
+  --c-pink-50: 253 242 248; --c-pink-100: 252 231 243; --c-pink-200: 251 207 232; --c-pink-300: 249 168 212; --c-pink-400: 244 114 182; --c-pink-500: 236 72 153; --c-pink-600: 219 39 119; --c-pink-700: 190 24 93; --c-pink-800: 157 23 77; --c-pink-900: 131 24 67; --c-pink-950: 80 7 36;
+  --c-rose-50: 255 241 242; --c-rose-100: 255 228 230; --c-rose-200: 254 205 211; --c-rose-300: 253 164 175; --c-rose-400: 251 113 133; --c-rose-500: 244 63 94; --c-rose-600: 225 29 72; --c-rose-700: 190 18 60; --c-rose-800: 159 18 57; --c-rose-900: 136 19 55; --c-rose-950: 76 5 25;
+  color-scheme: light;
+}
+.gsl-dark .gsl-keep .bg-white, .gsl-dark .gsl-keep.bg-white { background-color: rgb(255 255 255); }
+.gsl-dark .gsl-keep.bg-white\/95 { background-color: rgb(255 255 255 / 0.95); }
+</style>
+<script>
+  // Apply the saved font choice before the page draws (no flash).
+  try {
+    var f = JSON.parse(localStorage.getItem('gsl-fonts') || '{}');
+    var map = { text: 'data-font-text', title: 'data-font-title', big: 'data-font-big', small: 'data-font-small', track: 'data-big-track' };
+    Object.keys(map).forEach(function (k) { if (f[k]) document.documentElement.setAttribute(map[k], f[k]); });
+  } catch (e) {}
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Every colour scale reads its CSS variable; the page font is --font-text.
+  (function () {
+    var fam = ['slate','gray','zinc','neutral','stone','red','orange','amber','yellow','lime','green','emerald','teal','cyan','sky','blue','indigo','violet','purple','fuchsia','pink','rose'];
+    var shades = [50,100,200,300,400,500,600,700,800,900,950];
+    var colors = {};
+    fam.forEach(function (f) {
+      colors[f] = {};
+      shades.forEach(function (s) { colors[f][s] = 'rgb(var(--c-' + f + '-' + s + ') / <alpha-value>)'; });
+    });
+    tailwind.config = { theme: { extend: { colors: colors, fontFamily: { sans: ['var(--font-text)'] } } } };
+  })();
+</script>
+<div id="root"></div>
