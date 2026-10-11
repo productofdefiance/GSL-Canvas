@@ -1,0 +1,11 @@
+node_modules/
+build/
+# test kit output
+test/out/
+test/snap*/
+test/cssC.css
+test/*.css
+test/browser/app.bundle.js
+test/browser/v8/
+test/browser/*.png
+test/shots/

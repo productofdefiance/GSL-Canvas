@@ -19,7 +19,7 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 | src/League.js + src/LeagueTabs.js | League page shell + its redesigned tabs (convention C1) |
 | src/Cups.js, src/CupsLab.js, src/Pyramid.js, src/Squad.js | Other pages |
 | src/index.js, src/sheetData.js, src/style.css | Entry point; the exported workbook data; leftover stylesheet |
-| test/ | Test kit (see test/README.md; written for a flat src/ with index.html beside it: adapt to read public/index.html) |
+| test/ | Test kit: `test/setup.sh`, then `cd test && npm run check` (see test/README.md). Test-only dependencies live in test/package.json |
 | CLAUDE.md | This file |
 
 Any restructure is one deliberate step, agreed with Anish, checked in StackBlitz (his preview), then recorded
@@ -51,5 +51,5 @@ Libraries: React, d3, lucide-react only. Ask before adding anything.
 
 ## Checks before every pull request
 
-Syntax, a full render of every page and tab (phone 390 and desktop 1440), browser checks of the
+Run with the kit in test/ (commands in test/README.md). Syntax, a full render of every page and tab (phone 390 and desktop 1440), browser checks of the
 interactions touched (click, hover, touch), dark mode, and no sideways overflow at phone width.

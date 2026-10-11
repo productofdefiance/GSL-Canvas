@@ -1,11 +1,15 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — App.js (the shell that holds every section)
- *  Version:  Canvas v51.15
- *  Date:     2026-10-09, 11:00 UTC
+ *  Version:  Canvas v51.16
+ *  Date:     2026-10-11, 12:00 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  CHANGELOG (newest first)
+ *
+ *  Canvas v51.16 — 2026-10-11, 12:00 UTC — GitHub pilot set-up (infrastructure only)
+ *   - Version line updated. No other changes to this file. Repo tidy-ups:
+ *     CLAUDE.md renamed, test kit moved into test/, .gitignore added.
  *
  *  Canvas v51.15 — 2026-10-09, 11:00 UTC — League locked · League v35, LeagueTabs v8
  *   - Version line updated. No other changes to this file.
@@ -310,8 +314,8 @@ import { PAGE_WIDTH, ChromeContext, LabBar, registerClubSheets } from './ui.js';
 
 // Footer: which version of each file is running, and when this Canvas
 // version was published (v50: replaces the floating corner tag).
-const VERSION_TAG = 'Canvas v51.15 • League v35 • LeagueTabs v8 • Cups v18 • Cups Lab v2 • Pyramid v29 • Squad v31 • UI v28';
-const PUBLISHED = '9 Oct 2026, 11:00 UTC';
+const VERSION_TAG = 'Canvas v51.16 • League v35 • LeagueTabs v8 • Cups v18 • Cups Lab v2 • Pyramid v29 • Squad v31 • UI v28';
+const PUBLISHED = '11 Oct 2026, 12:00 UTC';
 
 // Pages that have been converted to the design system, and so can go dark.
 // The others stay light even when dark mode is on (one page at a time).

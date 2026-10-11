@@ -1,0 +1,40 @@
+const {chromium,devices}=require('playwright');const fs=require('fs');
+const css=fs.readFileSync('../cssC.css','utf8');const bundle=fs.readFileSync('app.bundle.js','utf8');
+(async()=>{const b=await chromium.launch();
+async function page(dark,opts={viewport:{width:1440,height:1000}}){const ctx=await b.newContext(opts);const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+ const html=`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><script>localStorage.setItem('gsl-theme','${dark?'dark':'light'}');globalThis.__OV=${JSON.stringify({"App:sectionId":"league","League:activeTab":"spider"})}</script></head><body><div id="root"></div><script>${bundle}</script></body></html>`;
+ await p.route('http://gsl.test/',r=>r.fulfill({body:html,contentType:'text/html; charset=utf-8'}));await p.goto('http://gsl.test/');await p.waitForTimeout(900);return [p,errs];}
+const log=[];let [p,e]=await page(false);
+await p.screenshot({path:'v8/s-versus.png',fullPage:true});
+// picker: B -> Opponents -> type "nap" -> pick Napoli
+await p.locator('button:has-text("Change")').nth(1).click();await p.waitForTimeout(150);
+await p.screenshot({path:'v8/s-picker.png',clip:{x:0,y:0,width:1440,height:900}});
+await p.locator("div.absolute.z-40 button:has-text(\"Opponents\")").first().click();await p.waitForTimeout(100);
+const inp=p.locator('input[placeholder^="Search"]').first();await inp.click();await inp.type('nap');await p.waitForTimeout(100);
+const stillFocused=await p.evaluate(()=>document.activeElement&&document.activeElement.tagName);
+await p.locator('div.absolute.z-40 button:has-text("NAPOLI")').first().click();await p.waitForTimeout(200);
+const titles=await p.$$eval('span.font-extrabold.truncate',els=>els.map(e=>e.innerText).slice(0,2));
+const stretched=await p.locator('text=/scale to/').count();
+log.push('focus while typing:',stillFocused,'| titles:',JSON.stringify(titles),'| stretched rows:',stretched);
+await p.screenshot({path:'v8/s-napoli.png',fullPage:true});
+await p.locator('button[title="Swap sides"]').click();await p.waitForTimeout(150);
+log.push('after swap:',JSON.stringify(await p.$$eval('span.font-extrabold.truncate',els=>els.map(e=>e.innerText).slice(0,2))));
+await p.locator('main button:has-text("Home vs Away")').first().click();await p.waitForTimeout(150);
+log.push('quick pick:',JSON.stringify(await p.$$eval('span.font-extrabold.truncate',els=>els.map(e=>e.innerText).slice(0,2))));
+// group
+await p.locator('button:has-text("Group")').first().click();await p.waitForTimeout(200);
+await p.locator('main button:has-text("Clubs")').first().click();await p.waitForTimeout(200);
+const chips=await p.$$eval('div.w-\\[148px\\]',els=>els.map(e=>e.innerText.split('\n')[0]));log.push('club chips:',JSON.stringify(chips));
+await p.locator('div.w-\\[148px\\]').first().hover();await p.waitForTimeout(150);
+await p.screenshot({path:'v8/s-group.png',fullPage:true});
+await p.locator('div.w-\\[148px\\] button').first().click();await p.waitForTimeout(100);
+log.push('after remove:',await p.locator('div.w-\\[148px\\]').count());
+await p.locator('button:has-text("Add club")').click();await p.locator('input[placeholder="Search clubs…"]').type('juv');await p.locator('div.absolute button:has-text("JUVENTUS")').first().click().catch(()=>{});await p.waitForTimeout(100);
+log.push('after add:',await p.locator('div.w-\\[148px\\]').count());
+await p.locator('main button:has-text("Table")').first().click();await p.waitForTimeout(100);log.push('table rows:',await p.locator('tbody tr').count());
+await p.locator('main button:has-text("By season")').first().click();await p.waitForTimeout(100);
+log.push('errs',JSON.stringify(e));
+[p,e]=await page(true);await p.screenshot({path:'v8/s-dark.png',fullPage:true});log.push('dark errs',JSON.stringify(e));
+[p,e]=await page(false,{...devices['iPhone 13']});await p.screenshot({path:'v8/s-phone.png',fullPage:true});
+const sw=await p.evaluate(()=>document.documentElement.scrollWidth);log.push('phone width',sw,'errs',JSON.stringify(e));
+console.log(log.join(' '));await b.close();})();
