@@ -14,6 +14,7 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 | Path | What it is |
 | --- | --- |
 | package.json | Project settings |
+| netlify.toml | Netlify build for pull-request previews: `CI=false npm run build`, publishes `build/`, Node 20 |
 | public/index.html | Tailwind CDN, Google Fonts, colour variables, division and dark-mode CSS |
 | src/App.js | Shell: Top Bar, page switching, dark-mode switch, footer, `VERSION_TAG` / `PUBLISHED` |
 | src/ui.js | Shared layer: controls, Highlights bar, hover provider, flags, `useSort`, `ownClubInfo`, club colours |
