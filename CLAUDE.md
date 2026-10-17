@@ -5,7 +5,7 @@ Owner: the user (creative director, no coding background). Footer on every scree
 credit (exact text in App.js; leave it as it is).
 
 **Read first:** the living handoff, https://claude.ai/code/artifact/cbb051f0-7e60-42d2-a83c-b0d8d7951145
-(current state, rules R1–R13, conventions, open items, how the user works). Keep it current as you work.
+(current state, rules R1–R13, conventions, open items, how the user works). The design chat keeps it current.
 
 ## Project layout
 
@@ -53,13 +53,19 @@ Code receives one brief per build, the locked decisions only.
   Mock images the user attaches go to `briefs/img/v51.xx-<n>.png`. The repo is public: mocks cropped to the
   canvas only, no names or personal screenshots in briefs or images.
 - The Design System (https://claude.ai/artifact/3SAiTFvKEVFGsyrRhoksT9) is the source for tokens and component
-  specs: read `project/README.md`, `project/tokens.json`, `project/components/<Name>/README.md`. Read only:
-  never edit it from Code.
+  specs: read `project/README.md`, `project/tokens.json`, `project/components/<Name>/README.md`.
+- claude.ai is read-only for Code. Code may read claude.ai artifacts and docs (the Design System, design
+  files, the feedback doc, the handoff) but never edits, publishes, comments on or resolves anything there.
+  They belong to the design chat.
 - Before building, check the brief against this file, the Design System and the code. List conflicts, gaps and
   anything it would break; ask, don't guess. Build only on the user's go.
 - Measure nothing from images: sizes, gaps and colours must be numbers in the brief or the Design System.
-- Branch: the session's assigned branch (the brief's branch line is a suggestion). Pull request title: from the brief.
-- Report back in the pull request description (section 8 of the template); the user pastes it into the design chat.
+- One session per build: each build starts in a fresh session, so it gets its own branch and pull request.
+  Never reuse an earlier build's branch.
+- Branch: the session's assigned branch (the brief's branch line, if any, is a suggestion). Pull request title:
+  from the brief.
+- Report back in the pull request description (section 8 of the template). Every time a pull request is opened,
+  give the user its link. The user gives the design chat the pull request link; it reads the description there.
 - Where a brief and this file conflict, ask.
 
 ## Code rules

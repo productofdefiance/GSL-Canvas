@@ -1,11 +1,13 @@
 # Canvas v51.xx: <short name>
 
-<!-- One brief per build. Written by the design chat on claude.ai; saved here as briefs/v51.xx.md.
-     Code can't open claude.ai docs or design files: everything needed must be in this file or briefs/img/. -->
+<!-- One brief per build. Written by the design chat as a claude.ai doc. The user starts a fresh Code session with
+     the doc link (or the pasted text); Code saves a copy as briefs/v51.xx.md on the build branch.
+     Code can read claude.ai docs and the Design System but changes nothing there. Mock images the user attaches
+     are saved to briefs/img/. The repo is public: no names or personal screenshots. -->
 
 - **Date:** YYYY-MM-DD
 - **Goal (one line):** …
-- **Branch:** `build/v51.xx-<short-name>`
+- **Branch (optional):** the session's own branch is used; name one only as a suggestion
 - **Pull request title:** `Canvas v51.xx: <short name>`
 
 ## 1. Context
@@ -54,5 +56,6 @@ toggles, filters, columns, drawers, sorting, empty states.
 
 ## 8. Report back (the pull request description)
 
-What's in · anything beyond this brief and why · checks run and their results · known gaps.
-The user pastes this back into the design chat, which logs it.
+The pull request description is the report: what's in · anything beyond this brief and why · checks run and
+their results · known gaps. Code gives the user the pull request link; the user passes the link to the design chat,
+which reads the description there and logs it.
