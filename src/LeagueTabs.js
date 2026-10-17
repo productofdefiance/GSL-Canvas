@@ -42,6 +42,11 @@
  *     season, the minimum-games filter, the radar's pillar labels.
  *   - Points race season strip: its keep-in-view logic moved to ui.js
  *     (useKeepInView); same behaviour.
+ *   - Sideways rows use ui.js ScrollRow, so an edge fades where more is
+ *     hidden: the Points season strip and the picker's kinds on phones (white
+ *     card), the quick picks and the Group chips (page background), in light
+ *     and dark. Ranked card rows are 44px tall. Verdict chips name a club
+ *     layer by its abbreviation ("CHE by 12.7%").
  — 2026-10-17, 22:00 UTC — Canvas v51.20 (Points on phones)
  *   - Points race and Matchday benchmarks: subtitles removed; their words
  *     (from the section [i] blurbs) live in each section's [i].
@@ -229,6 +234,7 @@ import {
   TAP,
   useHoverCard,
   useKeepInView,
+  ScrollRow,
   ACCENT_HEX,
   ACCENT_HEX_LIGHT,
 } from './ui.js';
@@ -1170,7 +1176,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
           {divSwitch}
         </div>
         )}
-        <div className="flex items-center gap-3"><div ref={stripRef} className="overflow-x-auto pb-1 min-w-0"><div data-strip-row="" className="flex gap-1.5 w-max pr-4 sm:pr-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div></div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
+        <div className="flex items-center gap-3"><ScrollRow boxRef={stripRef} surface="card" className="pb-1"><div data-strip-row="" className="flex gap-1.5 w-max pr-4 sm:pr-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div></ScrollRow>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
         <div className="flex flex-wrap gap-5 text-xs font-medium text-slate-600">
           {mode === 'focus' ? (
             <>
@@ -1785,13 +1791,16 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
     const kinds = [['career', 'Career', 'Your whole history', 1, Trophy], ['seasons', 'Seasons', 'One campaign', played.length, Calendar], ['venue', 'Venue', 'Home or away', 2, Home], ['opp', 'Opponents', 'Your record against a club', clubsByGames.length, Shield]];
     return (
       <div className="absolute z-40 top-full right-0 mt-2 w-[min(620px,calc(100vw-2rem))] bg-white rounded-xl shadow-xl ring-1 ring-slate-200 flex flex-col sm:flex-row text-left" onClick={(e) => e.stopPropagation()}>
-        <div className="sm:w-44 shrink-0 border-b sm:border-b-0 sm:border-r border-slate-100 p-2 flex sm:flex-col gap-1 overflow-x-auto">
-          {kinds.map(([k, t, d, n, I]) => (
+        {(() => { const kindButtons = kinds.map(([k, t, d, n, I]) => (
             <button key={k} type="button" onClick={() => (k === 'career' ? choose({ kind: 'career' }) : setPickKind(k))} className={`flex items-start gap-2 rounded-lg px-2 py-2 max-sm:min-h-[44px] text-left shrink-0 ${pickKind === k ? 'bg-slate-100' : 'hover:bg-slate-50'}`}>
               <I className="w-4 h-4 text-slate-500 mt-0.5" /><span className="min-w-0"><span className="flex justify-between gap-2 text-sm font-semibold text-slate-900"><span>{t}</span><span className="text-xs font-medium text-slate-400">{n}</span></span><span className="hidden sm:block text-[11px] text-slate-500 leading-snug">{d}</span></span>
             </button>
-          ))}
-        </div>
+          ));
+          // Phones (v13): the kinds scroll sideways in a ScrollRow (fading where more is hidden); from 640px a column
+          return radPhone
+            ? <div className="shrink-0 border-b border-slate-100"><ScrollRow surface="card" className="p-2 flex gap-1">{kindButtons}</ScrollRow></div>
+            : <div className="sm:w-44 shrink-0 border-b sm:border-b-0 sm:border-r border-slate-100 p-2 flex sm:flex-col gap-1 overflow-x-auto">{kindButtons}</div>;
+        })()}
         <div className="flex-1 p-2 max-h-[360px] overflow-y-auto">
           {pickKind === 'seasons' && <>
             <div className={`flex justify-between px-3 py-1 ${EB} text-slate-400`}><span>Season</span><span>PPG</span></div>
@@ -1846,6 +1855,9 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
     const car = career[p.key], bst = bestSeasonVal(p);
     const lead = better(p, va, vb);
     const verdict = lead === 0 ? 'Level' : `${(lead > 0 ? A : B).title.split(' · ').pop()} by ${p.gap(Math.abs(va - vb))}`;
+    // Phones: a club layer goes by its abbreviation ("CHE by 12.7%"); seasons, Career, Home and Away as on desktop
+    const leadL = lead > 0 ? LA : LB;
+    const chipText = lead !== 0 && leadL.kind === 'opp' ? `${leadL.key} by ${p.gap(Math.abs(va - vb))}` : verdict;
     const vc = lead === 0 ? null : verdictColors(hexOf((lead > 0 ? A : B).color), dark);
     const bar = (v, color) => (
       <div className="relative h-[9px] rounded-full bg-slate-100">
@@ -1859,7 +1871,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
         <div className="col-span-2 sm:col-span-1 flex items-start justify-between gap-2">
           <div><div className="text-sm font-semibold text-slate-900">{p.label}</div><div className="text-[11px] text-slate-500">{p.sub}{stretchedMax != null ? ` · scale to ${p.fmt(stretchedMax)}` : ''}</div></div>
           {/* Phones (v13): the verdict as a chip on the pillar's header line, in place of the desktop column */}
-          {radPhone && <span data-verdict="" className={`shrink-0 whitespace-nowrap text-[11px] font-bold tabular-nums rounded-[6px] px-[7px] py-[3px] ${vc ? '' : 'text-slate-600 bg-slate-100'}`} style={vc || undefined}>{verdict}</span>}
+          {radPhone && <span data-verdict="" className={`shrink-0 whitespace-nowrap text-[11px] font-bold tabular-nums rounded-[6px] px-[7px] py-[3px] ${vc ? '' : 'text-slate-600 bg-slate-100'}`} style={vc || undefined}>{chipText}</span>}
         </div>
         <div className="flex flex-col gap-2">{bar(va, A.color)}{bar(vb, B.color)}</div>
         <div className="flex flex-col gap-1.5 text-right"><span className={`text-sm tabular-nums ${lead > 0 ? 'font-extrabold text-slate-900' : 'font-medium text-slate-500'}`}>{p.fmt(va)}</span><span className={`text-sm tabular-nums ${lead < 0 ? 'font-extrabold text-slate-900' : 'font-medium text-slate-500'}`}>{p.fmt(vb)}</span></div>
@@ -1929,9 +1941,9 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
           // Phones (v13): an eyebrow, then every quick pick on one row that scrolls sideways
           <div className="flex flex-col gap-1">
             <span className={`${EB} text-slate-500`}>Quick picks</span>
-            <div ref={quickRef} data-quick-row="" className="overflow-x-auto py-1">
+            <ScrollRow boxRef={quickRef} surface="page" data-quick-row="" className="py-1">
               <div className="flex gap-2 w-max text-xs">{quick.map((q) => <button key={q.label} type="button" data-quick-on={isQuick(q) ? '' : undefined} onClick={() => { setLA(q.a); setLB(q.b); }} className={`${TAP} whitespace-nowrap rounded-md px-2 py-1 font-semibold min-h-[36px] ${isQuick(q) ? 'bg-slate-900 text-slate-50' : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:text-slate-900'}`}>{q.label}</button>)}</div>
-            </div>
+            </ScrollRow>
           </div>
         ) : (
         <div className="flex flex-wrap items-center gap-2 text-xs"><span className="text-slate-500 font-semibold">Quick picks</span>{quick.map((q) => <button key={q.label} type="button" onClick={() => { setLA(q.a); setLB(q.b); }} className={`rounded-md px-2 py-1 font-semibold min-h-[32px] ${isQuick(q) ? 'bg-slate-900 text-slate-50' : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:text-slate-900'}`}>{q.label}</button>)}</div>
@@ -1984,7 +1996,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
           <Segmented tap value={gKind} onChange={(v) => { setGKind(v); setHl(null); rankHc.close(); }} options={[{ value: 'seasons', label: 'Seasons' }, { value: 'clubs', label: 'Clubs' }]} />
           <span className="text-xs text-slate-500">{gLayers.length} of {maxG}{gKind === 'clubs' ? ' · your record against each' : ''}</span>
         </div>
-        <div className="flex items-stretch gap-1.5 overflow-x-auto pb-1 max-sm:pt-3 max-sm:pb-3 max-sm:-my-3">
+        <ScrollRow surface="page" className="flex items-stretch gap-1.5 pb-1 max-sm:pt-3 max-sm:pb-3 max-sm:-my-3">
           {gLayers.map((L) => (
             <div key={L.id} data-gchip={L.id} {...forward(L.id)} className={`w-[148px] shrink-0 rounded-lg px-2.5 py-1.5 ring-1 ${hl === L.id ? 'bg-white ring-slate-900' : 'bg-slate-50 ring-slate-200'}`} style={{ boxShadow: L.us ? `inset 0 3px 0 ${L.color}` : `inset 4px 0 0 ${L.color}` }}>
               <div className="flex items-center justify-between gap-1"><span className="flex items-center gap-1.5 min-w-0">{L.flag && <Flag emoji={L.flag} size={16} />}<span className="text-xs font-extrabold text-slate-900 truncate">{gKind === 'seasons' ? `${L.short} · ${L.sub}` : L.name}</span></span><button type="button" onClick={() => { if (gKind === 'seasons') setGSeasons(seasonsSel.filter((n) => `S${n}` !== L.id)); else setGClubs(clubsSel.filter((a) => a !== L.id)); }} aria-label={`Remove ${L.short}`} className={`${TAP} text-slate-400 hover:text-slate-900 shrink-0`}><X className="w-3.5 h-3.5" /></button></div>
@@ -2004,7 +2016,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
               )}
             </span>
           )}
-        </div>
+        </ScrollRow>
         <Section title={gKind === 'seasons' ? 'Your seasons, side by side' : 'Your record against each club'} accent={accent}
           info={<>
             <p><strong>Up to eight seasons, or clubs, on the same six pillars,</strong> drawn as outlines so they can overlap.</p>
@@ -2072,7 +2084,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
         const at = ranked.findIndex((x) => x.r < cr);
         const careerRow = <div key="career" data-career-row="" className="flex items-center gap-2 h-6 text-xs text-slate-500"><span className="w-7 shrink-0" /><span className="w-0.5 h-3 shrink-0 bg-slate-900" />Career average · {p.fmt(cv)}</div>;
         const rows = ranked.map((x) => (
-          <button key={x.L.id} type="button" data-rank-row={x.L.id} onClick={() => setHl(x.L.id)} className={`w-full h-[30px] shrink-0 flex items-center gap-2 rounded-md px-1 text-left ${hl === x.L.id ? 'bg-slate-100' : ''}`}>
+          <button key={x.L.id} type="button" data-rank-row={x.L.id} onClick={() => setHl(x.L.id)} className={`w-full h-11 shrink-0 flex items-center gap-2 rounded-md px-1 text-left ${hl === x.L.id ? 'bg-slate-100' : ''}`}>
             <span className="w-7 shrink-0 text-xs font-bold tabular-nums text-slate-500">{shared(x.rank) ? '=' : ''}{x.rank}</span>
             <span className="w-3 h-3 shrink-0 rounded-full" style={{ background: x.L.color }} />
             <span className="w-14 shrink-0 flex items-center gap-1 text-xs font-bold text-slate-900">{x.L.flag && <Flag emoji={x.L.flag} size={14} />}{x.L.short}</span>

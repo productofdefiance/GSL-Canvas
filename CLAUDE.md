@@ -85,6 +85,8 @@ Code receives one brief per build, the locked decisions only.
 - Hover cards never keep their own touch logic: every card uses the shared ui.js helpers (`useHoverCard`,
   `HoverProvider` / `useHover`, `useTouchCard`). On touch a card opens on a tap, switches on another tap, and closes
   on a tap anywhere else or on scroll; only one overlay (hover card, [i], sheet) is open at a time.
+- Any chip or switch row that scrolls sideways uses ui.js `ScrollRow` (its edge fades where more is hidden; set
+  `surface` to the card or page behind it); no plain `overflow-x-auto` rows. Wide tables (ledgers) are exempt.
 - Flags are always drawn vectors (ui.js `Flag`, or `SvgFlag` inside charts), never emoji text, anywhere in the canvas.
 - Text floor 11px (SVG too). R10 match order: flag, club, result chip, score. R11: tables sort by headers.
   R12: "us" cards get a top accent strip, "them" cards a left strip.

@@ -39,7 +39,7 @@ const ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+0.05)/(Math.mi
   const r=await p.evaluate(async()=>{const {poll,settle,inside}=window.__p;const row=document.querySelector('[data-quick-row]');const chips=[...row.querySelectorAll('button')];
    const tops=new Set(chips.map((c)=>Math.round(c.getBoundingClientRect().top)));const labels=chips.map((c)=>c.textContent);
    const sel0=row.querySelector('[data-quick-on]');const load={label:sel0&&sel0.textContent,inside:sel0&&inside(sel0,row)};
-   const eyebrow=row.previousElementSibling&&row.previousElementSibling.textContent;
+   const eb=(row.previousElementSibling||row.parentElement.previousElementSibling);const eyebrow=eb&&eb.textContent;
    const scrolls=row.scrollWidth>row.clientWidth;const page=[document.documentElement.scrollWidth,document.documentElement.clientWidth];
    const hs=chips.map((c)=>Math.round(c.getBoundingClientRect().height));const firstL=Math.round(chips[0].getBoundingClientRect().left-row.getBoundingClientRect().left);
    // change the pairing with the row scrolled the other way (by script, so not "the user")
@@ -64,10 +64,13 @@ const ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+0.05)/(Math.mi
    await ctx.close();return r;};
   const d=await read(false,false),ph=await read(true,false),pd=await read(true,true);
   if(!d||!ph){out(false,`2. ${name}: quick pick not found`);continue;}
-  const same=ph.v.map((x)=>x.t).join('|')===d.v.join('|');
+  // a club layer goes by its abbreviation on phones: "CHE by 12.7%" for the desktop's "CHELSEA by 12.7%"
+  const club=/vs (.+)$/.exec(ph.title)[1];const isClub=name==='Career vs a club';
+  const expect=d.v.map((t,i)=>{if(!isClub||!t.startsWith(club+' by '))return t;const code=ph.v[i].t.split(' by ')[0];return /^[A-Z0-9]{2,4}$/.test(code)?`${code} by ${t.slice(club.length+4)}`:t;});
+  const same=ph.v.map((x)=>x.t).join('|')===expect.join('|')&&(!isClub||ph.v.some((x)=>/^[A-Z0-9]{2,4} by /.test(x.t)));
   const cl=ph.v.map((x)=>ratio(rgb(x.c),rgb(x.bg))),cd=pd.v.map((x)=>ratio(rgb(x.c),rgb(x.bg)));
-  out(same&&cl.every((x)=>x>=4.5)&&cd.every((x)=>x>=4.5)&&ph.v.every((x)=>x.fs==='11px'&&x.fw==='700'),`2. ${ph.title}: the 6 verdict chips equal the desktop column; every chip ≥ 4.5:1 in light and dark`,
-   ph.v.map((x,i)=>`"${x.t}" ${cl[i].toFixed(2)} / ${cd[i].toFixed(2)}`).join(' · ')+(same?'':` · desktop: ${d.v.join(' | ')}`));}
+  out(same&&cl.every((x)=>x>=4.5)&&cd.every((x)=>x>=4.5)&&ph.v.every((x)=>x.fs==='11px'&&x.fw==='700'),`2. ${ph.title}: the 6 verdict chips equal the desktop column${isClub?' (the club by its abbreviation)':''}; every chip ≥ 4.5:1 in light and dark`,
+   ph.v.map((x,i)=>`"${x.t}" ${cl[i].toFixed(2)} / ${cd[i].toFixed(2)}`).join(' · ')+(same?'':` · desktop: ${d.v.join(' | ')}`)+(isClub?` · desktop column: ${d.v.join(' | ')}`:''));}
  // ── 3. Group tap-to-rank (seasons, then clubs) ──
  for(const kind of ['seasons','clubs']){const {p,ctx,errs}=await open(b,{...SP,'LeagueTabs:mode':'group','LeagueTabs:gKind':kind});
   const r=await p.evaluate(async(kind)=>{const {poll,settle,tapEl,tap,card}=window.__p;const rows=[...document.querySelectorAll('[data-pillar-row]')];const res=[];
@@ -127,9 +130,9 @@ const ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+0.05)/(Math.mi
   ['Highs & lows, By season',{...SP,'LeagueTabs:hlBy':'season'},null],
   ['Group seasons, ranked card open',{...SP,'LeagueTabs:mode':'group'},'rank'],
  ];
- // Known exceptions (reported, not failed): the brief sets the ranked card's rows at 30px; the minimum-games
- // filter's "All" (39px) and "5+" (40px) are narrower than 44 and switch widths are frozen for the standards review.
- const KNOWN=[/^\d+ S\d+ .*×30$|^=?\d+.*×30$/,/^All \/ 5\+ /];
+ // Known exception (reported, not failed): the minimum-games filter's "All" (39px) and "5+" (40px) are
+ // narrower than 44 and switch widths are frozen for the standards review.
+ const KNOWN=[/^All \/ 5\+ /];
  const known=(x)=>KNOWN.some((k)=>k.test(x));
  const allSmall=new Map();let allOver=[];
  for(const [name,ov,openMenu] of STATES){const {p,ctx,errs}=await open(b,ov);

@@ -29,6 +29,10 @@
  *     row or its content resizes; stops once the user scrolls the row (touch,
  *     pen or wheel) until the key changes. Moved here from the Points season
  *     strip (v51.20) so Spider's quick picks share it.
+ *   - ScrollRow: surface ('card' or 'page') gives the edge fade the colour of
+ *     the surface behind the row in light and dark; boxRef hands over the
+ *     scrolling box (useKeepInView); other props go onto it; the fades update
+ *     when the row's content resizes. Existing callers unchanged.
  *   - TapStyle renders a hidden <style>: inside a space-y-* stack the plain one
  *     counted as an item and added a gap above the next (Home vs Away's top sat
  *     24px low from v51.19).
@@ -660,9 +664,18 @@ export function useDark() { return useContext(ChromeContext).dark === true; }
 export const INK_HEX = { light: '#0f172a', dark: '#f1f5f9' };
 // A row that scrolls sideways, with a faded edge on any side that has more
 // to see. The child marked data-active="true" scrolls into view when
-// activeKey changes. fade = the background colour behind the row.
-export function ScrollRow({ children, className = '', activeKey, fade = 'from-white' }) {
+// activeKey changes. fade = the background colour behind the row (a class).
+// UI v33: surface = 'card' (a white card) or 'page' (the page behind the
+// cards) gives the fade that surface's colour in light and dark, in place of
+// fade. boxRef receives the scrolling box (for useKeepInView); other props
+// go onto it too.
+// card: a white card (dark mode's card colour in dark); page: the page's own
+// bg-slate-50 layer (League's page wrapper), so its colour variable fits both modes.
+const SURFACE_RGB = { card: ['255 255 255', '15 23 42'], page: ['var(--c-slate-50)', 'var(--c-slate-50)'] };
+export function ScrollRow({ children, className = '', activeKey, fade = 'from-white', surface = null, boxRef = null, ...rest }) {
   const ref = useRef(null);
+  const dark = useDark();
+  const setRef = (el) => { ref.current = el; if (boxRef) boxRef.current = el; };
   const [edge, setEdge] = useState({ l: false, r: false });
   const check = () => {
     const el = ref.current;
@@ -676,8 +689,10 @@ export function ScrollRow({ children, className = '', activeKey, fade = 'from-wh
     if (!el || typeof ResizeObserver === 'undefined') return undefined;
     const ro = new ResizeObserver(check);
     ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
     return () => ro.disconnect();
   }, []);
+  useEffect(() => { check(); });
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -691,9 +706,9 @@ export function ScrollRow({ children, className = '', activeKey, fade = 'from-wh
   }, [activeKey]);
   return (
     <div className="relative min-w-0">
-      <div ref={ref} onScroll={check} className={`relative overflow-x-auto ${className}`} style={{ scrollbarWidth: 'none' }}>{children}</div>
-      {edge.l && <div className={`pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r ${fade} to-transparent`} />}
-      {edge.r && <div className={`pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l ${fade} to-transparent`} />}
+      <div ref={setRef} onScroll={check} {...rest} className={`relative overflow-x-auto ${className}`} style={{ scrollbarWidth: 'none' }}>{children}</div>
+      {edge.l && (surface ? <div data-fade="l" className="pointer-events-none absolute inset-y-0 left-0 w-8" style={{ background: `linear-gradient(to right, rgb(${SURFACE_RGB[surface][dark ? 1 : 0]}), rgb(${SURFACE_RGB[surface][dark ? 1 : 0]} / 0))` }} /> : <div className={`pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r ${fade} to-transparent`} />)}
+      {edge.r && (surface ? <div data-fade="r" className="pointer-events-none absolute inset-y-0 right-0 w-8" style={{ background: `linear-gradient(to left, rgb(${SURFACE_RGB[surface][dark ? 1 : 0]}), rgb(${SURFACE_RGB[surface][dark ? 1 : 0]} / 0))` }} /> : <div className={`pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l ${fade} to-transparent`} />)}
     </div>
   );
 }
