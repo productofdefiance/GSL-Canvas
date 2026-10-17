@@ -1,11 +1,16 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — League.js (was App.js)
- *  Version:  League v35
- *  Date:     2026-10-09, 11:00 UTC
+ *  Version:  League v36
+ *  Date:     2026-10-17, 07:45 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  CHANGELOG (newest first)
+ *
+ *  League v36 — 2026-10-17, 07:45 UTC — Canvas v51.18
+ *   - Signed numbers (Seasons, Matchdays, Opponents: goal differences, points
+ *     vs last season) use ui.js's shared signed(); the local copy is removed.
+ *     Zero now shows no sign ("0 vs S3", "0 GD" instead of "+0").
  *
  *  League v35 — 2026-10-09, 11:00 UTC — Canvas v51.15
  *   - Campaigns ledger: on wide screens the column groups spread across the
@@ -436,6 +441,7 @@ import {
   SectionStats,
   HOME_HEX,
   AWAY_HEX,
+  signed,
 } from './ui.js';
 import { FormMarginsTab, PointsTab, HomeAwayTab, SpiderTab } from './LeagueTabs.js';
 import * as d3 from 'd3';
@@ -745,7 +751,7 @@ function ResultChip({ res }) {
 function MatchGd({ gd, suffix = '' }) {
   if (gd === null || gd === undefined) return <span className="text-slate-400">–</span>;
   const cls = gd > 0 ? 'text-emerald-700' : gd < 0 ? 'text-rose-700' : 'text-slate-500';
-  return <span className={`tabular-nums ${cls}`}>{gd > 0 ? `+${gd}` : gd < 0 ? `−${Math.abs(gd)}` : '0'}{suffix}</span>;
+  return <span className={`tabular-nums ${cls}`}>{signed(gd)}{suffix}</span>;
 }
 // One matchday as a card (Cards view)
 function MatchdayCard({ f, onEdit }) {
@@ -831,7 +837,6 @@ function seasonTag(s) { return s && s.isInvincible && s.isComplete ? 'Invincible
 function TagChip({ children }) {
   return <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-amber-100 text-amber-900 ring-1 ring-amber-300 whitespace-nowrap">{children}</span>;
 }
-function signed(n) { return n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '0'; }
 function HomeAwaySplit({ home, away, labels = true }) {
   const t = (home || 0) + (away || 0);
   const hp = t > 0 ? (home / t) * 100 : 50;
@@ -3506,7 +3511,7 @@ function App({
                   valueClassName="text-2xl sm:text-3xl"
                   left={champ && cs.clearancePts !== null && cs.clearancePts !== undefined ? `+${cs.clearancePts} clear of 2nd` : ''}
                   leftClassName="text-amber-700"
-                  right={sameDiv ? `${cs.pts - prev.pts >= 0 ? '+' : '−'}${Math.abs(cs.pts - prev.pts)} vs S${prev.num}` : ''}
+                  right={sameDiv ? `${signed(cs.pts - prev.pts)} vs S${prev.num}` : ''}
                 />
                 <HighlightCard
                   label="Goals"
@@ -3514,7 +3519,7 @@ function App({
                   iconClassName="text-indigo-600"
                   value={`${cs.gf} - ${cs.ga}`}
                   valueClassName="text-2xl sm:text-3xl"
-                  left={`${cs.gd >= 0 ? '+' : '−'}${Math.abs(cs.gd)} GD`}
+                  left={`${signed(cs.gd)} GD`}
                   leftClassName={cs.gd >= 0 ? 'text-emerald-700' : 'text-rose-700'}
                 />
                 <HighlightCard

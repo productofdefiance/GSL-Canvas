@@ -1,6 +1,10 @@
 <!--
   GSL CANVAS — public/index.html
-  Version:  Canvas v51.07 (sandbox) · 2026-10-07, 01:30 UTC
+  Version:  Canvas v51.18 · 2026-10-17, 07:45 UTC
+  v51.18: fonts locked. Page titles default to Outfit (--font-title). The
+  script that re-applied a saved Lab font choice before the page draws is
+  removed: ui.js puts the locked set on <html> on every load (and LabBar
+  applies a saved choice again if SHOW_LAB_BAR is turned back on).
   v51.07: division colours (--c-div1…4; bright partners in dark mode) and
   .gsl-divstrip / .gsl-divchip / .gsl-divbar / .gsl-divtext.
   v51.06: dark mode (.gsl-dark swaps every colour variable; League only for
@@ -30,7 +34,7 @@
   /* Fonts. Device = Tailwind's default stack (what the canvas used before v51). */
   --font-device: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-text: "Lexend", var(--font-device);
-  --font-title: "Lexend", var(--font-device);
+  --font-title: "Outfit", var(--font-device);
   --font-big: "Outfit", var(--font-device);
   --font-small: "Atkinson Hyperlegible Next", var(--font-device);
   /* Big numbers' letter spacing (v51.03 lab: +0.01em or 0). */
@@ -62,6 +66,7 @@
 html[data-font-text="atkinson"] { --font-text: "Atkinson Hyperlegible Next", var(--font-device); }
 html[data-font-text="device"] { --font-text: var(--font-device); }
 html[data-font-title="outfit"] { --font-title: "Outfit", var(--font-device); }
+html[data-font-title="lexend"] { --font-title: "Lexend", var(--font-device); }
 html[data-font-title="playfair"] { --font-title: "Playfair Display", Georgia, serif; }
 html[data-font-title="device"] { --font-title: var(--font-device); }
 html[data-font-big="atkinson"] { --font-big: "Atkinson Hyperlegible Next", var(--font-device); }
@@ -172,14 +177,6 @@ html[data-big-track="t10"] { --big-track: 0.1em; }
 .gsl-dark .gsl-keep .bg-white, .gsl-dark .gsl-keep.bg-white { background-color: rgb(255 255 255); }
 .gsl-dark .gsl-keep.bg-white\/95 { background-color: rgb(255 255 255 / 0.95); }
 </style>
-<script>
-  // Apply the saved font choice before the page draws (no flash).
-  try {
-    var f = JSON.parse(localStorage.getItem('gsl-fonts') || '{}');
-    var map = { text: 'data-font-text', title: 'data-font-title', big: 'data-font-big', small: 'data-font-small', track: 'data-big-track' };
-    Object.keys(map).forEach(function (k) { if (f[k]) document.documentElement.setAttribute(map[k], f[k]); });
-  } catch (e) {}
-</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   // Every colour scale reads its CSS variable; the page font is --font-text.
