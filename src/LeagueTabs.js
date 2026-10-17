@@ -2,8 +2,8 @@
  *  ═══════════════════════════════════════════════════════════════════════════
  *  GSL CANVAS: League · Form & Margins and Points tabs
  *  ═══════════════════════════════════════════════════════════════════════════
- *  Version:  LeagueTabs v8
- *  Date:     2026-10-09, 11:00 UTC
+ *  Version:  LeagueTabs v9
+ *  Date:     2026-10-17, 12:00 UTC
  *
  *  The two League tabs redesigned in the v51 Palette Lab (Form & Margins
  *  rounds 1–3, Points rounds 1–5), built as their own module so League.js
@@ -19,6 +19,15 @@
  *  score), accents never colour data.
  *
  *  CHANGELOG (newest first)
+ *
+ *  LeagueTabs v9 — 2026-10-17, 12:00 UTC — Canvas v51.17 (dark-mode fixes)
+ *   - Spider Matrix: the Career layer colour (INK) is the ink token as a CSS
+ *     variable, so its radar line and dots, scorecard bars, legend swatch,
+ *     card swatch and top strip show in dark mode. The opponent clash check
+ *     compares against the ink hex of the mode that is on (useDark).
+ *   - Selected chips (Points season strip All / None, Home vs Away combine
+ *     seasons, Spider Change ▾, Venue season scope, quick picks) use
+ *     text-slate-50 instead of text-white, so they stay readable in dark mode.
  *
  *  LeagueTabs v8 — 2026-10-09, 11:00 UTC — Canvas v51.15
  *   - Momentum Overlay hover card: titled by matchday; shows the plotted
@@ -120,6 +129,8 @@ import {
   RecordKey,
   Flag,
   useSort,
+  useDark,
+  INK_HEX,
 } from './ui.js';
 
 // ─── SHARED ─────────────────────────────────────────────────────────
@@ -956,7 +967,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
           </div>
           <Segmented value={div} onChange={(v) => { setDiv(v); setShown(null); }} options={[{ value: 'all', label: 'All' }, ...['1', '2', '3', '4'].filter((d) => played.some((s) => divLabel(s.division) === `Div ${d}`)).map((d) => ({ value: d, label: `Div ${d}` }))]} />
         </div>
-        <div className="flex items-center gap-3"><div className="flex gap-1.5 overflow-x-auto pb-1 min-w-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
+        <div className="flex items-center gap-3"><div className="flex gap-1.5 overflow-x-auto pb-1 min-w-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
         <div className="flex flex-wrap gap-5 text-xs font-medium text-slate-600">
           {mode === 'focus' ? (
             <>
@@ -1167,7 +1178,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
         ); })()}
         <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 ring-1 ring-slate-200 px-3 py-2">
           <button type="button" onClick={() => { setCombine(!combine); if (combine) setSel(sel.slice(0, 1)); }} className={`${EB} ${combine ? 'text-slate-900' : 'text-slate-500'} mr-1`}>Combine seasons {combine ? '·  on' : ''}</button>
-          {combine && played.map((s) => <button key={s.num} type="button" onClick={() => toggleSeason(s.num)} className={`text-xs font-semibold rounded-md px-2 py-1 min-h-[32px] ${sel.includes(s.num) ? 'bg-slate-900 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-600'}`}>{sel.includes(s.num) ? '✓ ' : ''}S{s.num}</button>)}
+          {combine && played.map((s) => <button key={s.num} type="button" onClick={() => toggleSeason(s.num)} className={`text-xs font-semibold rounded-md px-2 py-1 min-h-[32px] ${sel.includes(s.num) ? 'bg-slate-900 text-slate-50' : 'bg-white ring-1 ring-slate-200 text-slate-600'}`}>{sel.includes(s.num) ? '✓ ' : ''}S{s.num}</button>)}
           {combine && <>
             <button type="button" onClick={() => setSel(played.filter((s) => divLabel(s.division) === 'Div 1').map((s) => s.num))} className="text-xs font-semibold rounded-md px-2 py-1 bg-white ring-1 ring-slate-200 text-slate-600">Div 1 seasons</button>
             <button type="button" onClick={() => setSel(played.filter((s) => divLabel(s.division) !== 'Div 1').map((s) => s.num))} className="text-xs font-semibold rounded-md px-2 py-1 bg-white ring-1 ring-slate-200 text-slate-600">Lower divisions</button>
@@ -1304,10 +1315,14 @@ const profile = (list) => {
 const flipMatch = (m) => ({ ...m, f: m.a, a: m.f, res: m.res === 'W' ? 'L' : m.res === 'L' ? 'W' : 'D' });
 const hexRgb = (h) => { const m = /^#?([0-9a-f]{6})$/i.exec(String(h || '').trim()); if (!m) return null; const n = parseInt(m[1], 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
 const tooClose = (a, b) => { const x = hexRgb(a), y = hexRgb(b); if (!x || !y) return false; return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) < 70; };
-const INK = '#0f172a';
+// Career layer colour: the ink token as a CSS variable, so it swaps in dark
+// mode. The clash check needs a hex, so it uses INK_HEX for the mode that is
+// on (useDark).
+const INK = 'rgb(var(--c-slate-900))';
 
 export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = 'indigo' }) {
   const matches = useMatches(seasons);
+  const dark = useDark();
   const played = seasons.filter((s) => s.gp > 0);
   const own = ownClub || { name: 'Your club', flag: '', color: INK };
   const clubMap = useMemo(() => { const m = new Map(); clubs.forEach((c) => m.set(String(c.abbr || '').toUpperCase(), c)); return m; }, [clubs]);
@@ -1335,7 +1350,9 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
   const [LB, setLB] = useState(defB);
   const [menu, setMenu] = useState(null); // 'A' | 'B' | 'add' | null
   const A = describe(LA), B = describe(LB);
-  if (A && B && tooClose(A.color, B.color)) B.color = B.us ? '#64748b' : '#94a3b8';
+  const ink = INK_HEX[dark ? 'dark' : 'light'];
+  const hexOf = (c) => (c === INK ? ink : c);
+  if (A && B && tooClose(hexOf(A.color), hexOf(B.color))) B.color = B.us ? '#64748b' : '#94a3b8';
   const quick = [
     { label: 'Home vs Away', a: { kind: 'venue', key: 'H' }, b: { kind: 'venue', key: 'A' } },
     bestPpgSeason && { label: `Career vs S${bestPpgSeason.num}${bestPpgSeason.isInvincible ? ' (Invincible)' : ''}`, a: { kind: 'career' }, b: { kind: 'season', key: bestPpgSeason.num } },
@@ -1412,7 +1429,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
             ); })}
           </>}
           {pickKind === 'venue' && <>
-            <div className="flex flex-wrap gap-1 px-1 pb-2">{[0, ...played.map((s) => s.num)].map((n) => <button key={n} type="button" onClick={() => setVenueScope(n)} className={`text-xs font-semibold rounded-md px-2 py-1 ${venueScope === n ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>{n ? `S${n}` : 'All seasons'}</button>)}</div>
+            <div className="flex flex-wrap gap-1 px-1 pb-2">{[0, ...played.map((s) => s.num)].map((n) => <button key={n} type="button" onClick={() => setVenueScope(n)} className={`text-xs font-semibold rounded-md px-2 py-1 ${venueScope === n ? 'bg-slate-900 text-slate-50' : 'bg-slate-100 text-slate-600'}`}>{n ? `S${n}` : 'All seasons'}</button>)}</div>
             {['H', 'A'].map((v) => { const list = matches.filter((x) => x.venue === v && (!venueScope || x.season === venueScope)); const pr = profile(list); const I = v === 'H' ? Home : Plane; return (
               <button key={v} type="button" onClick={() => choose({ kind: 'venue', key: v, scope: venueScope || undefined })} className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-50"><I className="w-4 h-4" style={{ color: v === 'H' ? HC : 'rgb(var(--c-sky-600))' }} /><span className="text-sm font-semibold text-slate-900">{v === 'H' ? 'Home' : 'Away'}</span><span className="text-xs text-slate-500">{list.length} GP</span><span className="ml-auto text-xs font-semibold tabular-nums"><WDLRecord w={pr.w} d={pr.d} l={pr.l} /></span><span className="w-12 text-right text-sm font-semibold tabular-nums">{pr.ppg.toFixed(2)}</span></button>
             ); })}
@@ -1438,7 +1455,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
           <span className="text-xs font-medium text-slate-500">{d.sub}</span>
         </span>
         <span className="relative shrink-0">
-          <button type="button" onClick={(e) => { e.stopPropagation(); setPickKind(which === 'A' ? (LA.kind === 'career' ? 'seasons' : LA.kind === 'season' ? 'seasons' : LA.kind) : (LB.kind === 'career' ? 'seasons' : LB.kind === 'season' ? 'seasons' : LB.kind)); setMenu(menu === which ? null : which); }} className={`text-xs font-semibold rounded-md px-2 py-1 min-h-[32px] ${menu === which ? 'bg-slate-900 text-white' : 'text-slate-600 ring-1 ring-slate-200 bg-white'}`}>Change ▾</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); setPickKind(which === 'A' ? (LA.kind === 'career' ? 'seasons' : LA.kind === 'season' ? 'seasons' : LA.kind) : (LB.kind === 'career' ? 'seasons' : LB.kind === 'season' ? 'seasons' : LB.kind)); setMenu(menu === which ? null : which); }} className={`text-xs font-semibold rounded-md px-2 py-1 min-h-[32px] ${menu === which ? 'bg-slate-900 text-slate-50' : 'text-slate-600 ring-1 ring-slate-200 bg-white'}`}>Change ▾</button>
           {menu === which && renderPicker(which)}
         </span>
       </div>
@@ -1514,7 +1531,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
           <button type="button" title="Swap sides" onClick={() => { const a = LA; setLA(LB); setLB(a); }} className="self-center w-10 h-10 shrink-0 rounded-full bg-white ring-1 ring-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:text-slate-900"><ArrowLeftRight className="w-4 h-4" /></button>
           {renderLayerCard(B, 'B', true)}
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs"><span className="text-slate-500 font-semibold">Quick picks</span>{quick.map((q) => <button key={q.label} type="button" onClick={() => { setLA(q.a); setLB(q.b); }} className={`rounded-md px-2 py-1 font-semibold min-h-[32px] ${isQuick(q) ? 'bg-slate-900 text-white' : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:text-slate-900'}`}>{q.label}</button>)}</div>
+        <div className="flex flex-wrap items-center gap-2 text-xs"><span className="text-slate-500 font-semibold">Quick picks</span>{quick.map((q) => <button key={q.label} type="button" onClick={() => { setLA(q.a); setLB(q.b); }} className={`rounded-md px-2 py-1 font-semibold min-h-[32px] ${isQuick(q) ? 'bg-slate-900 text-slate-50' : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:text-slate-900'}`}>{q.label}</button>)}</div>
         <Section title={`${A.title.split(' · ').pop()} vs ${B.title.split(' · ').pop()}`} sub="The shape on the left; every pillar on its own fixed scale on the right.">
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,520px)_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
             <div ref={radRef} className="w-full">

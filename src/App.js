@@ -1,11 +1,15 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — App.js (the shell that holds every section)
- *  Version:  Canvas v51.16
- *  Date:     2026-10-11, 12:00 UTC
+ *  Version:  Canvas v51.17
+ *  Date:     2026-10-17, 12:00 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  CHANGELOG (newest first)
+ *
+ *  Canvas v51.17 — 2026-10-17, 12:00 UTC — Dark-mode fixes
+ *   - ChromeContext also carries dark (the page is shown dark), read with
+ *     ui.js's useDark(). Version line updated.
  *
  *  Canvas v51.16 — 2026-10-11, 12:00 UTC — GitHub pilot set-up (infrastructure only)
  *   - Version line updated. No other changes to this file. Repo tidy-ups:
@@ -314,8 +318,8 @@ import { PAGE_WIDTH, ChromeContext, LabBar, registerClubSheets } from './ui.js';
 
 // Footer: which version of each file is running, and when this Canvas
 // version was published (v50: replaces the floating corner tag).
-const VERSION_TAG = 'Canvas v51.16 • League v35 • LeagueTabs v8 • Cups v18 • Cups Lab v2 • Pyramid v29 • Squad v31 • UI v28';
-const PUBLISHED = '11 Oct 2026, 12:00 UTC';
+const VERSION_TAG = 'Canvas v51.17 • League v35 • LeagueTabs v9 • Cups v18 • Cups Lab v2 • Pyramid v29 • Squad v31 • UI v29';
+const PUBLISHED = '17 Oct 2026, 12:00 UTC';
 
 // Pages that have been converted to the design system, and so can go dark.
 // The others stay light even when dark mode is on (one page at a time).
@@ -375,13 +379,13 @@ export default function App({ sheets = {} }) {
   // The Top Bar's arrow folds the Title Row away (resets on each visit).
   // While folded the Top Bar stops sticking; only the Tab Bar sticks.
   const [headerFolded, setHeaderFolded] = useState(false);
-  const chrome = useMemo(() => ({ headerFolded }), [headerFolded]);
   const section = SECTIONS.find((s) => s.id === sectionId) || SECTIONS[0];
   // v51.06: dark mode, remembered per device; applied only on converted pages.
   const [dark, setDark] = useState(() => {
     try { return typeof localStorage !== 'undefined' && localStorage.getItem('gsl-theme') === 'dark'; } catch (e) { return false; }
   });
   const darkHere = dark && DARK_READY.has(sectionId);
+  const chrome = useMemo(() => ({ headerFolded, dark: darkHere }), [headerFolded, darkHere]);
   useEffect(() => {
     if (typeof document === 'undefined') return;
     document.documentElement.classList.toggle('gsl-dark', darkHere);
