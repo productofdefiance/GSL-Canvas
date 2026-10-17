@@ -2,8 +2,8 @@
  *  ═══════════════════════════════════════════════════════════════════════════
  *  GSL CANVAS: League · Form & Margins and Points tabs
  *  ═══════════════════════════════════════════════════════════════════════════
- *  Version:  LeagueTabs v11
- *  Date:     2026-10-17, 20:00 UTC
+ *  Version:  LeagueTabs v12
+ *  Date:     2026-10-17, 22:00 UTC
  *
  *  The two League tabs redesigned in the v51 Palette Lab (Form & Margins
  *  rounds 1–3, Points rounds 1–5), built as their own module so League.js
@@ -19,6 +19,34 @@
  *  score), accents never colour data.
  *
  *  CHANGELOG (newest first)
+ *
+ *  LeagueTabs v12 — 2026-10-17, 22:00 UTC — Canvas v51.20 (Points on phones)
+ *   - Points race and Matchday benchmarks: subtitles removed; their words
+ *     (from the section [i] blurbs) live in each section's [i].
+ *   - Matchday benchmarks on phones: the ledger starts folded under "Show all
+ *     N matchdays ▾" (N from the data). The strip scrubs: a sideways slide
+ *     reads the matchday under the finger (cellAt); a tap opens or switches
+ *     a cell's card. The open cell gets a 2px ink outline 2px out, the rest
+ *     drop to 35%; a hint shows while no card is open (hidden, not removed,
+ *     so the page never shrinks and scrolls). The docked card: MD,
+ *     games and season range, Record, Win % (a tag in the cell's heat colour),
+ *     PPG, GD, the rank line, Best win (drawn flag, club code, score, season)
+ *     and "See in ledger →", which unfolds the ledger, scrolls the row to the
+ *     middle and marks it (accent tint, 3px accent bar) until another row
+ *     opens, the ledger folds or the filter changes. On phones a tap on a
+ *     cell no longer opens its row. Desktop unchanged.
+ *   - Pace on phones (option A): mode, baseline and division switches on
+ *     three rows; the baseline switch reads Average / Record / Last season and
+ *     the legend carries its value ("Average · 2.40 PPG"); "Measured against"
+ *     goes. Desktop unchanged.
+ *   - Points race season strip: the focused season is kept in view whenever
+ *     the layout can have moved (focus, mode or division change, web fonts
+ *     arriving, the strip or a cell resizing), not only when focus changes;
+ *     once the user scrolls the strip, it leaves it alone until focus, mode
+ *     or division changes.
+ *   - Home vs Away: Venue swing's [i] uses a curly apostrophe (season’s).
+ *   - [i] text: the two "Good to know" lines no longer name season lengths
+ *     (corrected in the blurbs doc), so they hold for any save.
  *
  *  LeagueTabs v11 — 2026-10-17, 20:00 UTC — Canvas v51.19 (Home vs Away on phones + section [i])
  *   - Section takes info: the section's [i] (ui.js SectionInfo, R14) at the
@@ -178,6 +206,8 @@ import {
   TapStyle,
   TAP,
   useHoverCard,
+  ACCENT_HEX,
+  ACCENT_HEX_LIGHT,
 } from './ui.js';
 
 // ─── SHARED ─────────────────────────────────────────────────────────
@@ -824,7 +854,9 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
 // ═══ POINTS ═════════════════════════════════════════════════════════
 const HEAT = [[1, '#065f46', '100%'], [0.75, '#10b981', '75–99%'], [0.5, '#a7f3d0', '50–74%'], [0.25, '#fbbf24', '25–49%'], [0, '#f43f5e', '<25%']];
 const heat = (wp) => (HEAT.find((h) => wp >= h[0] - 1e-9) || HEAT[HEAT.length - 1])[1];
-const AVG_C = '#94a3b8', REC_C = '#475569';
+const AVG_C = '#94a3b8', REC_C = '#475569', LAST_C = 'rgb(var(--c-slate-500))';
+// A legend's dashed-line swatch
+const Dash = ({ c }) => <svg width="24" height="4"><line x1="0" x2="24" y1="2" y2="2" stroke={c} strokeWidth="2" strokeDasharray="5 4" /></svg>;
 
 export function PointsTab({ seasons = [], accent = 'indigo' }) {
   const matches = useMatches(seasons);
@@ -865,18 +897,48 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
   const baseVal = base === 'rec' ? REC : base === 'last' ? LAST : AVG;
   const [raceHover, raceHc] = useHoverCard();
   const hoverMd = raceHover ? raceHover.md : null, hoverAt = raceHover ? raceHover.at : null;
-  // Season strip: on load and when the focused season changes, scroll the
-  // strip (never the page) so the focused cell is fully in view, 16px in
-  // from the edge it was hidden behind.
+  // Season strip: scroll the strip (never the page) so the focused cell is
+  // fully in view, 16px in from the edge it was hidden behind. v12: it runs
+  // again whenever the layout can have moved: focus, mode or division change,
+  // web fonts arriving (document.fonts), and the strip or any cell changing
+  // size (ResizeObserver). Once the user scrolls the strip themselves (touch,
+  // pen or wheel on it), it stops until focus, mode or division changes.
   const stripRef = useRef(null);
-  useEffect(() => {
+  const stripUser = useRef(false);
+  const fitStrip = useRef(() => {});
+  fitStrip.current = () => {
     const strip = stripRef.current;
-    const cell = strip && strip.querySelector(`[data-season="${focus}"]`);
+    const cell = !stripUser.current && strip && strip.querySelector(`[data-season="${focus}"]`);
     if (!cell) return;
     const sb = strip.getBoundingClientRect(), cb = cell.getBoundingClientRect();
     if (cb.right > sb.right) strip.scrollLeft += cb.right - sb.right + 16;
     else if (cb.left < sb.left) strip.scrollLeft -= sb.left - cb.left + 16;
-  }, [focus]);
+  };
+  useEffect(() => { stripUser.current = false; fitStrip.current(); }, [focus, mode, div]);
+  const stripCells = pool.map((s) => s.num).join(',');
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip || typeof window === 'undefined') return undefined;
+    const fit = () => fitStrip.current();
+    const mine = () => { stripUser.current = true; };
+    let live = true;
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(fit) : null;
+    // The strip (its visible width) and its row of cells (their total width). The row is a
+    // stable box: the cells themselves are re-created on every render, so they can't be watched.
+    if (ro) { ro.observe(strip); if (strip.firstElementChild) ro.observe(strip.firstElementChild); }
+    const fonts = typeof document !== 'undefined' && document.fonts;
+    if (fonts && fonts.ready) fonts.ready.then(() => { if (live) fit(); });
+    if (fonts && fonts.addEventListener) fonts.addEventListener('loadingdone', fit);
+    strip.addEventListener('pointerdown', mine);
+    strip.addEventListener('wheel', mine, { passive: true });
+    return () => {
+      live = false;
+      if (ro) ro.disconnect();
+      if (fonts && fonts.removeEventListener) fonts.removeEventListener('loadingdone', fit);
+      strip.removeEventListener('pointerdown', mine);
+      strip.removeEventListener('wheel', mine);
+    };
+  }, [stripCells]);
 
   const maxMd = Math.max(38, ...pool.map((s) => s.gp));
   const [raceRef, raceW] = useWidth(1250);
@@ -895,6 +957,10 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
   const sy = (p) => Y0 + (1 - p / maxP) * (H_ - Y0 - 30);
   const linesFor = (list) => list.filter((s) => cum[s.num]);
 
+  const modeSwitch = <Segmented value={mode} onChange={(v) => { setMode(v); raceHc.close(); }} options={[{ value: 'focus', label: 'Focus' }, { value: 'compare', label: 'Compare' }, { value: 'pace', label: 'Pace' }]} />;
+  const divSwitch = <Segmented value={div} onChange={(v) => { setDiv(v); setShown(null); }} options={[{ value: 'all', label: 'All' }, ...['1', '2', '3', '4'].filter((d) => played.some((s) => divLabel(s.division) === `Div ${d}`)).map((d) => ({ value: d, label: `Div ${d}` }))]} />;
+  // Baseline choices; short = phones (names only, the value goes into the legend)
+  const baseOptions = (short) => [{ value: 'avg', label: short ? 'Average' : `Your average (${AVG.toFixed(2)})` }, { value: 'rec', label: short ? 'Record' : `Record (${REC.toFixed(2)})` }, ...(lastSeason ? [{ value: 'last', label: short ? 'Last season' : `Last season (S${lastSeason.num} · ${LAST.toFixed(2)})` }] : [])];
   const toggleSeason = (n) => {
     if (mode === 'focus') { setFocusNum(n); return; }
     const next = new Set(shownSet); next.has(n) ? next.delete(n) : next.add(n); setShown(next);
@@ -1052,6 +1118,32 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
   const perfect = perfectList.length;
   const [mdSorted, mdHead] = useSort(byMd, 'md', 'asc');
   const ranked = [...byMd].sort(cmpMd);
+  const rankLine = (md) => { const i = ranked.findIndex((r) => r.md === md); return i === 0 ? 'Your weakest matchday' : i === ranked.length - 1 ? 'Your strongest matchday' : `${ORD(ranked.length - i)} best of ${ranked.length}`; };
+  // Phones (v12): the ledger starts folded; "See in ledger" unfolds it, scrolls its row to the
+  // middle of the screen and marks it until another row opens, the ledger folds or the filter changes.
+  const [ledOpen, setLedOpen] = useState(false);
+  const [markMd, setMarkMd] = useState(null);
+  const [jumpMd, setJumpMd] = useState(null);
+  const ledgerShown = !phone || ledOpen;
+  useEffect(() => {
+    if (jumpMd === null || !ledgerShown || typeof document === 'undefined') return;
+    const row = document.querySelector(`[data-md-row="${jumpMd}"]`);
+    if (row) row.scrollIntoView({ block: 'center' });
+    setJumpMd(null);
+  }, [jumpMd, ledgerShown]);
+  const seeInLedger = (md) => { cellHc.close(); setLedOpen(true); setMarkMd(md); setJumpMd(md); };
+  // The page accent for "See in ledger" and the row mark; a step lighter in dark mode, as the [i]
+  const dark = useDark();
+  const accentHex = (dark ? ACCENT_HEX_LIGHT : ACCENT_HEX)[accent] || (dark ? ACCENT_HEX_LIGHT : ACCENT_HEX).indigo;
+  // The strip scrubs: the matchday under the finger, read from its position along the strip
+  // (a finger keeps sending to the cell it started on, so the cell itself can't tell)
+  const stripBox = useRef(null);
+  const cellAt = (e) => {
+    const el = stripBox.current;
+    if (!el || !byMd.length) return null;
+    const b = el.getBoundingClientRect(), n = byMd.length, gap = 2, cw = (b.width - gap * (n - 1)) / n;
+    return byMd[Math.max(0, Math.min(n - 1, Math.floor((e.clientX - b.left + gap / 2) / (cw + gap))))];
+  };
   const RESDOT = { W: 'bg-emerald-500', D: 'bg-amber-400', L: 'bg-rose-500' };
 
   return (
@@ -1065,15 +1157,34 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
       </HighlightsBar>
 
       {/* Points race: Focus, Compare, Pace */}
-      <Section title="Points race" sub={mode === 'focus' ? `Season ${focus}, point by point.` : mode === 'compare' ? 'Every season, point by point.' : `Every season against your ${base === 'rec' ? 'record' : 'average'} pace.`}>
+      <Section title="Points race" accent={accent}
+        info={<>
+          <p><strong>Your league points, matchday by matchday.</strong> Each line climbs as the results come in.</p>
+          <ul>
+            <li><strong>Focus</strong> follows one season. Draws are rings, losses are filled dots. The dashed line is record pace: the best points-per-game set before this season, stretched over this season’s games.</li>
+            <li><strong>Compare</strong> puts every season on one chart, with your highest and average finishing totals as dashed lines.</li>
+            <li><strong>Pace</strong> shows how far each season ran ahead (above 0) or behind (below 0) a benchmark: your average, your record, or last season.</li>
+          </ul>
+          <p><strong>How to use:</strong> pick a season in the strip to focus it, or tick seasons on and off in Compare and Pace (All / None for everything). The division pills narrow the seasons. Hover the chart, or drag a finger across it, to read any matchday; on a phone the card stays docked at the bottom until you tap elsewhere.</p>
+          <p><strong>Good to know:</strong> the matchday axis runs to the longest season you’ve played. Shorter seasons stop before the end of the axis.</p>
+        </>}>
+        {phone ? (
+          // Phones (v12, Pace option A): mode, then the baseline (Pace only, names without numbers), then the divisions
+          <div className="flex flex-col items-start gap-2">
+            {modeSwitch}
+            {mode === 'pace' && <Segmented value={base} onChange={setBase} options={baseOptions(true)} />}
+            {divSwitch}
+          </div>
+        ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <Segmented value={mode} onChange={(v) => { setMode(v); raceHc.close(); }} options={[{ value: 'focus', label: 'Focus' }, { value: 'compare', label: 'Compare' }, { value: 'pace', label: 'Pace' }]} />
-            {mode === 'pace' && <span className="flex items-center gap-2 text-xs font-medium text-slate-500">Measured against <Segmented value={base} onChange={setBase} options={[{ value: 'avg', label: `Your average (${AVG.toFixed(2)})` }, { value: 'rec', label: `Record (${REC.toFixed(2)})` }, ...(lastSeason ? [{ value: 'last', label: `Last season (S${lastSeason.num} · ${LAST.toFixed(2)})` }] : [])]} /></span>}
+            {modeSwitch}
+            {mode === 'pace' && <span className="flex items-center gap-2 text-xs font-medium text-slate-500">Measured against <Segmented value={base} onChange={setBase} options={baseOptions(false)} /></span>}
           </div>
-          <Segmented value={div} onChange={(v) => { setDiv(v); setShown(null); }} options={[{ value: 'all', label: 'All' }, ...['1', '2', '3', '4'].filter((d) => played.some((s) => divLabel(s.division) === `Div ${d}`)).map((d) => ({ value: d, label: `Div ${d}` }))]} />
+          {divSwitch}
         </div>
-        <div className="flex items-center gap-3"><div ref={stripRef} className="flex gap-1.5 overflow-x-auto pb-1 pr-4 sm:pr-0 min-w-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
+        )}
+        <div className="flex items-center gap-3"><div ref={stripRef} className="overflow-x-auto pb-1 min-w-0"><div data-strip-row="" className="flex gap-1.5 w-max pr-4 sm:pr-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div></div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
         <div className="flex flex-wrap gap-5 text-xs font-medium text-slate-600">
           {mode === 'focus' ? (
             <>
@@ -1081,10 +1192,17 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
               <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-rose-700 ring-2 ring-white shadow" />Loss</span>
               <span className="inline-flex items-center gap-1.5"><span className="w-5 border-t-2 border-dashed border-slate-900" />Record pace</span>
             </>
+          ) : mode === 'pace' && phone ? (
+            // Phones: the chosen baseline and its value first, then the other dashed lines drawn on the chart
+            <span className="contents text-slate-500">
+              <span className="inline-flex items-center gap-1.5"><Dash c={base === 'rec' ? REC_C : base === 'last' ? LAST_C : AVG_C} />{base === 'rec' ? 'Record' : base === 'last' ? 'Last season' : 'Average'} · <span className="font-bold text-slate-900">{baseVal.toFixed(2)} PPG</span>{base === 'last' && lastSeason ? ` (S${lastSeason.num})` : ''}</span>
+              {base !== 'avg' && <span className="inline-flex items-center gap-1.5"><Dash c={AVG_C} />Average</span>}
+              {base !== 'rec' && <span className="inline-flex items-center gap-1.5"><Dash c={REC_C} />Record</span>}
+            </span>
           ) : (
             <>
-              <span className="inline-flex items-center gap-1.5"><svg width="24" height="4"><line x1="0" x2="24" y1="2" y2="2" stroke={AVG_C} strokeWidth="2" strokeDasharray="5 4" /></svg>Average</span>
-              <span className="inline-flex items-center gap-1.5"><svg width="24" height="4"><line x1="0" x2="24" y1="2" y2="2" stroke={REC_C} strokeWidth="2" strokeDasharray="5 4" /></svg>Record</span>
+              <span className="inline-flex items-center gap-1.5"><Dash c={AVG_C} />Average</span>
+              <span className="inline-flex items-center gap-1.5"><Dash c={REC_C} />Record</span>
             </>
           )}
         </div>
@@ -1092,8 +1210,18 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
       </Section>
 
       {/* Matchday benchmarks */}
-      <Section title="Matchday benchmarks" sub="How each matchday has gone across seasons. Open one to see its results."
-        right={<Segmented value={bScope} onChange={(v) => { setBScope(v); setOpenMd(null); }} options={[{ value: 'all', label: 'All seasons' }, { value: 'div1', label: 'Div 1' }, { value: 'lower', label: 'Lower divisions' }]} />}>
+      <Section title="Matchday benchmarks" accent={accent}
+        info={<>
+          <p><strong>Every matchday number across your seasons</strong>: all your MD 1s together, all your MD 2s, and so on.</p>
+          <ul>
+            <li><strong>Cards:</strong> your best and worst matchday by points per game (goal difference breaks ties), matchdays you’ve won every time, and how many games each matchday holds.</li>
+            <li><strong>Win rate by matchday:</strong> one bar per matchday, coloured by how often you won it.</li>
+            <li><strong>The ledger:</strong> one row per matchday with record, win rate, points per game, goals, clean sheets, a dot per season and your best win.</li>
+          </ul>
+          <p><strong>How to use:</strong> filter by All seasons, Division 1, or the lower divisions. Sort the ledger by any column; open a row to see that matchday’s result in every season. Drag across the bars to read any matchday, and tap "See in ledger" to jump to its row. On a phone the ledger is folded under "Show all matchdays".</p>
+          <p><strong>Good to know:</strong> the last matchdays exist only in the longer seasons, so they usually hold fewer games.</p>
+        </>}
+        right={<Segmented value={bScope} onChange={(v) => { setBScope(v); setOpenMd(null); setMarkMd(null); }} options={[{ value: 'all', label: 'All seasons' }, { value: 'div1', label: 'Div 1' }, { value: 'lower', label: 'Lower divisions' }]} />}>
         {byMd.length > 0 && (
           <SectionStats columns={4} items={[
             { label: 'Best matchday', value: `MD ${bestMd.md}`, line: <><span>{bestMd.ppg.toFixed(2)} PPG</span><span>GD {signed(bestMd.gd)}</span></> },
@@ -1107,18 +1235,51 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
             <span className={`${TYPE.card} text-slate-900`}>Win rate by matchday</span>
             <span className="flex flex-wrap gap-x-2 gap-y-3 sm:gap-3 text-xs text-slate-500">{HEAT.map((h) => <span key={h[2]} className="inline-flex items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: h[1] }} />{h[2]}</span>)}</span>
           </div>
-          <div className="flex gap-0.5">
-            {byMd.map((r) => <span key={r.md} {...cellHc.on(r.md, () => r)} onClick={() => setOpenMd(r.md)} className={`h-7 flex-1 rounded-[3px] cursor-pointer ${hoverCell && hoverCell.md === r.md ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`} style={{ background: heat(r.w / r.gp) }} />)}
+          <div ref={stripBox} className="flex gap-0.5" style={{ touchAction: 'pan-y' }}>
+            {byMd.map((r) => {
+              const on = hoverCell && hoverCell.md === r.md;
+              // Phones: a 2px ink outline 2px out on the open cell, the rest at 35%; desktop as before
+              const look = phone ? (hoverCell && !on ? 'opacity-35' : '') : on ? 'ring-2 ring-slate-900 ring-offset-1' : '';
+              return <span key={r.md} data-md={r.md} {...cellHc.on((e) => (cellAt(e) || r).md, (e) => cellAt(e) || r, { scrub: true })} onClick={phone ? undefined : () => setOpenMd(r.md)} className={`h-7 flex-1 rounded-[3px] cursor-pointer ${look}`} style={{ background: heat(r.w / r.gp), ...(phone && on ? { outline: '2px solid rgb(var(--c-slate-900))', outlineOffset: 2 } : {}) }} />;
+            })}
           </div>
           <div className="flex justify-between text-[11px] text-slate-400"><span>MD {byMd.length ? byMd[0].md : ''}</span><span>MD {byMd.length ? byMd[byMd.length - 1].md : ''}</span></div>
-          {hoverCell && (
+          {/* The hint hides while a card is open but keeps its space: a page that got shorter would
+              scroll to fit, and a scroll closes the card it just opened */}
+          {phone && byMd.length > 0 && <div className={`text-xs text-slate-500 ${hoverCell ? 'invisible' : ''}`} aria-hidden={hoverCell ? true : undefined}>Drag across the strip to read any matchday.</div>}
+          {phone && hoverCell && (() => {
+            // Phones: the docked card, with a way into the ledger
+            const r = hoverCell, wp = r.w / r.gp, bg = heat(wp), ss = r.list.map((m) => m.season);
+            const lo = Math.min(...ss), hi = Math.max(...ss);
+            return (
+              <div data-hv-card="" className="fixed z-[70] left-2 right-2 bottom-3">
+                <div className="bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 p-4 flex flex-col gap-2 text-left">
+                  <div className="flex items-baseline justify-between gap-3"><span className="text-[15px] font-extrabold text-slate-900">MD {r.md}</span><span className="text-xs text-slate-500">{r.gp} games · {lo === hi ? `S${lo}` : `S${lo}–S${hi}`}</span></div>
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="flex flex-col gap-1"><span className={`${EB} text-slate-500`}>Record</span><span className="text-sm font-semibold tabular-nums"><WDLRecord w={r.w} d={r.d} l={r.l} /></span></div>
+                    <div className="flex flex-col items-start gap-1"><span className={`${EB} text-slate-500`}>Win %</span><span data-wp-tag="" className="text-[14px] font-bold tabular-nums rounded-[6px] px-[7px] py-px" style={{ background: bg, color: bg === '#065f46' ? '#ffffff' : '#0f172a' }}>{Math.round(wp * 100)}%</span></div>
+                    <div className="flex flex-col gap-1"><span className={`${EB} text-slate-500`}>PPG</span><span className="text-sm font-semibold tabular-nums text-slate-900">{(r.pts / r.gp).toFixed(2)}</span></div>
+                    <div className="flex flex-col gap-1"><span className={`${EB} text-slate-500`}>GD</span><span className={`text-sm font-semibold tabular-nums ${r.gd >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{signed(r.gd)}</span></div>
+                  </div>
+                  <div className="text-xs text-slate-500">{rankLine(r.md)}</div>
+                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-200">
+                    {r.best ? <span data-best="" className="flex items-center gap-1.5 whitespace-nowrap min-w-0"><span className={`${EB} text-slate-500 mr-1`}>Best win</span><Flag emoji={r.best.oppFlag} size={18} /><span className="text-[13px] font-semibold text-slate-700">{r.best.opp}</span><span className="text-sm font-semibold tabular-nums text-slate-900"><Score a={r.best.f} b={r.best.a} /></span><span className="text-xs text-slate-500">· S{r.best.season}</span></span> : <span data-best="" className="text-xs text-slate-500">No wins yet</span>}
+                    <button type="button" onClick={() => seeInLedger(r.md)} className="shrink-0 min-h-[44px] px-1 text-xs font-bold whitespace-nowrap" style={{ color: accentHex }}>See in ledger →</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+          {!phone && hoverCell && (
             <div data-hv-card="" className="absolute z-20 top-full mt-1 w-60 bg-white rounded-xl shadow-lg ring-1 ring-slate-200 p-3 flex flex-col gap-1.5 pointer-events-none" style={{ left: `${Math.min(80, ((hoverCell.md - 1) / Math.max(1, byMd.length - 1)) * 100)}%` }}>
               <div className="flex items-baseline justify-between"><span className="text-sm font-extrabold text-slate-900">MD {hoverCell.md}</span><span className="text-xs text-slate-500">{hoverCell.gp} seasons</span></div>
               <div className="flex items-center justify-between"><span className="text-sm font-semibold tabular-nums"><WDLRecord w={hoverCell.w} d={hoverCell.d} l={hoverCell.l} /></span><span className="text-sm font-semibold text-slate-900">{Math.round((hoverCell.w / hoverCell.gp) * 100)}% · {(hoverCell.pts / hoverCell.gp).toFixed(2)} PPG</span></div>
-              <div className="text-xs text-slate-500">{(() => { const i = ranked.findIndex((r) => r.md === hoverCell.md); return i === 0 ? 'Your weakest matchday' : i === ranked.length - 1 ? 'Your strongest matchday' : `${ORD(ranked.length - i)} best of ${ranked.length}`; })()}</div>
+              <div className="text-xs text-slate-500">{rankLine(hoverCell.md)}</div>
             </div>
           )}
         </div>
+        {phone && byMd.length > 0 && <button type="button" onClick={() => { if (ledOpen) setMarkMd(null); setLedOpen(!ledOpen); }} className="w-full h-11 rounded-[10px] border border-slate-200 text-[13px] font-semibold text-slate-700">{ledOpen ? 'Hide matchdays ▴' : `Show all ${byMd.length} matchdays ▾`}</button>}
+        {ledgerShown && (
         <div className="rounded-xl border border-slate-200 overflow-x-auto">
           <div className="min-w-[1100px]">
             <div className="grid grid-cols-[70px_40px_88px_130px_48px_74px_44px_40px_minmax(0,1fr)_minmax(0,1fr)_20px] gap-3 px-4 py-2 bg-slate-50 border-b border-slate-200">
@@ -1127,7 +1288,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
               const open = openMd === r.md, wp = (r.w / r.gp) * 100;
               return (
                 <React.Fragment key={r.md}>
-                  <div onClick={() => setOpenMd(open ? null : r.md)} className={`grid grid-cols-[70px_40px_88px_130px_48px_74px_44px_40px_minmax(0,1fr)_minmax(0,1fr)_20px] items-center gap-3 px-4 py-2.5 border-b border-slate-100 cursor-pointer ${open ? 'bg-indigo-50/40' : 'bg-white even:bg-slate-50/50 hover:bg-slate-50'}`}>
+                  <div data-md-row={r.md} onClick={() => { if (!open && markMd !== null && markMd !== r.md) setMarkMd(null); setOpenMd(open ? null : r.md); }} className={`grid grid-cols-[70px_40px_88px_130px_48px_74px_44px_40px_minmax(0,1fr)_minmax(0,1fr)_20px] items-center gap-3 px-4 py-2.5 border-b border-slate-100 cursor-pointer ${open ? 'bg-indigo-50/40' : 'bg-white even:bg-slate-50/50 hover:bg-slate-50'}`} style={markMd === r.md ? { background: `${accentHex}1a`, boxShadow: `inset 3px 0 0 ${accentHex}` } : undefined}>
                     <span className="text-sm font-semibold text-slate-900">MD {r.md}</span>
                     <span className="text-sm text-slate-500 tabular-nums text-right">{r.gp}</span>
                     <span className="text-sm font-semibold tabular-nums"><WDLRecord w={r.w} d={r.d} l={r.l} /></span>
@@ -1161,6 +1322,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
             })}
           </div>
         </div>
+        )}
       </Section>
     </div>
   );
@@ -1278,7 +1440,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
       {/* Venue swing: career split bar, then season by season; click to select, or combine */}
       <Section title="Venue swing" accent={accent}
         info={<>
-          <p><strong>Where your points come from: home or away.</strong> The wide bar splits your whole career; the chart below shows each season's swing. A bar above the line means home was stronger, below means away was stronger, and the number is the gap.</p>
+          <p><strong>Where your points come from: home or away.</strong> The wide bar splits your whole career; the chart below shows each season’s swing. A bar above the line means home was stronger, below means away was stronger, and the number is the gap.</p>
           <p><strong>How to use:</strong> switch between Points, Wins and Goals. Tap a season to see it in detail below; tap it again to go back to the whole career. Turn on Combine seasons to pool several, for example every Division 1 season.</p>
         </>}
         right={<Segmented tap value={metric} onChange={setMetric} options={[{ value: 'pts', label: 'Points' }, { value: 'w', label: 'Wins' }, { value: 'gf', label: 'Goals' }]} />}>

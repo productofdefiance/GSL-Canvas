@@ -1,11 +1,14 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — App.js (the shell that holds every section)
- *  Version:  Canvas v51.19
- *  Date:     2026-10-17, 20:00 UTC
+ *  Version:  Canvas v51.20
+ *  Date:     2026-10-17, 22:00 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  CHANGELOG (newest first)
+ *
+ *  Canvas v51.20 — 2026-10-17, 22:00 UTC — Points on phones · LeagueTabs v12, UI v32
+ *   - Version line updated. No other changes to this file.
  *
  *  Canvas v51.19 — 2026-10-17, 20:00 UTC — Home vs Away on phones + section [i] · LeagueTabs v11, UI v31
  *   - Version line updated. No other changes to this file. Pyramid v30 and
@@ -326,8 +329,8 @@ import { PAGE_WIDTH, ChromeContext, LabBar, SHOW_LAB_BAR, registerClubSheets } f
 
 // Footer: which version of each file is running, and when this Canvas
 // version was published (v50: replaces the floating corner tag).
-const VERSION_TAG = 'Canvas v51.19 • League v36 • LeagueTabs v11 • Cups v19 • Cups Lab v2 • Pyramid v30 • Squad v32 • UI v31';
-const PUBLISHED = '17 Oct 2026, 20:00 UTC';
+const VERSION_TAG = 'Canvas v51.20 • League v36 • LeagueTabs v12 • Cups v19 • Cups Lab v2 • Pyramid v30 • Squad v32 • UI v32';
+const PUBLISHED = '17 Oct 2026, 22:00 UTC';
 
 // Pages that have been converted to the design system, and so can go dark.
 // The others stay light even when dark mode is on (one page at a time).

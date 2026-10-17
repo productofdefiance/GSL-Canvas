@@ -1,8 +1,8 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — ui.js (shared building blocks for every section)
- *  Version:  UI v31
- *  Date:     2026-10-17, 20:00 UTC
+ *  Version:  UI v32
+ *  Date:     2026-10-17, 22:00 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  Everything here is shared by League, Cups and Pyramid, so the sections
@@ -22,6 +22,15 @@
  *  SectionInfo ..... a section's [i]: popover on desktop, bottom sheet on phones
  *
  *  CHANGELOG
+ *  UI v32 — 2026-10-17, 22:00 UTC — Canvas v51.20
+ *   - useTapAway: a tap inside any open card ([data-hv-card]) no longer
+ *     closes it, so a docked card can hold a button (Matchday benchmarks'
+ *     "See in ledger"). Taps on hover targets ([data-hv]) are left to them,
+ *     as before.
+ *   - SectionInfo: the open icon in dark mode uses the accent's lighter shade
+ *     (ACCENT_HEX_LIGHT: indigo-400 for League) on a 15% tint; light mode as
+ *     before.
+ *
  *  UI v31 — 2026-10-17, 20:00 UTC — Canvas v51.19
  *   - SectionInfo (R14): a section's description in an [i] at the top right
  *     of its header. Lucide Info, 18px, slate-400, in a 44px tap area; the
@@ -314,6 +323,8 @@ export const ACCENTS = {
 // are in ACCENTS above.) Squad's maroon becomes the user's club colour
 // later in v51 (decision F13).
 export const ACCENT_HEX = { indigo: '#4f46e5', teal: '#0f766e', maroon: '#7c3aed', amber: '#ca8a04' };
+// The same accents a step lighter, for marks on dark surfaces (UI v32): the 400 shades.
+export const ACCENT_HEX_LIGHT = { indigo: '#818cf8', teal: '#2dd4bf', maroon: '#a78bfa', amber: '#facc15' };
 
 // v51.06: home and away, the provisional blue pair (navy / sky). Charts use
 // the hex; classes use the CSS variables --c-home / --c-away, which dark
@@ -742,10 +753,11 @@ export function useOverlay(open, close) {
 // useTapAway(active, close, opts): while active, a finished tap (pointerup,
 // moved less than 12px) anywhere outside closes, blank space included, and
 // so does a scroll anywhere on the page. Taps inside `box` (a ref) or on
-// anything matching `keep` (default: hover targets, [data-hv]) are left to
-// their own handlers. mouse: true also closes on a mouse press outside (the
+// anything matching `keep` (default: hover targets, [data-hv], and open
+// cards, [data-hv-card], so a card can hold a button) are left to their own
+// handlers. mouse: true also closes on a mouse press outside (the
 // [i] popover); scroll: false keeps it open while the page scrolls.
-export function useTapAway(active, close, { box = null, keep = '[data-hv]', mouse = false, scroll = true } = {}) {
+export function useTapAway(active, close, { box = null, keep = '[data-hv], [data-hv-card]', mouse = false, scroll = true } = {}) {
   const cb = useRef(close);
   cb.current = close;
   useEffect(() => {
@@ -1041,12 +1053,14 @@ export function SectionInfo({ title, accent = 'indigo', children }) {
     if (!open) announce();
     setOpen(!open);
   };
-  const hex = ACCENT_HEX[accent] || ACCENT_HEX.indigo;
+  // UI v32: dark mode takes the lighter shade on a 15% tint, so the open icon keeps its contrast
+  const dark = useDark();
+  const hex = (dark ? ACCENT_HEX_LIGHT : ACCENT_HEX)[accent] || (dark ? ACCENT_HEX_LIGHT : ACCENT_HEX).indigo;
   return (
     <span ref={box} className="relative inline-flex shrink-0 -my-[13px] -mr-[13px]">
       <button type="button" onClick={toggle} aria-label={`About ${title}`} aria-expanded={open}
         className="w-11 h-11 inline-flex items-center justify-center">
-        <span className="w-[26px] h-[26px] rounded-[10px] inline-flex items-center justify-center" style={open ? { color: hex, background: `${hex}1a` } : undefined}>
+        <span className="w-[26px] h-[26px] rounded-[10px] inline-flex items-center justify-center" style={open ? { color: hex, background: `${hex}${dark ? '26' : '1a'}` } : undefined}>
           <Info className={`w-[18px] h-[18px] ${open ? '' : 'text-slate-400'}`} />
         </span>
       </button>

@@ -62,13 +62,16 @@ Code receives one brief per build, the locked decisions only.
   anything it would break; ask, don't guess. Build only on the user's go.
 - Measure nothing from images: sizes, gaps and colours must be numbers in the brief or the Design System.
 - One session per workstream (for example the League phone pass: Home vs Away, Points, Spider). Each build still
-  gets its own new branch from an up-to-date main, named `claude/v51-xx-<short-name>`, and its own pull request;
-  start a build only after the previous one is merged; never reuse a merged branch. Start a fresh session for a
-  new workstream, or when the session gets long.
-- Branch: the session's assigned branch (the brief's branch line, if any, is a suggestion). Pull request title:
-  from the brief.
+  gets its own branch (see Branches below) and its own pull request; start a build only after the previous one is
+  merged. Start a fresh session for a new workstream, or when the session gets long.
+- Branches: the first build in a session uses the session's assigned branch; each later build in the same session
+  makes a new branch from an up-to-date main, named `claude/v51-xx-<short-name>`. If the session can't push a new
+  branch, stop and tell the user to start a fresh session. Never build on a merged branch. Pull request title: from
+  the brief.
 - Report back in the pull request description (section 8 of the template). Every time a pull request is opened,
   give the user its link. The user gives the design chat the pull request link; it reads the description there.
+- The pull request description always carries its Netlify preview link,
+  `https://deploy-preview-<PR number>--gslcanvas1.netlify.app`.
 - Where a brief and this file conflict, ask.
 
 ## Code rules
@@ -94,5 +97,7 @@ interactions touched (click, hover, touch), dark mode, no sideways overflow at p
 tap and on scroll.
 - Full sweep (every target) on the tabs the build changes: `npm run tap -- --full <tabs>`.
 - Full sweep on every tab whenever ui.js's hover or touch code changes: `npm run tap:full`.
-- A sample (first, middle and last target of each chart) on every other tab, every build, as the regression check.
-- The test polls instead of waiting fixed times, and every run keeps a hard timeout.
+- A sample (first, middle and last target of each chart) on every other tab, every build, as the regression check:
+  any tab not named in `--full` (`npm run tap -- --sample` samples every tab).
+- The test polls instead of waiting fixed times, every run keeps a hard timeout, and nothing is left running in
+  the background.

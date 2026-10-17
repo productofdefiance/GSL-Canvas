@@ -23,6 +23,7 @@ npm run css          # Tailwind CSS for the browser, prefixed with public/index.
 npm run bundle       # browser/app.bundle.js
 npm run overflow     # phone overflow check on every League tab (scrollWidth must equal 390)
 npm run tap -- --full <tabs the build changes>   # hover cards on touch at 390: full on those tabs, sample elsewhere (see below)
+npm run tap -- --sample                          # sample on every tab (no build-specific full sweep)
 cd browser && node shots6.js '[{"w":1440,"ov":{"App:sectionId":"league","League:activeTab":"spider"},"out":"x.png","dark":true}]'
 ```
 
@@ -68,12 +69,22 @@ Tab ids: league overview, fixtures, clubs, race, analytics, homeaway, spider.
   3. **Sample** (first, middle and last target of each chart) on every other tab: what `npm run tap` does to any
      tab not named in `--full`. This is the regression check, about 2 minutes.
 
+  Scroll-to-close scrolls 40px down, or up when the page is already at its end (a short page, e.g. Points with its
+  ledger folded); a page that can't scroll either way is a failure, not a pass.
+
   No fixed waits: each step polls (every frame, 500ms cap) until the card opens, changes or closes, or the page
   stops scrolling. Hard timeouts stay: `--max` seconds inside the script (exit 2) and `timeout` around it. The full
   sweep of every tab took ~5.5 minutes in v51.19 (Form & Margins has ~640 targets); if it outgrows the limit, split it:
   `node tap_t.js --full all --only analytics --max 550`, then `--only race,homeaway,spider,overview,fixtures,clubs,extras`.
   Known: 10 Spider Group dots sit on top of another dot with the same value and are reported as covered (v51.21's
   tap-to-rank replaces tapping single dots).
+- `pts_t.js` (v51.20): Points on phones: the folded ledger and its button, the strip scrub (and a vertical swipe
+  still scrolling, sent as raw touch events), the docked card against its ledger row, "See in ledger" (centred,
+  marked, the mark clearing), the Pace control rows and legend, the [i] text word for word, the dark [i] contrast.
+- `strip_t.js` (v51.20): the Points race season strip keeps the focused season fully inside after late layout:
+  a web font served 1.5s late (once with the cards sized to their text and ResizeObserver switched off, so only the
+  `document.fonts` handlers can act), cards widening after render, Pace → Focus, Div 1 → All, and a user's own
+  scroll not being undone. Prints each measurement (cell edges, strip edges, scroll position).
 - `ha_t.js` (v51.19): Home vs Away on phones and the section [i]: popover / sheet, blurb text, ledger vs desktop, side-by-side bar widths, 44px tap areas, dark mode.
 - `capsec.js`: captures each section of a tab as HTML for design inventories.
 

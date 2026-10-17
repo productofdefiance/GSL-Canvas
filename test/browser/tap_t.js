@@ -13,7 +13,7 @@
 // scrolling (500ms cap per step). A hard timeout (--max seconds, default 540) ends the run.
 //
 // Usage (after npm run css and npm run bundle), from test/browser:
-//   node tap_t.js                          sample on every view, plus extras (quick regression)
+//   node tap_t.js  (or --sample)           sample on every view, plus extras (quick regression)
 //   node tap_t.js --full race,homeaway     full on those tabs (or views: race-pace, analytics-overlay), sample elsewhere
 //   node tap_t.js --full all --only analytics-single     full sweep of one view
 //   --only <tabs|views|extras>             run only those; --max <seconds> hard timeout
@@ -22,7 +22,8 @@ const {chromium,devices}=require('playwright');const fs=require('fs');
 const css=fs.readFileSync('../cssC.css','utf8');const bundle=fs.readFileSync('app.bundle.js','utf8');
 const arg=(k)=>{const i=process.argv.indexOf(k);return i>0?process.argv[i+1]:null;};
 const list=(v)=>(v?v.split(',').map((x)=>x.trim()).filter(Boolean):null);
-const FULL=list(arg('--full'))||[],ONLY=list(arg('--only')),MAX=Number(arg('--max'))||540;
+// --sample is the default depth; --full <tabs> overrides it for those tabs (or 'all')
+const FULL=process.argv.includes('--sample')&&!arg('--full')?[]:list(arg('--full'))||[],ONLY=list(arg('--only')),MAX=Number(arg('--max'))||540;
 setTimeout(()=>{console.log(`TIMEOUT: hard limit of ${MAX}s reached`);process.exit(2);},MAX*1000).unref();
 let failed=0;
 const out=(ok,name,info)=>{if(!ok)failed++;console.log(`${ok?'PASS':'FAIL'} ${name}${info?' · '+info:''}`);};
@@ -90,7 +91,10 @@ const SWEEP=async([scope,limit,full])=>{const {tap,card,until,change,settle,spot
   if(!pt)r.noPartner++;else{await tap(pt[0],pt[1],13);const c2=await change(c1);if(!c2)fail(t,`tapping ${q===t?'another spot':name(q)} closed the card instead of switching`);else if(c2===c1)r.sameText++;else r.sw++;}
   if(!card()){await tap(p[0],p[1]);await until(true);}
   const bl=blank();if(!bl)fail(t,'no blank space in view');else{await tap(bl[0],bl[1],15);if(await until(false))fail(t,'tap on blank space left it open');else r.blank++;}
-  await tap(p[0],p[1]);if(!(await until(true)))fail(t,'did not reopen');else{window.scrollBy(0,40);if(await until(false))fail(t,'scroll left it open');else r.scroll++;window.scrollBy(0,-40);await settle();}
+  await tap(p[0],p[1]);if(!(await until(true)))fail(t,'did not reopen');else{
+   // scroll 40px down, or up when the page is already at its end (a short page, e.g. a folded ledger)
+   const y0=scrollY;window.scrollBy(0,40);if(scrollY===y0)window.scrollBy(0,-40);const dy=scrollY-y0;
+   if(!dy)fail(t,'the page cannot scroll, so scroll-to-close was not tested');else if(await until(false))fail(t,'scroll left it open');else r.scroll++;window.scrollBy(0,-dy);await settle();}
  }
  return r;};
 const report=(tag,r,errs,full)=>{

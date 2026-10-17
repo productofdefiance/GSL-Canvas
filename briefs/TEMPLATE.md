@@ -7,7 +7,9 @@
 
 - **Date:** YYYY-MM-DD
 - **Goal (one line):** …
-- **Branch (optional):** the session's own branch is used; name one only as a suggestion
+- **Branch:** the first build in a session uses the session's assigned branch; each later build in the same session
+  makes a new branch from an up-to-date main, named `claude/v51-xx-<short-name>` (if the session can't push one, Code
+  stops and asks for a fresh session). Never a merged branch.
 - **Pull request title:** `Canvas v51.xx: <short name>`
 
 ## 1. Context
@@ -57,5 +59,5 @@ toggles, filters, columns, drawers, sorting, empty states.
 ## 8. Report back (the pull request description)
 
 The pull request description is the report: what's in · anything beyond this brief and why · checks run and
-their results · known gaps. Code gives the user the pull request link; the user passes the link to the design chat,
+their results · the Netlify preview link (`https://deploy-preview-<PR number>--gslcanvas1.netlify.app`) · known gaps. Code gives the user the pull request link; the user passes the link to the design chat,
 which reads the description there and logs it.
