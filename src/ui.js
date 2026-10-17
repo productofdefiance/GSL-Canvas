@@ -1,8 +1,8 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — ui.js (shared building blocks for every section)
- *  Version:  UI v32
- *  Date:     2026-10-17, 22:00 UTC
+ *  Version:  UI v33
+ *  Date:     2026-10-17, 23:30 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  Everything here is shared by League, Cups and Pyramid, so the sections
@@ -22,6 +22,17 @@
  *  SectionInfo ..... a section's [i]: popover on desktop, bottom sheet on phones
  *
  *  CHANGELOG
+ *  UI v33 — 2026-10-17, 23:30 UTC — Canvas v51.21
+ *   - useKeepInView: keeps the selected item of a sideways-scrolling row fully
+ *     in view (16px in from the edge it was hidden behind), scrolling only the
+ *     row. Runs when its reset key changes, after web fonts arrive and when the
+ *     row or its content resizes; stops once the user scrolls the row (touch,
+ *     pen or wheel) until the key changes. Moved here from the Points season
+ *     strip (v51.20) so Spider's quick picks share it.
+ *   - TapStyle renders a hidden <style>: inside a space-y-* stack the plain one
+ *     counted as an item and added a gap above the next (Home vs Away's top sat
+ *     24px low from v51.19).
+ *
  *  UI v32 — 2026-10-17, 22:00 UTC — Canvas v51.20
  *   - useTapAway: a tap inside any open card ([data-hv-card]) no longer
  *     closes it, so a docked card can hold a button (Matchday benchmarks'
@@ -1017,6 +1028,51 @@ export function Sheet({ onClose, children, maxW = 'sm:max-w-5xl', fit = false, z
   );
 }
 
+// ─── KEEP IN VIEW (UI v33, Canvas v51.21) ────────────────────────────
+// A row that scrolls sideways (overflow-x-auto) with one selected item:
+//   useKeepInView(rowRef, '[data-season="8"]', resetKey, contentKey)
+// keeps that item fully in view, 16px in from the edge it was hidden behind,
+// scrolling only the row, never the page. It runs when resetKey changes (the
+// selection, a mode, a filter), after web fonts arrive, and when the row or
+// its first child (a stable box holding the items) changes size. Once the user
+// scrolls the row themselves (touch, pen or wheel on it) it stops until
+// resetKey changes. contentKey: change it when the set of items changes, so the
+// observers re-attach.
+export function useKeepInView(boxRef, selector, resetKey, contentKey) {
+  const user = useRef(false);
+  const fit = useRef(() => {});
+  fit.current = () => {
+    const box = boxRef.current;
+    const el = !user.current && box && selector && box.querySelector(selector);
+    if (!el) return;
+    const bb = box.getBoundingClientRect(), eb = el.getBoundingClientRect();
+    if (eb.right > bb.right) box.scrollLeft += eb.right - bb.right + 16;
+    else if (eb.left < bb.left) box.scrollLeft -= bb.left - eb.left + 16;
+  };
+  useEffect(() => { user.current = false; fit.current(); }, [resetKey]);
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box || typeof window === 'undefined') return undefined;
+    const run = () => fit.current();
+    const mine = () => { user.current = true; };
+    let live = true;
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(run) : null;
+    if (ro) { ro.observe(box); if (box.firstElementChild) ro.observe(box.firstElementChild); }
+    const fonts = typeof document !== 'undefined' && document.fonts;
+    if (fonts && fonts.ready) fonts.ready.then(() => { if (live) run(); });
+    if (fonts && fonts.addEventListener) fonts.addEventListener('loadingdone', run);
+    box.addEventListener('pointerdown', mine);
+    box.addEventListener('wheel', mine, { passive: true });
+    return () => {
+      live = false;
+      if (ro) ro.disconnect();
+      if (fonts && fonts.removeEventListener) fonts.removeEventListener('loadingdone', run);
+      box.removeEventListener('pointerdown', mine);
+      box.removeEventListener('wheel', mine);
+    };
+  }, [contentKey]);
+}
+
 // ─── TAP AREAS (UI v31, Canvas v51.19) ───────────────────────────────
 // TAP (the gsl-tap class) gives a small control an invisible 44 × 44px tap
 // area on phones, centred on it; the control looks the same. Leave enough
@@ -1024,7 +1080,9 @@ export function Sheet({ onClose, children, maxW = 'sm:max-w-5xl', fit = false, z
 // once on any page that uses it.
 export const TAP = 'gsl-tap';
 export function TapStyle() {
-  return <style>{'@media (max-width:639.98px){.gsl-tap{position:relative}.gsl-tap::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}'}</style>;
+  // hidden: inside a space-y-* stack, a plain <style> counts as the first item and pushes the
+  // next one down by the gap (v33 fix; Home vs Away had an extra 24px at its top since v51.19)
+  return <style hidden>{'@media (max-width:639.98px){.gsl-tap{position:relative}.gsl-tap::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}'}</style>;
 }
 
 // ─── SECTION [i] (UI v31, Canvas v51.19) ─────────────────────────────
