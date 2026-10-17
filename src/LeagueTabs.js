@@ -2,8 +2,8 @@
  *  ═══════════════════════════════════════════════════════════════════════════
  *  GSL CANVAS: League · Form & Margins and Points tabs
  *  ═══════════════════════════════════════════════════════════════════════════
- *  Version:  LeagueTabs v9
- *  Date:     2026-10-17, 12:00 UTC
+ *  Version:  LeagueTabs v10
+ *  Date:     2026-10-17, 07:45 UTC
  *
  *  The two League tabs redesigned in the v51 Palette Lab (Form & Margins
  *  rounds 1–3, Points rounds 1–5), built as their own module so League.js
@@ -19,6 +19,25 @@
  *  score), accents never colour data.
  *
  *  CHANGELOG (newest first)
+ *
+ *  LeagueTabs v10 — 2026-10-17, 07:45 UTC — Canvas v51.18 (quick fixes)
+ *   - Minus signs: every signed number (axis labels, pace, deltas, GD, hover
+ *     cards) goes through ui.js's signed(): true minus sign, no sign on zero.
+ *   - Points: Best season's date sits on its own line under the Invincible
+ *     chip on phones and never wraps. Perfect matchdays wraps to two lines at
+ *     most, then ends with "+N" (ClampList); never "…". Heat legend "<25%",
+ *     on one line at 390. The season strip scrolls (never the page) to keep
+ *     the focused season in view, 16px in from the edge.
+ *   - Points race on phones: the plot uses the full width (right margin =
+ *     the longest end label + 6px) and the x-axis shows bare numbers; desktop
+ *     keeps "MD 1". Ticks come from the data: 1, every 10, and each
+ *     completed season's length (a multiple of 10 within 4 of one is dropped).
+ *   - Home vs Away: on phones the Points card comes first at full width. The
+ *     swing bar's away figures keep light mode's dark ink in dark mode.
+ *   - Spider Matrix on phones: the radar fills its box and every pillar label
+ *     sits inside it, 8px clear; side labels wrap to two lines and the web
+ *     shrinks to fit. Desktop unchanged. Versus subtitle removed; Group's
+ *     count line drops its hover hint; its subtitle is "Outlines only."
  *
  *  LeagueTabs v9 — 2026-10-17, 12:00 UTC — Canvas v51.17 (dark-mode fixes)
  *   - Spider Matrix: the Career layer colour (INK) is the ink token as a CSS
@@ -116,7 +135,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Activity, Target, Zap, Star, Trophy, ChevronDown, ChevronUp, Search, Home, Plane, X, ArrowLeftRight, Calendar, Shield, Plus } from 'lucide-react';
 import {
   TYPE,
@@ -131,6 +150,8 @@ import {
   useSort,
   useDark,
   INK_HEX,
+  useScreen,
+  signed,
 } from './ui.js';
 
 // ─── SHARED ─────────────────────────────────────────────────────────
@@ -140,7 +161,6 @@ const seasonHex = (n) => SEASON_HEX[((n - 1) % 12) + 1];
 const ORD = (n) => { const s = ['th', 'st', 'nd', 'rd']; const v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
 const divLabel = (d) => { const m = String(d || '').match(/(\d+)/); return m ? `Div ${m[1]}` : String(d || ''); };
 const yearLabel = (y) => String(y || '').replace(/\s*-\s*/, '–');
-const signed = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '0');
 const RES_CHIP = { W: 'bg-emerald-50 text-emerald-700 ring-emerald-200', D: 'bg-amber-50 text-amber-700 ring-amber-200', L: 'bg-rose-50 text-rose-700 ring-rose-200' };
 function Chip({ r }) {
   return <span className={`w-6 h-6 shrink-0 rounded-md ring-1 inline-flex items-center justify-center text-[11px] font-semibold ${RES_CHIP[r] || ''}`}>{r}</span>;
@@ -178,17 +198,48 @@ function Chev({ open }) {
 
 // Width of a box, so charts fill their container (SVGs with a fixed height
 // otherwise keep their aspect ratio and come out narrower than the card).
-function useWidth(initial = 1000) {
+function useWidth(initial = 1000, min = 320) {
   // Callback ref, so a chart that mounts later (or moves between views) is still measured
   const [el, setEl] = useState(null);
   const [w, setW] = useState(initial);
   useEffect(() => {
     if (!el || typeof ResizeObserver === 'undefined') return undefined;
-    const ro = new ResizeObserver((entries) => setW(Math.max(320, Math.round(entries[0].contentRect.width))));
+    const ro = new ResizeObserver((entries) => setW(Math.max(min, Math.round(entries[0].contentRect.width))));
     ro.observe(el);
     return () => ro.disconnect();
   }, [el]);
   return [setEl, w];
+}
+// A list on at most `lines` lines, never cut off with "…": as many items as
+// fit, then "+N" for the rest ("MD 10 · 16 · 34 +4"). Measured in the
+// browser; re-measured when the box or the items change.
+function ClampList({ items = [], prefix = '', lines = 2 }) {
+  const box = useRef(null);
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = box.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver((es) => setW(Math.round(es[0].contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const sig = `${items.join(',')}|${w}`;
+  const [fit, setFit] = useState({ sig, n: items.length });
+  const n = fit.sig === sig ? fit.n : items.length;
+  if (fit.sig !== sig) setFit({ sig, n: items.length });
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el || n <= 1) return;
+    const tops = new Set([...el.children].map((c) => Math.round(c.getBoundingClientRect().top)));
+    if (tops.size > lines) setFit({ sig, n: n - 1 });
+  });
+  const rest = items.length - n;
+  return (
+    <span ref={box} className="min-w-0 flex-1 flex flex-wrap gap-x-[0.3em]">
+      {items.slice(0, n).map((x, i) => <span key={x} className="whitespace-nowrap">{i ? '· ' : prefix}{x}</span>)}
+      {rest > 0 && <span className="whitespace-nowrap">+{rest}</span>}
+    </span>
+  );
 }
 // A hover card fixed to the viewport, so no scrolling box can clip it.
 function FloatCard({ at, width = 256, beside = false, children }) {
@@ -501,7 +552,7 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
           {(() => {
             const MW = Math.max(320, momW - 44), MH = 220, mid = 130, msc = 18;
             const avgOf = (list) => list.map((_, i) => { const sl = list.slice(Math.max(0, i - 4), i + 1); return sl.reduce((t, m) => t + (m.f - m.a), 0) / sl.length; });
-            const grid = [-2, 0, 2, 4, 6].map((g) => <g key={g}><line x1="0" x2={MW} y1={mid - g * msc} y2={mid - g * msc} stroke="rgb(var(--c-slate-200))" strokeDasharray={g ? '3 3' : undefined} /><text x="-8" y={mid - g * msc + 4} fontSize="11" textAnchor="end" fill="rgb(var(--c-slate-500))">{g > 0 ? `+${g}` : g}</text></g>);
+            const grid = [-2, 0, 2, 4, 6].map((g) => <g key={g}><line x1="0" x2={MW} y1={mid - g * msc} y2={mid - g * msc} stroke="rgb(var(--c-slate-200))" strokeDasharray={g ? '3 3' : undefined} /><text x="-8" y={mid - g * msc + 4} fontSize="11" textAnchor="end" fill="rgb(var(--c-slate-500))">{signed(g)}</text></g>);
             if (momMode === 'overlay') {
               const maxN = Math.max(1, ...seasonsPlayed.map((s) => matches.filter((m) => m.season === s.num).length));
               const series = seasonsPlayed.map((s) => { const list = matches.filter((m) => m.season === s.num); return { s, list, av: avgOf(list) }; });
@@ -542,7 +593,7 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
           const order = rows.map((r) => r.v).sort((a, b) => b - a);
           const rk = (v) => `${order.filter((x) => Math.abs(x - v) < 1e-9).length > 1 ? '=' : ''}${ORD(order.findIndex((x) => Math.abs(x - v) < 1e-9) + 1)}`;
           const best = order[0];
-          const fmt1 = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v).toFixed(1)}`;
+          const fmt1 = (v) => signed(v, 1);
           return (
             <FloatCard at={ovHover.at} width={400} beside>
               <div className="flex items-baseline justify-between gap-3"><span className="text-sm font-extrabold text-slate-900">MD {ovHover.i + 1}</span><span className={`${EB} text-slate-400`}>Line · change · rank · result</span></div>
@@ -563,7 +614,7 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
           <FloatCard at={momHover.at}>
             <span className={`${EB} text-slate-500`}>S{momNum} · MD {momList[momHover.i].md} · {momList[momHover.i].venue === 'H' ? 'Home' : 'Away'}</span>
             <MatchLine m={momList[momHover.i]} className="justify-between" />
-            <span className="flex justify-between text-xs text-slate-500"><span>GD {signed(momList[momHover.i].f - momList[momHover.i].a)}</span><span>5-game average {(() => { const sl = momList.slice(Math.max(0, momHover.i - 4), momHover.i + 1); const v = sl.reduce((t, m) => t + (m.f - m.a), 0) / sl.length; return (v > 0 ? '+' : '') + v.toFixed(1); })()}</span></span>
+            <span className="flex justify-between text-xs text-slate-500"><span>GD {signed(momList[momHover.i].f - momList[momHover.i].a)}</span><span>5-game average {(() => { const sl = momList.slice(Math.max(0, momHover.i - 4), momHover.i + 1); const v = sl.reduce((t, m) => t + (m.f - m.a), 0) / sl.length; return signed(v, 1); })()}</span></span>
           </FloatCard>
         )}
       </Section>
@@ -739,7 +790,7 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
 }
 
 // ═══ POINTS ═════════════════════════════════════════════════════════
-const HEAT = [[1, '#065f46', '100%'], [0.75, '#10b981', '75–99%'], [0.5, '#a7f3d0', '50–74%'], [0.25, '#fbbf24', '25–49%'], [0, '#f43f5e', 'Under 25%']];
+const HEAT = [[1, '#065f46', '100%'], [0.75, '#10b981', '75–99%'], [0.5, '#a7f3d0', '50–74%'], [0.25, '#fbbf24', '25–49%'], [0, '#f43f5e', '<25%']];
 const heat = (wp) => (HEAT.find((h) => wp >= h[0] - 1e-9) || HEAT[HEAT.length - 1])[1];
 const AVG_C = '#94a3b8', REC_C = '#475569';
 
@@ -782,11 +833,33 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
   const baseVal = base === 'rec' ? REC : base === 'last' ? LAST : AVG;
   const [hoverMd, setHoverMd] = useState(null);
   const [hoverAt, setHoverAt] = useState(null);
+  // Season strip: on load and when the focused season changes, scroll the
+  // strip (never the page) so the focused cell is fully in view, 16px in
+  // from the edge it was hidden behind.
+  const stripRef = useRef(null);
+  useEffect(() => {
+    const strip = stripRef.current;
+    const cell = strip && strip.querySelector(`[data-season="${focus}"]`);
+    if (!cell) return;
+    const sb = strip.getBoundingClientRect(), cb = cell.getBoundingClientRect();
+    if (cb.right > sb.right) strip.scrollLeft += cb.right - sb.right + 16;
+    else if (cb.left < sb.left) strip.scrollLeft -= sb.left - cb.left + 16;
+  }, [focus]);
 
   const maxMd = Math.max(38, ...pool.map((s) => s.gp));
   const [raceRef, raceW] = useWidth(1250);
+  const phone = useScreen() === 'phone';
+  // Right margin: room for the end labels (S1, S12…). Phones keep only the
+  // longest label plus 6px; desktop keeps its 60px.
+  const RM = phone ? 6 + 8 * (1 + String(Math.max(1, ...pool.map((s) => s.num))).length) : 60;
+  // Matchday ticks from the data: 1, every 10, and each completed season's
+  // length (a multiple of 10 within 4 of a season length is dropped).
+  const lens = [...new Set(pool.filter((s) => s.isComplete).map((s) => s.gp))];
+  if (!lens.includes(maxMd)) lens.push(maxMd);
+  const mdTicks = [...new Set([1, ...Array.from({ length: Math.floor(maxMd / 10) }, (_, i) => (i + 1) * 10).filter((m) => !lens.some((l) => l !== m && Math.abs(l - m) <= 4)), ...lens])].filter((m) => m <= maxMd).sort((a, b) => a - b);
+  const mdLabel = (m) => (phone ? `${m}` : `MD ${m}`);
   const W_ = Math.max(320, raceW), H_ = 360, X0 = 40, Y0 = 20, maxP = Math.max(120, Math.ceil((Math.max(0, ...pool.map((s) => s.pts)) + 5) / 20) * 20);
-  const sx = (md) => X0 + ((md - 1) / (maxMd - 1)) * (W_ - X0 - 60);
+  const sx = (md) => X0 + ((md - 1) / (maxMd - 1)) * (W_ - X0 - RM);
   const sy = (p) => Y0 + (1 - p / maxP) * (H_ - Y0 - 30);
   const linesFor = (list) => list.filter((s) => cum[s.num]);
 
@@ -799,7 +872,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
     const on = mode === 'focus' ? s.num === focus : shownSet.has(s.num);
     const sel = mode === 'focus' && s.num === focus;
     return (
-      <button type="button" onClick={() => toggleSeason(s.num)} className={`w-[108px] shrink-0 text-left rounded-lg px-2.5 py-1.5 transition ${on ? (sel ? 'bg-white ring-2 ring-slate-900' : 'bg-slate-50 ring-1 ring-slate-200') : 'bg-white ring-1 ring-slate-100 opacity-45'}`} style={{ boxShadow: `inset 0 3px 0 ${seasonHex(s.num)}` }} aria-pressed={on}>
+      <button type="button" data-season={s.num} onClick={() => toggleSeason(s.num)} className={`w-[108px] shrink-0 text-left rounded-lg px-2.5 py-1.5 transition ${on ? (sel ? 'bg-white ring-2 ring-slate-900' : 'bg-slate-50 ring-1 ring-slate-200') : 'bg-white ring-1 ring-slate-100 opacity-45'}`} style={{ boxShadow: `inset 0 3px 0 ${seasonHex(s.num)}` }} aria-pressed={on}>
         <div className="flex items-center justify-between gap-1"><span className="text-xs font-extrabold text-slate-900">S{s.num} <span className="font-semibold text-slate-400">· {divLabel(s.division)}</span></span><span className={`w-3.5 h-3.5 rounded-[4px] inline-flex items-center justify-center ${on ? 'bg-slate-900' : 'ring-1 ring-slate-300'}`}>{on && <svg className="w-2.5 h-2.5 text-slate-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M5 12l5 5 9-10" /></svg>}</span></div>
         <div className="flex items-baseline justify-between mt-1"><span className="text-base font-extrabold tabular-nums text-slate-900">{s.pts}</span><span className={`text-[11px] font-semibold tabular-nums ${bestSeason && s.num === bestSeason.num ? 'rounded px-1 -mx-1 bg-amber-100 ring-1 ring-amber-400 text-amber-900' : 'text-slate-500'}`}>{ppg(s).toFixed(2)}</span></div>
       </button>
@@ -808,17 +881,17 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
 
   const axes = (
     <>
-      {Array.from({ length: maxP / 20 + 1 }, (_, i) => i * 20).map((v) => <g key={v}><line x1={X0} x2={W_ - 60} y1={sy(v)} y2={sy(v)} stroke="rgb(var(--c-slate-200))" /><text x={X0 - 8} y={sy(v) + 4} fontSize="11" textAnchor="end" fill="rgb(var(--c-slate-500))">{v}</text></g>)}
-      {[1, 10, 20, 30, 38, 46].filter((m) => m <= maxMd).map((m) => <text key={m} x={sx(m)} y={H_ - 8} fontSize="11" textAnchor="middle" fill="rgb(var(--c-slate-500))">MD {m}</text>)}
+      {Array.from({ length: maxP / 20 + 1 }, (_, i) => i * 20).map((v) => <g key={v}><line x1={X0} x2={W_ - RM} y1={sy(v)} y2={sy(v)} stroke="rgb(var(--c-slate-200))" /><text x={X0 - 8} y={sy(v) + 4} fontSize="11" textAnchor="end" fill="rgb(var(--c-slate-500))">{v}</text></g>)}
+      {mdTicks.map((m) => <text key={m} x={sx(m)} y={H_ - 8} fontSize="11" textAnchor="middle" fill="rgb(var(--c-slate-500))">{mdLabel(m)}</text>)}
     </>
   );
   const endLabels = (list) => {
     const ends = list.map((s) => ({ s, y: sy(s.pts), x: sx(cum[s.num].length) })).sort((a, b) => a.y - b.y);
     let last = -1e9;
-    return ends.map(({ s, y, x }) => { const yy = Math.max(y, last + 13); last = yy; return <g key={s.num}><line x1={x + 3} y1={y} x2={W_ - 56} y2={yy} stroke={seasonHex(s.num)} strokeWidth="1" opacity="0.5" /><text x={W_ - 52} y={yy + 4} fontSize="11" fontWeight="700" fill={seasonHex(s.num)}>S{s.num}</text></g>; });
+    return ends.map(({ s, y, x }) => { const yy = Math.max(y, last + 13); last = yy; return <g key={s.num}><line x1={x + 3} y1={y} x2={W_ - RM + 2} y2={yy} stroke={seasonHex(s.num)} strokeWidth="1" opacity="0.5" /><text x={W_ - RM + 6} y={yy + 4} fontSize="11" fontWeight="700" fill={seasonHex(s.num)}>S{s.num}</text></g>; });
   };
   const hoverLayer = () => (
-    <rect x={X0} y={Y0} width={W_ - 60 - X0} height={H_ - Y0 - 30} fill="transparent" style={{ touchAction: 'pan-y' }}
+    <rect x={X0} y={Y0} width={W_ - RM - X0} height={H_ - Y0 - 30} fill="transparent" style={{ touchAction: 'pan-y' }}
       onPointerMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); const md = Math.round(1 + ((e.clientX - r.left) / r.width) * (maxMd - 1)); setHoverMd(Math.max(1, Math.min(maxMd, md))); setHoverAt(pointAt(e)); }}
       onPointerLeave={(e) => { if (e.pointerType !== 'touch') { setHoverMd(null); setHoverAt(null); } }} />
   );
@@ -848,7 +921,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
     chart = (
       <svg viewBox={`0 0 ${W_} ${H_}`} width="100%" height={H_} >
         {axes}
-        {[[avgPts, `Average · ${avgPts.toFixed(1)} pts`, AVG_C], [recPtsSeason ? recPtsSeason.pts : 0, `Record · ${recPtsSeason ? recPtsSeason.pts : 0} pts`, REC_C]].map(([v, lab, c]) => <g key={lab}><line x1={X0} x2={W_ - 60} y1={sy(v)} y2={sy(v)} stroke={c} strokeWidth="1.5" strokeDasharray="5 4" /><text x={X0 + 6} y={sy(v) - 5} fontSize="11" fontWeight="600" fill={c}>{lab}</text></g>)}
+        {[[avgPts, `Average · ${avgPts.toFixed(1)} pts`, AVG_C], [recPtsSeason ? recPtsSeason.pts : 0, `Record · ${recPtsSeason ? recPtsSeason.pts : 0} pts`, REC_C]].map(([v, lab, c]) => <g key={lab}><line x1={X0} x2={W_ - RM} y1={sy(v)} y2={sy(v)} stroke={c} strokeWidth="1.5" strokeDasharray="5 4" /><text x={X0 + 6} y={sy(v) - 5} fontSize="11" fontWeight="600" fill={c}>{lab}</text></g>)}
         {list.map((s) => <polyline key={s.num} points={cum[s.num].map((x, i) => `${sx(i + 1)},${sy(x.pts)}`).join(' ')} fill="none" stroke={seasonHex(s.num)} strokeWidth="2" strokeLinejoin="round" />)}
         {endLabels(list)}
         {hoverMd && <g><line x1={sx(hoverMd)} x2={sx(hoverMd)} y1={Y0} y2={H_ - 30} stroke="rgb(var(--c-slate-900))" opacity="0.35" />{list.filter((s) => cum[s.num][hoverMd - 1]).map((s) => <circle key={s.num} cx={sx(hoverMd)} cy={sy(cum[s.num][hoverMd - 1].pts)} r="3.5" fill={seasonHex(s.num)} stroke="#fff" strokeWidth="1.5" />)}</g>}
@@ -863,8 +936,8 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
     const sy2 = (v) => 30 + (1 - (v + lim) / (2 * lim)) * (H_ - 60);
     chart = (
       <svg viewBox={`0 0 ${W_} ${H_}`} width="100%" height={H_} >
-        {Array.from({ length: 5 }, (_, i) => -lim + (i * lim) / 2).map((v) => <g key={v}><line x1={X0} x2={W_ - 60} y1={sy2(v)} y2={sy2(v)} stroke="rgb(var(--c-slate-200))" /><text x={X0 - 8} y={sy2(v) + 4} fontSize="11" textAnchor="end" fill="rgb(var(--c-slate-500))">{v > 0 ? `+${v}` : v}</text></g>)}
-        {[1, 10, 20, 30, 38, 46].filter((m) => m <= maxMd).map((m) => <text key={m} x={sx(m)} y={H_ - 8} fontSize="11" textAnchor="middle" fill="rgb(var(--c-slate-500))">MD {m}</text>)}
+        {Array.from({ length: 5 }, (_, i) => -lim + (i * lim) / 2).map((v) => <g key={v}><line x1={X0} x2={W_ - RM} y1={sy2(v)} y2={sy2(v)} stroke="rgb(var(--c-slate-200))" /><text x={X0 - 8} y={sy2(v) + 4} fontSize="11" textAnchor="end" fill="rgb(var(--c-slate-500))">{signed(v)}</text></g>)}
+        {mdTicks.map((m) => <text key={m} x={sx(m)} y={H_ - 8} fontSize="11" textAnchor="middle" fill="rgb(var(--c-slate-500))">{mdLabel(m)}</text>)}
         <line x1={sx(1)} x2={sx(maxMd)} y1={sy2(AVG - b)} y2={sy2((AVG - b) * maxMd)} stroke={AVG_C} strokeWidth="1.5" strokeDasharray="5 4" />
         <line x1={sx(1)} y1={sy2(REC - b)} x2={sx(maxMd)} y2={sy2((REC - b) * maxMd)} stroke={REC_C} strokeWidth="1.5" strokeDasharray="5 4" />
         {list.map((s) => { const c = cum[s.num]; return <g key={s.num}><polyline points={c.map((x, i) => `${sx(i + 1)},${sy2(x.pts - b * (i + 1))}`).join(' ')} fill="none" stroke={seasonHex(s.num)} strokeWidth="2" strokeLinejoin="round" /><text x={sx(c.length) + 6} y={sy2(c[c.length - 1].pts - b * c.length) + 4} fontSize="11" fontWeight="700" fill={seasonHex(s.num)}>S{s.num}</text></g>; })}
@@ -890,7 +963,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
         <MatchLine m={x} className="justify-between" />
         <div className="flex items-end justify-between pt-2 border-t border-slate-200">
           <div><div className={`${EB} text-slate-500`}>Points</div><div className={`text-2xl leading-none ${TYPE.big} text-slate-900`}>{x.pts}</div><div className="text-[11px] text-slate-500 mt-1">{(x.pts / md).toFixed(2)} PPG</div></div>
-          {diff !== null && <div className="text-right"><div className={`${EB} text-slate-500`}>Record pace</div><div className={`text-lg leading-none font-extrabold tabular-nums ${diff >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{diff >= 0 ? '+' : '−'}{Math.abs(diff).toFixed(1)}</div><div className="text-[11px] text-slate-500 mt-1">{diff >= 0 ? 'ahead of' : 'behind'} S{rb.num}</div></div>}
+          {diff !== null && <div className="text-right"><div className={`${EB} text-slate-500`}>Record pace</div><div className={`text-lg leading-none font-extrabold tabular-nums ${diff >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>{signed(diff, 1)}</div><div className="text-[11px] text-slate-500 mt-1">{diff >= 0 ? 'ahead of' : 'behind'} S{rb.num}</div></div>}
         </div>
       </div>
     );
@@ -907,7 +980,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
     const isLead = (r) => top && same(r, top);
     const leaders = rows.filter(isLead).map((r) => `S${r.s.num}`).join(', ');
     const me = rows.find((r) => r.s.num === latest);
-    const fmtDev = (v) => `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}`;
+    const fmtDev = (v) => signed(v, 1);
     card = rows.length ? (
       <div className={panel}>
         <div className="flex items-baseline justify-between gap-3"><span className="text-sm font-extrabold text-slate-900">{hoverMd ? `After MD ${hoverMd}` : 'Final'}</span><span className={`${EB} text-slate-400`}>{mode === 'pace' ? 'Vs pace · GD · rank · PPG' : 'Pts · GD · rank · PPG'}</span></div>
@@ -952,7 +1025,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
     <div className="space-y-6">
       {/* Highlights bar (R5) */}
       <HighlightsBar accent={accent} columns={4}>
-        <HighlightCard label="Best season" icon={Trophy} iconClassName="text-amber-600" value={bestSeason ? `S${bestSeason.num}` : '–'} valueClassName="text-2xl sm:text-3xl" left={bestSeason ? <span className="inline-flex items-center gap-2">{bestSeason.isInvincible && <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-amber-100 text-amber-900 ring-1 ring-amber-300">Invincible</span>}{`${yearLabel(bestSeason.year)} · ${divLabel(bestSeason.division)}`}</span> : ''} />
+        <HighlightCard label="Best season" icon={Trophy} iconClassName="text-amber-600" value={bestSeason ? `S${bestSeason.num}` : '–'} valueClassName="text-2xl sm:text-3xl" left={bestSeason ? <span className="inline-flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">{bestSeason.isInvincible && <span className="text-[11px] font-semibold rounded-full px-2 py-0.5 bg-amber-100 text-amber-900 ring-1 ring-amber-300">Invincible</span>}<span className="whitespace-nowrap">{`${yearLabel(bestSeason.year)} · ${divLabel(bestSeason.division)}`}</span></span> : ''} />
         <HighlightCard label="Highest PPG" icon={Zap} iconClassName="text-sky-600" value={REC ? REC.toFixed(2) : '–'} valueClassName="text-2xl sm:text-3xl" left={bestSeason ? `S${bestSeason.num} · ${bestSeason.pts} pts in ${bestSeason.gp}` : ''} />
         <HighlightCard label={mostDiv1 ? 'Most Div 1 points' : 'Most points'} icon={Star} iconClassName="text-amber-600" value={String((mostDiv1 || mostPts || {}).pts || '–')} valueClassName="text-2xl sm:text-3xl" left={(mostDiv1 || mostPts) ? `S${(mostDiv1 || mostPts).num} · ${yearLabel((mostDiv1 || mostPts).year)}` : ''} />
         <HighlightCard label="Fastest title seal" icon={Target} iconClassName="text-indigo-600" value={fastest ? String(fastest.spare) : '–'} valueClassName="text-2xl sm:text-3xl" left={fastest ? `games to spare · ${fastestSeasons}` : 'Not recorded yet'} />
@@ -967,7 +1040,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
           </div>
           <Segmented value={div} onChange={(v) => { setDiv(v); setShown(null); }} options={[{ value: 'all', label: 'All' }, ...['1', '2', '3', '4'].filter((d) => played.some((s) => divLabel(s.division) === `Div ${d}`)).map((d) => ({ value: d, label: `Div ${d}` }))]} />
         </div>
-        <div className="flex items-center gap-3"><div className="flex gap-1.5 overflow-x-auto pb-1 min-w-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
+        <div className="flex items-center gap-3"><div ref={stripRef} className="flex gap-1.5 overflow-x-auto pb-1 pr-4 sm:pr-0 min-w-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
         <div className="flex flex-wrap gap-5 text-xs font-medium text-slate-600">
           {mode === 'focus' ? (
             <>
@@ -992,14 +1065,14 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
           <SectionStats columns={4} items={[
             { label: 'Best matchday', value: `MD ${bestMd.md}`, line: <><span>{bestMd.ppg.toFixed(2)} PPG</span><span>GD {signed(bestMd.gd)}</span></> },
             { label: 'Worst matchday', value: `MD ${worstMd.md}`, line: <><span>{worstMd.ppg.toFixed(2)} PPG</span><span>GD {signed(worstMd.gd)}</span></> },
-            { label: 'Perfect matchdays', value: perfect, line: <span className="truncate">{perfect ? `MD ${perfectList.map((r) => r.md).join(' · ')}` : 'Won every time'}</span> },
+            { label: 'Perfect matchdays', value: perfect, line: perfect ? <ClampList items={perfectList.map((r) => r.md)} prefix="MD " /> : <span>Won every time</span> },
             { label: 'Matchdays', value: byMd.length, line: <span>{Math.min(...byMd.map((r) => r.gp))}–{Math.max(...byMd.map((r) => r.gp))} games each</span> },
           ]} />
         )}
         <div className="relative flex flex-col gap-1.5" onPointerLeave={leaveUnlessTouch(setHoverCell)}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className={`${TYPE.card} text-slate-900`}>Win rate by matchday</span>
-            <span className="flex flex-wrap gap-3 text-xs text-slate-500">{HEAT.map((h) => <span key={h[2]} className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: h[1] }} />{h[2]}</span>)}</span>
+            <span className="flex flex-wrap gap-x-2 gap-y-3 sm:gap-3 text-xs text-slate-500">{HEAT.map((h) => <span key={h[2]} className="inline-flex items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: h[1] }} />{h[2]}</span>)}</span>
           </div>
           <div className="flex gap-0.5">
             {byMd.map((r) => <span key={r.md} onPointerEnter={() => setHoverCell(r)} onClick={() => setOpenMd(r.md)} className={`h-7 flex-1 rounded-[3px] cursor-pointer ${hoverCell && hoverCell.md === r.md ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`} style={{ background: heat(r.w / r.gp) }} />)}
@@ -1066,6 +1139,9 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
 // Venue swing (career split bar, metric switch, click a season, combine seasons);
 // side-by-side for the selection; Venue ledger mirrored around the points split.
 const HC = 'rgb(var(--c-home))', AC = 'rgb(var(--c-away))';
+// Ink on the away (sky) colour: light mode's slate-900 in both modes, so the
+// figures keep their contrast when dark mode swaps the slate scale.
+const AWAY_INK = 'rgb(15 23 42)';
 const venueStat = (list) => {
   const gp = list.length, w = list.filter((m) => m.res === 'W').length, d = list.filter((m) => m.res === 'D').length;
   const gf = list.reduce((t, m) => t + m.f, 0), ga = list.reduce((t, m) => t + m.a, 0);
@@ -1105,8 +1181,8 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
       </div>
     );
   };
-  const hcard = (label, value, side, body) => (
-    <div key={label} className="bg-slate-50 rounded-xl p-3 sm:p-4 border border-slate-200/80 flex flex-col gap-1">
+  const hcard = (label, value, side, body, wide) => (
+    <div key={label} className={`bg-slate-50 rounded-xl p-3 sm:p-4 border border-slate-200/80 flex flex-col gap-1${wide ? ' col-span-2 sm:col-span-1' : ''}`}>
       <div className="flex items-start justify-between gap-2"><span className={`${EB} text-slate-500`}>{label}</span><span className="hidden sm:inline"><VenueTag side={side} /></span></div>
       <div className={`text-2xl leading-none ${TYPE.big} text-slate-900 mt-1`}>{value}</div>
       <span className="sm:hidden"><VenueTag side={side} /></span>
@@ -1114,7 +1190,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
     </div>
   );
   const pct = (x) => `${(x * 100).toFixed(1)}%`;
-  const plus = (n) => (n >= 0 ? `+${n}` : `−${Math.abs(n)}`);
+  const plus = (n) => signed(n);
 
   // Selection: none = all seasons; one = clicked season; several = combined
   const toggleSeason = (n) => {
@@ -1157,7 +1233,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
   return (
     <div className="space-y-6">
       <HighlightsBar accent={accent} columns={5}>
-        {hcard('Points', `+${Math.abs(H.pts - A.pts)}`, edge(H.pts, A.pts), two(H.pts, A.pts, H.pts, A.pts))}
+        {hcard('Points', `+${Math.abs(H.pts - A.pts)}`, edge(H.pts, A.pts), two(H.pts, A.pts, H.pts, A.pts), true)}
         {hcard('Win rate', `+${(Math.abs(H.win - A.win) * 100).toFixed(1)}%`, edge(H.win, A.win), two(H.win, A.win, pct(H.win), pct(A.win)))}
         {hcard('PPG', `+${Math.abs(H.ppg - A.ppg).toFixed(2)}`, edge(H.ppg, A.ppg), two(H.ppg, A.ppg, H.ppg.toFixed(2), A.ppg.toFixed(2)))}
         {hcard('Goal difference', `+${Math.abs(H.gd - A.gd)}`, edge(H.gd, A.gd), two(Math.max(0, H.gd), Math.max(0, A.gd), plus(H.gd), plus(A.gd)))}
@@ -1171,7 +1247,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
           <div className="flex flex-col gap-2">
             <div className="h-12 rounded-xl overflow-hidden flex">
               <div className="flex items-center justify-between px-3 sm:px-4 text-white min-w-0" style={{ width: `${(hv / t) * 100}%`, background: HC }}><span className="inline-flex items-center gap-2 text-sm font-semibold"><Home className="w-4 h-4" /><span className="hidden sm:inline">Home</span></span><span className="tabular-nums inline-flex items-baseline gap-2"><span className="text-xs font-medium opacity-70">{((hv / t) * 100).toFixed(1)}%</span><span className="text-lg font-extrabold">{hv}</span></span></div>
-              <div className="flex items-center justify-between px-3 sm:px-4 text-slate-900 min-w-0" style={{ width: `${(av / t) * 100}%`, background: AC }}><span className="tabular-nums inline-flex items-baseline gap-2"><span className="text-lg font-extrabold">{av}</span><span className="text-xs font-medium opacity-60">{((av / t) * 100).toFixed(1)}%</span></span><span className="inline-flex items-center gap-2 text-sm font-semibold"><span className="hidden sm:inline">Away</span><Plane className="w-4 h-4" /></span></div>
+              <div className="flex items-center justify-between px-3 sm:px-4 min-w-0" style={{ width: `${(av / t) * 100}%`, background: AC, color: AWAY_INK }}><span className="tabular-nums inline-flex items-baseline gap-2"><span className="text-lg font-extrabold">{av}</span><span className="text-xs font-medium opacity-60">{((av / t) * 100).toFixed(1)}%</span></span><span className="inline-flex items-center gap-2 text-sm font-semibold"><span className="hidden sm:inline">Away</span><Plane className="w-4 h-4" /></span></div>
             </div>
             <div className="text-xs text-slate-500">All seasons · {hv + av} {M.unit}</div>
           </div>
@@ -1386,8 +1462,20 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
   }, [hlBy, hlMin, clubsByGames, seasonProf, played, matches]);
 
   // ─── radar (shared) ───
-  const [radRef, radW] = useWidth(520);
-  const RW = Math.min(520, Math.max(300, radW)), RH = Math.round(RW * 0.8), cx = RW / 2, cy = RH / 2 + 4, R0 = Math.min(RW * 0.27, RH * 0.36), PADX = 0;
+  const [radRef, radW] = useWidth(520, 200);
+  // Phones (v51.18): the radar fills its box and every label sits inside it,
+  // 8px clear of the edges. Side labels wrap to two lines; the web takes the
+  // room the labels leave. Label width is estimated from its letters
+  // (0.62em each at 12px bold). Desktop keeps its fixed proportions.
+  const radPhone = useScreen() === 'phone';
+  const LBL = 12, LBL_EDGE = 8, LBL_GAP = 8, LBL_LINE = 14;
+  const lblLines = (p, i) => (radPhone && i % 3 !== 0 ? p.label.split(' ').reduce((ls, w, k) => (k ? [ls[0], ls.slice(1).concat(w).join(' ')].filter(Boolean) : [w]), []) : [p.label]);
+  const lblW = Math.max(...PILLARS.map((p, i) => (i % 3 !== 0 ? Math.max(...lblLines(p, i).map((l) => l.length * LBL * 0.62)) : 0)));
+  const phoneR0 = Math.max(40, Math.min((radW / 2 - LBL_EDGE - lblW - LBL_GAP) / Math.cos(Math.PI / 6), radW * 0.4));
+  const RW = radPhone ? radW : Math.min(520, Math.max(300, radW));
+  const R0 = radPhone ? phoneR0 : Math.min(RW * 0.27, Math.round(RW * 0.8) * 0.36);
+  const RH = radPhone ? Math.round(2 * R0 + 2 * (LBL_GAP + LBL + LBL_EDGE) + 8) : Math.round(RW * 0.8);
+  const cx = RW / 2, cy = radPhone ? RH / 2 : RH / 2 + 4, PADX = 0;
   const ptAt = (i, f) => { const a = -Math.PI / 2 + (i * Math.PI) / 3; return [cx + R0 * f * Math.cos(a), cy + R0 * f * Math.sin(a)]; };
   const polyOf = (prof) => PILLARS.map((p, i) => ptAt(i, clamp01(pos(p, prof[p.key]))).map((v) => v.toFixed(1)).join(',')).join(' ');
   const [axisHover, setAxisHover] = useState(null);
@@ -1395,7 +1483,16 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
     <g>
       {[0.25, 0.5, 0.75, 1].map((f) => <polygon key={f} points={PILLARS.map((_, i) => ptAt(i, f).join(',')).join(' ')} fill="none" stroke="rgb(var(--c-slate-200))" />)}
       {PILLARS.map((_, i) => { const [x, y] = ptAt(i, 1); return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgb(var(--c-slate-200))" />; })}
-      {PILLARS.map((p, i) => { const [x, y] = ptAt(i, 1.2); const anchor = Math.abs(x - cx) < 4 ? 'middle' : x > cx ? 'start' : 'end'; return <text key={p.key} x={x} y={y + 4} fontSize="12" fontWeight="700" textAnchor={anchor} fill="rgb(var(--c-slate-700))" className="cursor-default" onPointerMove={(e) => setAxisHover({ p, at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setAxisHover)}>{p.label}</text>; })}
+      {PILLARS.map((p, i) => {
+        const hover = { className: 'cursor-default', onPointerMove: (e) => setAxisHover({ p, at: pointAt(e) }), onPointerLeave: leaveUnlessTouch(setAxisHover) };
+        if (!radPhone) { const [x, y] = ptAt(i, 1.2); const anchor = Math.abs(x - cx) < 4 ? 'middle' : x > cx ? 'start' : 'end'; return <text key={p.key} x={x} y={y + 4} fontSize="12" fontWeight="700" textAnchor={anchor} fill="rgb(var(--c-slate-700))" {...hover}>{p.label}</text>; }
+        // Phone: top and bottom labels centred just outside the rim, side labels beside it
+        const [x, y] = ptAt(i, 1); const ls = lblLines(p, i);
+        const anchor = i % 3 === 0 ? 'middle' : x > cx ? 'start' : 'end';
+        const tx = anchor === 'middle' ? x : anchor === 'start' ? x + LBL_GAP : x - LBL_GAP;
+        const y0 = i === 0 ? y - LBL_GAP - 3 : i === 3 ? y + LBL_GAP + LBL - 1 : y + 4 - ((ls.length - 1) * LBL_LINE) / 2;
+        return <text key={p.key} x={tx} y={y0} fontSize={LBL} fontWeight="700" textAnchor={anchor} fill="rgb(var(--c-slate-700))" {...hover}>{ls.map((l, k) => <tspan key={k} x={tx} dy={k ? LBL_LINE : 0}>{l}</tspan>)}</text>;
+      })}
     </g>
   );
   const marks = (prof, color) => PILLARS.map((p, i) => { const r = pos(p, prof[p.key]); if (r <= 1 && r >= 0) return null; const out = r > 1; const [x1, y1] = ptAt(i, out ? 1 : 0.0001); const a = -Math.PI / 2 + (i * Math.PI) / 3, k = out ? 1 : -1; const tip = [x1 + Math.cos(a) * 9 * k, y1 + Math.sin(a) * 9 * k]; const l = [x1 + Math.cos(a + Math.PI / 2) * 4, y1 + Math.sin(a + Math.PI / 2) * 4], rr = [x1 - Math.cos(a + Math.PI / 2) * 4, y1 - Math.sin(a + Math.PI / 2) * 4]; return out ? <polygon key={p.key} points={`${tip.join(',')} ${l.join(',')} ${rr.join(',')}`} fill={color}><title>{`${p.label}: ${p.fmt(prof[p.key])} (off the scale)`}</title></polygon> : null; });
@@ -1532,7 +1629,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
           {renderLayerCard(B, 'B', true)}
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs"><span className="text-slate-500 font-semibold">Quick picks</span>{quick.map((q) => <button key={q.label} type="button" onClick={() => { setLA(q.a); setLB(q.b); }} className={`rounded-md px-2 py-1 font-semibold min-h-[32px] ${isQuick(q) ? 'bg-slate-900 text-slate-50' : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:text-slate-900'}`}>{q.label}</button>)}</div>
-        <Section title={`${A.title.split(' · ').pop()} vs ${B.title.split(' · ').pop()}`} sub="The shape on the left; every pillar on its own fixed scale on the right.">
+        <Section title={`${A.title.split(' · ').pop()} vs ${B.title.split(' · ').pop()}`}>
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,520px)_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
             <div ref={radRef} className="w-full">
               <svg width={RW} height={RH} viewBox={`0 0 ${RW} ${RH}`} className="max-w-full overflow-visible">
@@ -1565,7 +1662,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
       {mode === 'group' && <>
         <div className="flex flex-wrap items-center gap-3">
           <Segmented value={gKind} onChange={(v) => { setGKind(v); setHl(null); }} options={[{ value: 'seasons', label: 'Seasons' }, { value: 'clubs', label: 'Clubs' }]} />
-          <span className="text-xs text-slate-500">{gLayers.length} of {maxG}{gKind === 'clubs' ? ' · your record against each' : ''} · hover a chip to highlight it</span>
+          <span className="text-xs text-slate-500">{gLayers.length} of {maxG}{gKind === 'clubs' ? ' · your record against each' : ''}</span>
         </div>
         <div className="flex items-stretch gap-1.5 overflow-x-auto pb-1">
           {gLayers.map((L) => (
@@ -1588,7 +1685,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
             </span>
           )}
         </div>
-        <Section title={gKind === 'seasons' ? 'Your seasons, side by side' : 'Your record against each club'} sub="Outlines only; hover a chip, a shape or a dot to bring one forward."
+        <Section title={gKind === 'seasons' ? 'Your seasons, side by side' : 'Your record against each club'} sub="Outlines only."
           right={<Segmented value={gTable ? 'table' : 'lines'} onChange={(v) => setGTable(v === 'table')} options={[{ value: 'lines', label: 'Lines' }, { value: 'table', label: 'Table' }]} />}>
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,520px)_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
             <div ref={radRef} className="w-full">

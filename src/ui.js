@@ -1,8 +1,8 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — ui.js (shared building blocks for every section)
- *  Version:  UI v29
- *  Date:     2026-10-17, 12:00 UTC
+ *  Version:  UI v30
+ *  Date:     2026-10-17, 07:45 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  Everything here is shared by League, Cups and Pyramid, so the sections
@@ -21,6 +21,15 @@
  *  SegmentBar ...... a bar split into segments, with a hover card
  *
  *  CHANGELOG
+ *  UI v30 — 2026-10-17, 07:45 UTC — Canvas v51.18
+ *   - Fonts locked: page titles default to Outfit (LAB_CHOICES.title.def).
+ *     SHOW_LAB_BAR = false: App doesn't render LabBar, and the locked set
+ *     (every LAB_CHOICES def) goes on <html> on every load; a saved
+ *     gsl-fonts choice is ignored. LabBar, LAB_CHOICES and the CSS are kept;
+ *     true brings the Lab back as before.
+ *   - signed(n, digits) and MINUS: the shared formatter for signed numbers
+ *     ("+" positive, the minus sign U+2212 negative, no sign for zero).
+ *
  *  UI v29 — 2026-10-17, 12:00 UTC — Canvas v51.17
  *   - useDark(): true while the open page is shown dark (the switch is on and
  *     the page is converted). App passes it in ChromeContext. Only for code
@@ -409,12 +418,24 @@ export const FONT_CHOICES = {
 // <html> (index.html holds the CSS for each value).
 export const LAB_CHOICES = {
   text: { label: 'Text', attr: 'data-font-text', def: 'lexend', options: [['lexend', 'Lexend'], ['atkinson', 'Atkinson'], ['device', 'Device font']] },
-  title: { label: 'Page titles', attr: 'data-font-title', def: 'lexend', options: [['lexend', 'Lexend'], ['outfit', 'Outfit'], ['playfair', 'Playfair Display 600'], ['device', 'Device font']] },
+  title: { label: 'Page titles', attr: 'data-font-title', def: 'outfit', options: [['lexend', 'Lexend'], ['outfit', 'Outfit'], ['playfair', 'Playfair Display 600'], ['device', 'Device font']] },
   big: { label: 'Big numbers', attr: 'data-font-big', def: 'outfit', options: [['outfit', 'Outfit'], ['atkinson', 'Atkinson'], ['lexend', 'Lexend'], ['device', 'Device font']] },
   small: { label: 'Small numbers', attr: 'data-font-small', def: 'atkinson', options: [['atkinson', 'Atkinson'], ['outfit', 'Outfit'], ['lexend', 'Lexend'], ['device', 'Device font']] },
   track: { label: 'Big-number spacing', attr: 'data-big-track', def: 't2', options: [['m2', '−0.02em'], ['m1', '−0.01em'], ['t0', '0em'], ['t2', '+0.02em'], ['t4', '+0.04em'], ['t6', '+0.06em'], ['t10', '+0.1em']] },
 };
 const LAB_KEY = 'gsl-fonts';
+// v51.18: the Lab bar is switched off and the font set is locked (each
+// LAB_CHOICES def). While SHOW_LAB_BAR is false the locked values go on
+// <html> on every load and any saved choice is ignored. Set it to true to
+// bring the Lab back: LabBar then reads and keeps the saved choice again.
+export const SHOW_LAB_BAR = false;
+function applyLockedFonts() {
+  try {
+    const h = document.documentElement;
+    Object.keys(LAB_CHOICES).forEach((k) => h.setAttribute(LAB_CHOICES[k].attr, LAB_CHOICES[k].def));
+  } catch (e) { /* no page (server render): nothing to set */ }
+}
+if (!SHOW_LAB_BAR) applyLockedFonts();
 function readLab() {
   const out = {};
   let saved = {};
@@ -471,6 +492,18 @@ export function LabBar() {
   );
 }
 export const LabSwitcher = LabBar;
+
+// ─── SIGNED NUMBERS (v51.18) ─────────────────────────────────────────
+// Deltas, goal differences, pace values and axis labels: "+" for positive,
+// the true minus sign U+2212 (−) for negative, no sign for zero. digits
+// rounds first, so −0.04 at one digit reads "0.0", not "−0.0".
+export const MINUS = '\u2212';
+export function signed(n, digits) {
+  const v = Number(n) || 0;
+  const txt = digits == null ? String(Math.abs(v)) : Math.abs(v).toFixed(digits);
+  const r = digits == null ? v : Number(v.toFixed(digits));
+  return r > 0 ? `+${txt}` : r < 0 ? `${MINUS}${txt}` : txt;
+}
 export const FontSwitcher = LabBar;
 
 // ─── SCORELINES AND RECORDS (UI v22) ─────────────────────────────────

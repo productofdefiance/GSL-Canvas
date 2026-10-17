@@ -18,12 +18,16 @@ Claude Code cloud sessions already have Chromium (`PLAYWRIGHT_BROWSERS_PATH=/opt
 
 ```
 cd test
-npm run check        # syntax.js + build.js + render.js snap: every page x tab at 390 and 1440
+npm run check        # syntax.js + compile.js + build.js + render.js snap: every page x tab at 390 and 1440
 npm run css          # Tailwind CSS for the browser, prefixed with public/index.html's <style>
 npm run bundle       # browser/app.bundle.js
 npm run overflow     # phone overflow check on every League tab (scrollWidth must equal 390)
 cd browser && node shots6.js '[{"w":1440,"ov":{"App:sectionId":"league","League:activeTab":"spider"},"out":"x.png","dark":true}]'
 ```
+
+`compile.js` (from v51.18) parses every file in `src/` with Babel's parser, the one react-scripts
+compiles with. It fails on errors a plain syntax check misses, such as the same name imported twice. It also fails if
+`public/index.html` has `<html…>` text inside a comment, because react-scripts injects its script there.
 
 `render.js` prints any page with React errors or text under 11px, then a total. The v51.15 baseline:
 64 renders, 0 errors, 1,534 sub-11px hits (all in pages not yet converted, plus the logged 10px spine label).

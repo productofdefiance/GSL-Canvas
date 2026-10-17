@@ -1,12 +1,17 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — Cups.js
- *  Version:  Cups v18
- *  Date:     2026-10-05, 09:00 UTC
+ *  Version:  Cups v19
+ *  Date:     2026-10-17, 07:45 UTC
  *  Reads the "Cups" tab (passed in by App.js), using real sheet row numbers.
  * ════════════════════════════════════════════════════════════════════
  *
  *  CHANGELOG (newest first)
+ *
+ *  Cups v19 — 2026-10-17, 07:45 UTC — Canvas v51.18
+ *   - Removed Flag from the lucide-react import: it clashed with ui.js's
+ *     Flag (a duplicate import that stops react-scripts compiling). Every
+ *     use is ui.js's <Flag emoji=…>, so nothing on the page changes.
  *
  *  Cups v18 — 2026-10-05, 09:00 UTC — Canvas v51.05
  *   - Highlights records now show numbers only (shared change), so their
@@ -220,7 +225,7 @@ import {
   RecordKey,
 } from './ui.js';
 import * as d3 from 'd3';
-import { Trophy, Medal, Shield, Award, Calendar, Flame, TrendingUp, Search, Filter, CheckCircle2, XCircle, Edit3, Plus, Trash2, ChevronLeft, ChevronRight, ChevronDown, BarChart3, Layers, Globe, Target, Users, ArrowUpRight, Activity, Sparkles, RefreshCw, Star, X, Check, Zap, Clock, Swords, History, Flag, ArrowUpDown, MinusCircle, Hash, FlaskConical } from 'lucide-react';
+import { Trophy, Medal, Shield, Award, Calendar, Flame, TrendingUp, Search, Filter, CheckCircle2, XCircle, Edit3, Plus, Trash2, ChevronLeft, ChevronRight, ChevronDown, BarChart3, Layers, Globe, Target, Users, ArrowUpRight, Activity, Sparkles, RefreshCw, Star, X, Check, Zap, Clock, Swords, History, ArrowUpDown, MinusCircle, Hash, FlaskConical } from 'lucide-react';
 import CupsLab from './CupsLab.js';
 // Tab bar: order and names. (The 'id' must match the tab's content block.)
 const CUPS_TABS = [

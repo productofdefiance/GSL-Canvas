@@ -1,11 +1,15 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — App.js (the shell that holds every section)
- *  Version:  Canvas v51.17
- *  Date:     2026-10-17, 12:00 UTC
+ *  Version:  Canvas v51.18
+ *  Date:     2026-10-17, 07:45 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  CHANGELOG (newest first)
+ *
+ *  Canvas v51.18 — 2026-10-17, 07:45 UTC — Quick fixes
+ *   - The Lab bar is rendered only while SHOW_LAB_BAR (ui.js) is true; it is
+ *     false, so the bar is gone. Version line updated (Cups v19 too).
  *
  *  Canvas v51.17 — 2026-10-17, 12:00 UTC — Dark-mode fixes
  *   - ChromeContext also carries dark (the page is shown dark), read with
@@ -314,12 +318,12 @@ import Cups from './Cups.js';
 import Pyramid from './Pyramid.js';
 import Squad from './Squad.js';
 import { ChevronUp, ChevronDown, Sun, Moon } from 'lucide-react';
-import { PAGE_WIDTH, ChromeContext, LabBar, registerClubSheets } from './ui.js';
+import { PAGE_WIDTH, ChromeContext, LabBar, SHOW_LAB_BAR, registerClubSheets } from './ui.js';
 
 // Footer: which version of each file is running, and when this Canvas
 // version was published (v50: replaces the floating corner tag).
-const VERSION_TAG = 'Canvas v51.17 • League v35 • LeagueTabs v9 • Cups v18 • Cups Lab v2 • Pyramid v29 • Squad v31 • UI v29';
-const PUBLISHED = '17 Oct 2026, 12:00 UTC';
+const VERSION_TAG = 'Canvas v51.18 • League v36 • LeagueTabs v10 • Cups v19 • Cups Lab v2 • Pyramid v29 • Squad v31 • UI v30';
+const PUBLISHED = '17 Oct 2026, 07:45 UTC';
 
 // Pages that have been converted to the design system, and so can go dark.
 // The others stay light even when dark mode is on (one page at a time).
@@ -454,8 +458,9 @@ export default function App({ sheets = {} }) {
       </div>
 
       {/* Footer: versions, publish date, signature */}
-      {/* v51 lab controls (sandbox): their own bar, above the Footer */}
-      <LabBar />
+      {/* v51 lab controls (sandbox): their own bar, above the Footer.
+          Off since v51.18 (SHOW_LAB_BAR in ui.js); the code is kept. */}
+      {SHOW_LAB_BAR && <LabBar />}
 
       <footer className="border-t border-slate-200 bg-white">
         <div className={`${PAGE_WIDTH} mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 text-[11px] text-slate-400`}>
