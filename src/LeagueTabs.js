@@ -40,6 +40,8 @@
  *     the legend carries its value ("Average · 2.40 PPG"); "Measured against"
  *     goes. Desktop unchanged.
  *   - Home vs Away: Venue swing's [i] uses a curly apostrophe (season’s).
+ *   - [i] text: the two "Good to know" lines no longer name season lengths
+ *     (corrected in the blurbs doc), so they hold for any save.
  *
  *  LeagueTabs v11 — 2026-10-17, 20:00 UTC — Canvas v51.19 (Home vs Away on phones + section [i])
  *   - Section takes info: the section's [i] (ui.js SectionInfo, R14) at the
@@ -1129,7 +1131,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
             <li><strong>Pace</strong> shows how far each season ran ahead (above 0) or behind (below 0) a benchmark: your average, your record, or last season.</li>
           </ul>
           <p><strong>How to use:</strong> pick a season in the strip to focus it, or tick seasons on and off in Compare and Pace (All / None for everything). The division pills narrow the seasons. Hover the chart, or drag a finger across it, to read any matchday; on a phone the card stays docked at the bottom until you tap elsewhere.</p>
-          <p><strong>Good to know:</strong> the matchday axis runs to the longest season you’ve played. Division 1 seasons have 38 games, so their lines stop early.</p>
+          <p><strong>Good to know:</strong> the matchday axis runs to the longest season you’ve played. Shorter seasons stop before the end of the axis.</p>
         </>}>
         {phone ? (
           // Phones (v12, Pace option A): mode, then the baseline (Pace only, names without numbers), then the divisions
@@ -1182,7 +1184,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
             <li><strong>The ledger:</strong> one row per matchday with record, win rate, points per game, goals, clean sheets, a dot per season and your best win.</li>
           </ul>
           <p><strong>How to use:</strong> filter by All seasons, Division 1, or the lower divisions. Sort the ledger by any column; open a row to see that matchday’s result in every season. Drag across the bars to read any matchday, and tap "See in ledger" to jump to its row. On a phone the ledger is folded under "Show all matchdays".</p>
-          <p><strong>Good to know:</strong> matchdays 39–46 exist only in the lower divisions, so they usually hold fewer games.</p>
+          <p><strong>Good to know:</strong> the last matchdays exist only in the longer seasons, so they usually hold fewer games.</p>
         </>}
         right={<Segmented value={bScope} onChange={(v) => { setBScope(v); setOpenMd(null); setMarkMd(null); }} options={[{ value: 'all', label: 'All seasons' }, { value: 'div1', label: 'Div 1' }, { value: 'lower', label: 'Lower divisions' }]} />}>
         {byMd.length > 0 && (
