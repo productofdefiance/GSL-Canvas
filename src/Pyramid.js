@@ -1,8 +1,8 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — Pyramid.js
- *  Version:  Pyramid v29
- *  Date:     2026-10-05, 01:30 UTC
+ *  Version:  Pyramid v30
+ *  Date:     2026-10-17, 20:00 UTC
  *  Reads the "Pyramid" tab, plus "Winners" for European routes
  *  (both passed in by App.js).
  * ════════════════════════════════════════════════════════════════════
@@ -11,6 +11,12 @@
  *  ENABLE_EDITING (off), TOP_RISER_PLACES, PYRAMID_ACCENT.
  *
  *  CHANGELOG (newest first)
+ *
+ *  Pyramid v30 — 2026-10-17, 20:00 UTC — Canvas v51.19 (touch hover cards)
+ *   - Progression's touch scrub, the European positions card and Staying
+ *     power's card close through ui.js's useTouchCard: a finished tap
+ *     anywhere else (iPhone sends no click for blank space), a scroll, or
+ *     another card or [i] opening. They used to wait for a click.
  *
  *  Pyramid v29 — 2026-10-05, 01:30 UTC — Canvas v51.02
  *   - Title case: "Finishes Over Time", "Records Side By Side" (Head to Head).
@@ -357,7 +363,7 @@
  */
 
 import React, { useState, useMemo, useRef, useEffect, useContext } from 'react';
-import { PAGE_WIDTH, ClubSelect, SearchPicker, PageHeader, HighlightsBar, HighlightCard, Segmented, FilterPills, ControlLabel, ResetButton, SearchInput, SELECT_CLASS, SvgFlag, flagArt, flagKey, ChromeContext, useScreen, screenNow, Sheet, HoverProvider, useHover, ACCENT_HEX } from './ui.js';
+import { PAGE_WIDTH, ClubSelect, SearchPicker, PageHeader, HighlightsBar, HighlightCard, Segmented, FilterPills, ControlLabel, ResetButton, SearchInput, SELECT_CLASS, SvgFlag, useTouchCard, flagArt, flagKey, ChromeContext, useScreen, screenNow, Sheet, HoverProvider, useHover, ACCENT_HEX } from './ui.js';
 import { Trophy, TrendingUp, TrendingDown, Layers, Search, Filter, Sparkles, Shield, Activity, Info, Eye, Edit2, Check, X, ChevronLeft, ChevronRight, ChevronDown, RotateCcw, Medal, Award, Crown, Flame, BarChart2, Users, ArrowUpRight, ArrowDownRight, Maximize2, Minimize2, Star, List, LayoutGrid, Globe, Calendar, Pin } from 'lucide-react';
 // Division metadata with official hierarchy and branding
 const DIVISIONS = {
@@ -916,12 +922,8 @@ function ProgressionChartTab({ teams, filteredTeams, divisionFilter, setDivision
         setHighlightedTeamId(best.id);
         setHoverNode({ team: best, season, x: getX(season), y: getY(best.seasons[season - 1].rank) });
     };
-    useEffect(() => {
-        if (!scrubOn || typeof document === 'undefined') return undefined;
-        const out = (e) => { if (chartRef.current && chartRef.current.contains(e.target)) return; setScrubOn(false); setHoverNode(null); };
-        document.addEventListener('click', out, true);
-        return () => document.removeEventListener('click', out, true);
-    }, [scrubOn]);
+    // v30: a finished tap outside the chart, a scroll or another overlay ends it (ui.js useTouchCard)
+    useTouchCard(scrubOn, () => { setScrubOn(false); setHoverNode(null); }, { box: chartRef, keep: null });
     const scrubProps = {
         style: { touchAction: scrubOn ? 'none' : 'pan-y' },
         onPointerDown: (e) => {
@@ -1752,12 +1754,8 @@ function EuroPositions({ quals, hover, setHover, onSelectTeam }) {
     const ref = useRef(null);
     // v24.1 touch: a tap shows the card first (docked, with Open profile); mouse click still opens the profile directly
     const lastTouch = useRef(false);
-    useEffect(() => {
-        if (!hover || !hover.touch || typeof document === 'undefined') return undefined;
-        const out = (e) => { if (e.target && e.target.closest && (e.target.closest('[data-euro-dot]') || e.target.closest('[data-euro-card]'))) return; setHover(null); };
-        document.addEventListener('click', out, true);
-        return () => document.removeEventListener('click', out, true);
-    }, [hover]);
+    // v30: closes on a finished tap elsewhere (iPhone sends no click for blank space), a scroll or another overlay
+    useTouchCard(!!(hover && hover.touch), () => setHover(null), { keep: '[data-euro-dot], [data-euro-card]' });
     const [w, setW] = useState(900);
     useEffect(() => {
         const m = () => { if (ref.current && ref.current.clientWidth) setW(ref.current.clientWidth); };
@@ -2210,12 +2208,8 @@ function StayingPower({ teams, after, setAfter, onSelectTeam }) {
     const boxRef = useRef(null);
     // v26 touch: a tap shows the card first (docked, with Open profile); a mouse click still opens the profile
     const lastTouch = useRef(false);
-    useEffect(() => {
-        if (!hover || !hover.touch || typeof document === 'undefined') return undefined;
-        const out = (e) => { if (e.target && e.target.closest && (e.target.closest('[data-sp-row]') || e.target.closest('[data-sp-card]'))) return; setHover(null); };
-        document.addEventListener('click', out, true);
-        return () => document.removeEventListener('click', out, true);
-    }, [hover]);
+    // v30: closes on a finished tap elsewhere, a scroll or another overlay (ui.js useTouchCard)
+    useTouchCard(!!(hover && hover.touch), () => setHover(null), { keep: '[data-sp-row], [data-sp-card]' });
     const seasonNums = seasonNumsOf(teams);
     const lastSeason = seasonNums[seasonNums.length - 1] || 1;
     const promotion = after === 'promotion';

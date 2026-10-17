@@ -61,8 +61,10 @@ Code receives one brief per build, the locked decisions only.
 - Before building, check the brief against this file, the Design System and the code. List conflicts, gaps and
   anything it would break; ask, don't guess. Build only on the user's go.
 - Measure nothing from images: sizes, gaps and colours must be numbers in the brief or the Design System.
-- One session per build: each build starts in a fresh session, so it gets its own branch and pull request.
-  Never reuse an earlier build's branch.
+- One session per workstream (for example the League phone pass: Home vs Away, Points, Spider). Each build still
+  gets its own new branch from an up-to-date main, named `claude/v51-xx-<short-name>`, and its own pull request;
+  start a build only after the previous one is merged; never reuse a merged branch. Start a fresh session for a
+  new workstream, or when the session gets long.
 - Branch: the session's assigned branch (the brief's branch line, if any, is a suggestion). Pull request title:
   from the brief.
 - Report back in the pull request description (section 8 of the template). Every time a pull request is opened,
@@ -77,10 +79,20 @@ Code receives one brief per build, the locked decisions only.
 - Shared patterns go in ui.js; keep existing callers' behaviour and bump the UI version.
 - Hooks before early returns; no components defined inside components when they hold inputs.
 - `useScreen()` or Tailwind prefixes for screen size, never `window.innerWidth`; touch via `pointerType`.
+- Hover cards never keep their own touch logic: every card uses the shared ui.js helpers (`useHoverCard`,
+  `HoverProvider` / `useHover`, `useTouchCard`). On touch a card opens on a tap, switches on another tap, and closes
+  on a tap anywhere else or on scroll; only one overlay (hover card, [i], sheet) is open at a time.
+- Flags are always drawn vectors (ui.js `Flag`, or `SvgFlag` inside charts), never emoji text, anywhere in the canvas.
 - Text floor 11px (SVG too). R10 match order: flag, club, result chip, score. R11: tables sort by headers.
   R12: "us" cards get a top accent strip, "them" cards a left strip.
 
 ## Checks before every pull request
 
 Run with the kit in test/ (commands in test/README.md). Syntax, a full render of every page and tab (phone 390 and desktop 1440), browser checks of the
-interactions touched (click, hover, touch), dark mode, and no sideways overflow at phone width.
+interactions touched (click, hover, touch), dark mode, no sideways overflow at phone width, and the touch tap test
+(`npm run tap`, details in test/README.md): every hover target tapped at 390 must open, switch, and close on a blank
+tap and on scroll.
+- Full sweep (every target) on the tabs the build changes: `npm run tap -- --full <tabs>`.
+- Full sweep on every tab whenever ui.js's hover or touch code changes: `npm run tap:full`.
+- A sample (first, middle and last target of each chart) on every other tab, every build, as the regression check.
+- The test polls instead of waiting fixed times, and every run keeps a hard timeout.

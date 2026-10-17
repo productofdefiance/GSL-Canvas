@@ -1,12 +1,17 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — Squad.js
- *  Version:  Squad v31
- *  Date:     2026-10-04, 23:30 UTC
+ *  Version:  Squad v32
+ *  Date:     2026-10-17, 20:00 UTC
  *  Reads the "Squad" tab (passed in by App.js).
  * ════════════════════════════════════════════════════════════════════
  *
  *  CHANGELOG (newest first)
+ *
+ *  Squad v32 — 2026-10-17, 20:00 UTC — Canvas v51.19 (touch hover cards)
+ *   - Growth by age: the touch scrub ends through ui.js's useTouchCard: a
+ *     finished tap anywhere else (iPhone sends no click for blank space), a
+ *     scroll, or another card or [i] opening. It used to wait for a click.
  *
  *  Squad v31 — 2026-10-06, 21:00 UTC — Canvas v51.06
  *   - Accent: maroon becomes violet (#7c3aed), the same for every club (v51 palette).
@@ -422,7 +427,7 @@
  */
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Users, LayoutGrid, List, TrendingUp, Star, Clock, Calendar, Filter, Sparkles, X, ChevronLeft, ChevronRight, Shield, ArrowRight, ArrowLeft, FlaskConical, UserMinus, Eye, Pin, X as CloseIcon } from 'lucide-react';
-import { PAGE_WIDTH, PageHeader, HighlightsBar, HighlightCard, Segmented, FilterPills, ControlLabel, ResetButton, SearchInput, Flag, SvgFlag, HoverProvider, useHover, useWidth, useScreen, useScrub, Sheet, usePointerTrack, ACCENT_HEX } from './ui.js';
+import { PAGE_WIDTH, PageHeader, HighlightsBar, HighlightCard, Segmented, FilterPills, ControlLabel, ResetButton, SearchInput, Flag, SvgFlag, HoverProvider, useHover, useTouchCard, useWidth, useScreen, useScrub, Sheet, usePointerTrack, ACCENT_HEX } from './ui.js';
 
 // ─── SETTINGS ────────────────────────────────────────────────────────
 const SQUAD_ACCENT = ACCENT_HEX.maroon; // Squad's colour (to become the user's club colour, v51 F13)
@@ -1412,12 +1417,8 @@ function GrowthByAge({ squad, players, ageGroup, route, team = 'all', withFormer
     const [pickQ, setPickQ] = useState(''); // v29: search inside Pick players
     const [cleared, setCleared] = useState(false); // v29: Clear leaves no players selected
     const tStart = useRef(null);
-    useEffect(() => {
-        if (!scrubOn || typeof document === 'undefined') return undefined;
-        const out = (e) => { if (e.target && e.target.closest && (e.target.closest('[data-gba-chart]') || e.target.closest('[data-gba-bar]'))) return; setScrubOn(false); setScrubPt(null); setHover(null); };
-        document.addEventListener('click', out, true);
-        return () => document.removeEventListener('click', out, true);
-    }, [scrubOn]);
+    // v32: a finished tap elsewhere (iPhone sends no click for blank space), a scroll or another overlay ends it
+    useTouchCard(scrubOn, () => { setScrubOn(false); setScrubPt(null); setHover(null); }, { keep: '[data-gba-chart], [data-gba-bar]' });
     const teamTest = (TEAM_GROUPS.find(g => g.value === team) || TEAM_GROUPS[0]).test;
     const ok = (p) => (ageGroup === 'all' || groupOf(p.pos) === ageGroup) && (route === 'all' || routeOf(p) === route) && (team === 'all' || teamTest(p));
     const pts = (p) => p.seasons.filter(x => x.end != null && x.age != null).map(x => ({ x: x.age, y: x.end, s: x.s }));

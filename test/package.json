@@ -6,7 +6,9 @@
     "check": "node syntax.js && node compile.js && node build.js && node render.js snap",
     "css": "node css.js snap cssC.css",
     "bundle": "cd browser && node bundle.js entry.js app.bundle.js",
-    "overflow": "cd browser && node ow.js"
+    "overflow": "cd browser && node ow.js",
+    "tap": "cd browser && timeout 570 node tap_t.js --max 550",
+    "tap:full": "cd browser && timeout 570 node tap_t.js --full all --max 550"
   },
   "devDependencies": {
     "@babel/parser": "7.29.0",
