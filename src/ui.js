@@ -1,8 +1,8 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — ui.js (shared building blocks for every section)
- *  Version:  UI v30
- *  Date:     2026-10-17, 07:45 UTC
+ *  Version:  UI v31
+ *  Date:     2026-10-17, 18:00 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  Everything here is shared by League, Cups and Pyramid, so the sections
@@ -19,8 +19,24 @@
  *  SELECT_CLASS .... controls (moved here from League.js, unchanged)
  *  Flag ............ small drawn country flag (from a flag emoji)
  *  SegmentBar ...... a bar split into segments, with a hover card
+ *  SectionInfo ..... a section's [i]: popover on desktop, bottom sheet on phones
  *
  *  CHANGELOG
+ *  UI v31 — 2026-10-17, 18:00 UTC — Canvas v51.19
+ *   - SectionInfo (R14): a section's description in an [i] at the top right
+ *     of its header. Lucide Info, 18px, slate-400, in a 44px tap area; the
+ *     page accent on a 10% tint while open. Desktop: a 330px popover under
+ *     the icon (closes on outside click, Esc or the icon). Phones: the
+ *     bottom Sheet titled by the section (closes on ✕, swipe down, tap
+ *     outside). One open at a time across the page. INFO_TEXT styles the
+ *     rich text (bold lead, paragraphs, lists, bold labels).
+ *   - Sheet: new fit option: on phones a bottom sheet as tall as its content
+ *     (at most 85% of the screen) that closes on a downward swipe of any part
+ *     marked data-sheet-grab. Existing callers (no fit) are unchanged.
+ *   - TapStyle + TAP: the gsl-tap class gives a small control an invisible
+ *     44 × 44px tap area on phones; the control's look doesn't change.
+ *     Segmented takes tap to use it on its buttons; existing callers unchanged.
+ *
  *  UI v30 — 2026-10-17, 07:45 UTC — Canvas v51.18
  *   - Fonts locked: page titles default to Outfit (LAB_CHOICES.title.def).
  *     SHOW_LAB_BAR = false: App doesn't render LabBar, and the locked set
@@ -232,7 +248,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef, useContext, createContext } from 'react';
-import { Calendar, RotateCcw, Search, X, ChevronDown } from 'lucide-react';
+import { Calendar, RotateCcw, Search, X, ChevronDown, Info } from 'lucide-react';
 
 // ─── SECTION ACCENTS ─────────────────────────────────────────────────
 export const ACCENTS = {
@@ -846,20 +862,107 @@ export function useLegendToggle() {
 }
 // Sheet: a pop-up that fills a phone's screen and slides up from the bottom;
 // centred with a margin from tablet up. Tap outside or Escape to close.
-export function Sheet({ onClose, children, maxW = 'sm:max-w-5xl' }) {
+// fit (UI v31): on phones a bottom sheet as tall as its content (85% at most);
+// a downward swipe that starts on anything marked data-sheet-grab closes it.
+export function Sheet({ onClose, children, maxW = 'sm:max-w-5xl', fit = false }) {
+  const [drag, setDrag] = useState(0);
+  const from = useRef(null);
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const k = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
   }, [onClose]);
+  const swipe = fit ? {
+    onPointerDown: (e) => { if (e.pointerType !== 'mouse' && e.target.closest && e.target.closest('[data-sheet-grab]')) from.current = e.clientY; },
+    onPointerMove: (e) => { if (from.current !== null) setDrag(Math.max(0, e.clientY - from.current)); },
+    onPointerUp: () => { if (from.current !== null && drag > 80) onClose(); from.current = null; setDrag(0); },
+    onPointerCancel: () => { from.current = null; setDrag(0); },
+  } : {};
+  const box = fit
+    ? `bg-white w-full ${maxW} max-h-[85dvh] sm:max-h-[80vh] rounded-t-2xl sm:rounded-2xl`
+    : `bg-slate-50 w-full ${maxW} h-[100dvh] sm:h-auto sm:max-h-[94vh] sm:rounded-2xl`;
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-end sm:items-center justify-center sm:p-6 font-sans" onClick={onClose}>
       <style>{'@keyframes gslSheetUp{from{transform:translateY(100%)}to{transform:none}}@media (max-width:639px){.gsl-sheet{animation:gslSheetUp 220ms ease-out}}'}</style>
-      <div className={`gsl-sheet bg-slate-50 w-full ${maxW} h-[100dvh] sm:h-auto sm:max-h-[94vh] sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col`} onClick={(e) => e.stopPropagation()}>
+      <div className={`gsl-sheet ${box} overflow-hidden shadow-2xl flex flex-col`} style={drag ? { transform: `translateY(${drag}px)` } : undefined} onClick={(e) => e.stopPropagation()} {...swipe}>
         {children}
       </div>
     </div>
+  );
+}
+
+// ─── TAP AREAS (UI v31, Canvas v51.19) ───────────────────────────────
+// TAP (the gsl-tap class) gives a small control an invisible 44 × 44px tap
+// area on phones, centred on it; the control looks the same. Leave enough
+// gap between neighbours that their areas don't overlap. Render <TapStyle />
+// once on any page that uses it.
+export const TAP = 'gsl-tap';
+export function TapStyle() {
+  return <style>{'@media (max-width:639.98px){.gsl-tap{position:relative}.gsl-tap::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}'}</style>;
+}
+
+// ─── SECTION [i] (UI v31, Canvas v51.19) ─────────────────────────────
+// R14: a section's description lives in an [i] at the top right of its
+// header, not under the title. Desktop: a 330px popover under the icon.
+// Phones: the bottom Sheet, titled by the section. One open at a time across
+// the page. children: the rich text (wrap it in nothing; INFO_TEXT styles
+// paragraphs, lists and bold runs). Keep each section's text next to its code.
+const INFO_OPEN = 'gsl-info-open';
+let infoSeq = 0;
+export const INFO_TEXT = 'flex flex-col gap-2 [&_strong]:font-bold [&_strong]:text-slate-900 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1';
+export function SectionInfo({ title, accent = 'indigo', children }) {
+  const phone = useScreen() === 'phone';
+  const [open, setOpen] = useState(false);
+  const id = useRef(0);
+  if (!id.current) id.current = ++infoSeq;
+  const box = useRef(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const other = (e) => { if (e.detail !== id.current) setOpen(false); };
+    window.addEventListener(INFO_OPEN, other);
+    return () => window.removeEventListener(INFO_OPEN, other);
+  }, []);
+  useEffect(() => {
+    if (!open || phone || typeof document === 'undefined') return undefined;
+    const out = (e) => { if (box.current && !box.current.contains(e.target)) setOpen(false); };
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('pointerdown', out);
+    window.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('pointerdown', out); window.removeEventListener('keydown', esc); };
+  }, [open, phone]);
+  const toggle = () => {
+    if (!open && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(INFO_OPEN, { detail: id.current }));
+    setOpen(!open);
+  };
+  const hex = ACCENT_HEX[accent] || ACCENT_HEX.indigo;
+  return (
+    <span ref={box} className="relative inline-flex shrink-0 -my-[13px] -mr-[13px]">
+      <button type="button" onClick={toggle} aria-label={`About ${title}`} aria-expanded={open}
+        className="w-11 h-11 inline-flex items-center justify-center">
+        <span className="w-[26px] h-[26px] rounded-[10px] inline-flex items-center justify-center" style={open ? { color: hex, background: `${hex}1a` } : undefined}>
+          <Info className={`w-[18px] h-[18px] ${open ? '' : 'text-slate-400'}`} />
+        </span>
+      </button>
+      {open && !phone && (
+        <div role="dialog" aria-label={`About ${title}`} className="absolute right-[13px] top-full mt-1 z-40 w-[330px] max-h-[60vh] overflow-y-auto bg-white border border-slate-300 rounded-[14px] shadow-lg px-[18px] py-4 text-left">
+          <div className={`${TYPE.eyebrow} text-slate-500 mb-2`}>About this section</div>
+          <div className={`text-[13px] leading-[1.5] font-normal text-slate-700 ${INFO_TEXT}`}>{children}</div>
+        </div>
+      )}
+      {open && phone && (
+        <Sheet onClose={() => setOpen(false)} fit maxW="sm:max-w-md">
+          <div data-sheet-grab className="shrink-0 pt-2 pl-5 pr-2 flex flex-col" style={{ touchAction: 'none' }}>
+            <span className="self-center w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-[16px] font-extrabold text-slate-900">{title}</h3>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="w-11 h-11 inline-flex items-center justify-center text-slate-500"><X className="w-5 h-5" /></button>
+            </div>
+          </div>
+          <div className={`overflow-y-auto px-5 pb-6 pt-1 text-[14px] leading-[1.5] font-normal text-slate-700 ${INFO_TEXT}`}>{children}</div>
+        </Sheet>
+      )}
+    </span>
   );
 }
 
@@ -1174,7 +1277,8 @@ export const METRIC_OPTIONS = [
 ];
 
 // Segmented switch: pick exactly one option from a short, fixed set.
-export function Segmented({ options, value, onChange, className = '' }) {
+// tap (UI v31): each button gets the invisible 44px phone tap area (TAP).
+export function Segmented({ options, value, onChange, className = '', tap = false }) {
   return (
     <div
       className={`inline-flex flex-wrap items-center gap-0.5 bg-slate-100 p-1 rounded-lg text-xs font-semibold text-slate-600 ${className}`}
@@ -1188,7 +1292,7 @@ export function Segmented({ options, value, onChange, className = '' }) {
             type="button"
             title={o.title}
             onClick={() => onChange(o.value)}
-            className={`px-3 py-1 rounded-md transition-colors inline-flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-3 py-1 rounded-md transition-colors inline-flex items-center gap-1.5 whitespace-nowrap ${tap ? `${TAP} ` : ''}${
               active
                 ? SEGMENT_TONES[o.tone || 'neutral']
                 : 'hover:text-slate-900 hover:bg-white/60'

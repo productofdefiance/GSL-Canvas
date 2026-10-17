@@ -52,6 +52,7 @@ Tab ids: league overview, fixtures, clubs, race, analytics, homeaway, spider.
 - `touch_t.js`: simulated finger drag on the Points race (PointerEvent with pointerType 'touch'); checks the docked card.
 - `sp_t.js`: Spider Matrix: picker, typing focus, swap, quick picks, Group add / remove, table, dark, phone.
 - `rv.js`: a review-fix pass: header alignment by measured positions, two-column list, hover cards, ledger switch.
+- `ha_t.js` (v51.19): Home vs Away on phones and the section [i]: popover / sheet, blurb text, ledger vs desktop, side-by-side bar widths, 44px tap areas, dark mode.
 - `capsec.js`: captures each section of a tab as HTML for design inventories.
 
 Habits: scope clicks to `main` (tab names repeat in the header); scroll an element into view before

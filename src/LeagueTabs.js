@@ -2,8 +2,8 @@
  *  ═══════════════════════════════════════════════════════════════════════════
  *  GSL CANVAS: League · Form & Margins and Points tabs
  *  ═══════════════════════════════════════════════════════════════════════════
- *  Version:  LeagueTabs v10
- *  Date:     2026-10-17, 07:45 UTC
+ *  Version:  LeagueTabs v11
+ *  Date:     2026-10-17, 18:00 UTC
  *
  *  The two League tabs redesigned in the v51 Palette Lab (Form & Margins
  *  rounds 1–3, Points rounds 1–5), built as their own module so League.js
@@ -19,6 +19,22 @@
  *  score), accents never colour data.
  *
  *  CHANGELOG (newest first)
+ *
+ *  LeagueTabs v11 — 2026-10-17, 18:00 UTC — Canvas v51.19 (Home vs Away on phones + section [i])
+ *   - Section takes info: the section's [i] (ui.js SectionInfo, R14) at the
+ *     top right of its header; on desktop it follows the header's controls.
+ *   - Home vs Away: Venue swing, the side-by-side and Venue ledger lose their
+ *     descriptions; the words (from the section [i] blurbs) live in their [i].
+ *   - Venue ledger on phones: one value a side (the metric in the switch),
+ *     the season, its division and the split bar with both shares in the
+ *     middle; the stronger side in ink, the weaker faded. Rows still select.
+ *   - Side-by-side on phones: values on a top line with the label centred;
+ *     bars grow out from an 86px spine holding the gap (22px, ◂ / ▸ at the
+ *     stronger venue). Bar = value ÷ the row's larger value × half the row.
+ *   - Tap targets on phones: metric switches, Combine seasons, its chips and
+ *     shortcuts, Clear, the selection chip and the swing chart's season
+ *     columns get 44px tap areas (TAP); ledger rows are 52px tall.
+ *   - Desktop unchanged apart from the three descriptions.
  *
  *  LeagueTabs v10 — 2026-10-17, 07:45 UTC — Canvas v51.18 (quick fixes)
  *   - Minus signs: every signed number (axis labels, pace, deltas, GD, hover
@@ -152,6 +168,9 @@ import {
   INK_HEX,
   useScreen,
   signed,
+  SectionInfo,
+  TapStyle,
+  TAP,
 } from './ui.js';
 
 // ─── SHARED ─────────────────────────────────────────────────────────
@@ -177,15 +196,22 @@ function MatchLine({ m, chip = true, when = false, className = '' }) {
     </span>
   );
 }
-function Section({ title, sub, right, children }) {
+// info (v11, R14): the section's [i] text. On phones the [i] sits beside the
+// title; from 640px it comes after the header's controls.
+function Section({ title, sub, right, info, accent = 'indigo', children }) {
+  const phone = useScreen() === 'phone';
+  const i = info ? <SectionInfo title={title} accent={accent}>{info}</SectionInfo> : null;
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 flex flex-col gap-5">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          <h3 className={`${TYPE.section} text-slate-900`}>{title}</h3>
-          {sub && <p className="text-sm text-slate-500 mt-1">{sub}</p>}
+        <div className={i && phone ? 'flex items-start justify-between gap-3' : undefined}>
+          <div>
+            <h3 className={`${TYPE.section} text-slate-900`}>{title}</h3>
+            {sub && <p className="text-sm text-slate-500 mt-1">{sub}</p>}
+          </div>
+          {i && phone && <span className="mt-0.5">{i}</span>}
         </div>
-        {right}
+        {i && !phone ? <div className="flex items-center gap-3">{right}{i}</div> : right}
       </div>
       {children}
     </div>
@@ -1167,6 +1193,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
   const [formHover, setFormHover] = useState(null);
   const [ledMetric, setLedMetric] = useState('pts');
   const [swRef, swW] = useWidth(1000);
+  const phone = useScreen() === 'phone';
   const M = METRIC[metric], LM = METRIC[ledMetric];
 
   // Highlights bar (career-wide): each card names the edge and the venue holding it
@@ -1232,6 +1259,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
 
   return (
     <div className="space-y-6">
+      <TapStyle />
       <HighlightsBar accent={accent} columns={5}>
         {hcard('Points', `+${Math.abs(H.pts - A.pts)}`, edge(H.pts, A.pts), two(H.pts, A.pts, H.pts, A.pts), true)}
         {hcard('Win rate', `+${(Math.abs(H.win - A.win) * 100).toFixed(1)}%`, edge(H.win, A.win), two(H.win, A.win, pct(H.win), pct(A.win)))}
@@ -1241,8 +1269,12 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
       </HighlightsBar>
 
       {/* Venue swing: career split bar, then season by season; click to select, or combine */}
-      <Section title="Venue swing" sub="Your career split, then season by season. Click a season to see it below; click it again to clear."
-        right={<Segmented value={metric} onChange={setMetric} options={[{ value: 'pts', label: 'Points' }, { value: 'w', label: 'Wins' }, { value: 'gf', label: 'Goals' }]} />}>
+      <Section title="Venue swing" accent={accent}
+        info={<>
+          <p><strong>Where your points come from: home or away.</strong> The wide bar splits your whole career; the chart below shows each season's swing. A bar above the line means home was stronger, below means away was stronger, and the number is the gap.</p>
+          <p><strong>How to use:</strong> switch between Points, Wins and Goals. Tap a season to see it in detail below; tap it again to go back to the whole career. Turn on Combine seasons to pool several, for example every Division 1 season.</p>
+        </>}
+        right={<Segmented tap value={metric} onChange={setMetric} options={[{ value: 'pts', label: 'Points' }, { value: 'w', label: 'Wins' }, { value: 'gf', label: 'Goals' }]} />}>
         {(() => { const hv = M.get(H), av = M.get(A), t = hv + av || 1; return (
           <div className="flex flex-col gap-2">
             <div className="h-12 rounded-xl overflow-hidden flex">
@@ -1252,14 +1284,14 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
             <div className="text-xs text-slate-500">All seasons · {hv + av} {M.unit}</div>
           </div>
         ); })()}
-        <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 ring-1 ring-slate-200 px-3 py-2">
-          <button type="button" onClick={() => { setCombine(!combine); if (combine) setSel(sel.slice(0, 1)); }} className={`${EB} ${combine ? 'text-slate-900' : 'text-slate-500'} mr-1`}>Combine seasons {combine ? '·  on' : ''}</button>
-          {combine && played.map((s) => <button key={s.num} type="button" onClick={() => toggleSeason(s.num)} className={`text-xs font-semibold rounded-md px-2 py-1 min-h-[32px] ${sel.includes(s.num) ? 'bg-slate-900 text-slate-50' : 'bg-white ring-1 ring-slate-200 text-slate-600'}`}>{sel.includes(s.num) ? '✓ ' : ''}S{s.num}</button>)}
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-3 sm:gap-2 rounded-xl bg-slate-50 ring-1 ring-slate-200 px-3 py-2">
+          <button type="button" onClick={() => { setCombine(!combine); if (combine) setSel(sel.slice(0, 1)); }} className={`${EB} ${TAP} ${combine ? 'text-slate-900' : 'text-slate-500'} mr-1 max-sm:min-h-[32px]`}>Combine seasons {combine ? '·  on' : ''}</button>
+          {combine && played.map((s) => <button key={s.num} type="button" onClick={() => toggleSeason(s.num)} className={`${TAP} text-xs font-semibold rounded-md px-2 py-1 min-h-[32px] ${sel.includes(s.num) ? 'bg-slate-900 text-slate-50' : 'bg-white ring-1 ring-slate-200 text-slate-600'}`}>{sel.includes(s.num) ? '✓ ' : ''}S{s.num}</button>)}
           {combine && <>
-            <button type="button" onClick={() => setSel(played.filter((s) => divLabel(s.division) === 'Div 1').map((s) => s.num))} className="text-xs font-semibold rounded-md px-2 py-1 bg-white ring-1 ring-slate-200 text-slate-600">Div 1 seasons</button>
-            <button type="button" onClick={() => setSel(played.filter((s) => divLabel(s.division) !== 'Div 1').map((s) => s.num))} className="text-xs font-semibold rounded-md px-2 py-1 bg-white ring-1 ring-slate-200 text-slate-600">Lower divisions</button>
+            <button type="button" onClick={() => setSel(played.filter((s) => divLabel(s.division) === 'Div 1').map((s) => s.num))} className={`${TAP} text-xs font-semibold rounded-md px-2 py-1 max-sm:min-h-[32px] bg-white ring-1 ring-slate-200 text-slate-600`}>Div 1 seasons</button>
+            <button type="button" onClick={() => setSel(played.filter((s) => divLabel(s.division) !== 'Div 1').map((s) => s.num))} className={`${TAP} text-xs font-semibold rounded-md px-2 py-1 max-sm:min-h-[32px] bg-white ring-1 ring-slate-200 text-slate-600`}>Lower divisions</button>
           </>}
-          {sel.length > 0 && <button type="button" onClick={() => setSel([])} className="ml-auto text-xs font-semibold text-slate-500 hover:text-slate-900">Clear</button>}
+          {sel.length > 0 && <button type="button" onClick={() => setSel([])} className={`${TAP} ml-auto text-xs font-semibold text-slate-500 hover:text-slate-900 max-sm:min-h-[32px]`}>Clear</button>}
         </div>
         <div ref={swRef} className="w-full">
           <svg width={SW} height={SH} viewBox={`0 0 ${SW} ${SH}`} style={{ touchAction: 'pan-y' }} onPointerLeave={leaveUnlessTouch(setSwingHover)}>
@@ -1271,6 +1303,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
               const on = !sel.length || sel.includes(r.num), op = on ? 1 : 0.35;
               return (
                 <g key={r.num} className="cursor-pointer" onClick={() => toggleSeason(r.num)} onPointerMove={(e) => setSwingHover({ r, at: pointAt(e) })}>
+                  <rect data-tap="season" x={x - colw / 2} y="0" width={colw} height={SH} fill="transparent" />
                   <rect x={x - colw / 2 + 4} y="22" width={colw - 8} height={SH - 44} rx="10" fill={sel.includes(r.num) ? '#6366f1' : 'transparent'} fillOpacity="0.07" stroke={sel.includes(r.num) ? '#6366f1' : 'none'} strokeOpacity="0.5" />
                   {d > 0 && <rect x={x - bw / 2} y={mid - d * sc} width={bw} height={d * sc} rx="3" fill={HC} opacity={op} />}
                   {d < 0 && <rect x={x - bw / 2} y={mid} width={bw} height={-d * sc} rx="3" fill={AC} opacity={op} />}
@@ -1293,8 +1326,44 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
       </Section>
 
       {/* Side-by-side for the selection */}
-      <Section title={`${selTitle}, home and away`} sub="Both venues, the weaker side faded; the spine shows the difference, pointing at the stronger venue. Fewer draws, losses, goals conceded and blanks count as better."
-        right={selChip && <button type="button" onClick={() => setSel([])} className="inline-flex items-center gap-2 text-xs font-semibold rounded-full px-3 py-1 bg-slate-100 text-slate-700">{selChip}<X className="w-3.5 h-3.5 text-slate-400" /></button>}>
+      <Section title={`${selTitle}, home and away`} accent={accent}
+        info={<>
+          <p><strong>Ten measures, home on the left, away on the right.</strong> The number in the middle is the gap, and its arrow points at the stronger venue; the weaker side is faded.</p>
+          <p><strong>Good to know:</strong> for draws, losses, goals conceded and failing to score, fewer is better, so the arrow points at the side with fewer. The section follows whatever you picked in Venue swing: the whole career, one season, or a combined set.</p>
+        </>}
+        right={selChip && <button type="button" onClick={() => setSel([])} className={`${TAP} self-start inline-flex items-center gap-2 text-xs font-semibold rounded-full px-3 py-1 bg-slate-100 text-slate-700`}>{selChip}<X className="w-3.5 h-3.5 text-slate-400" /></button>}>
+        {phone ? (
+          <div>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pb-2 border-b border-slate-200">
+              <span className="inline-flex items-center gap-1.5 text-sm font-extrabold cursor-default" style={{ color: HC }} onPointerMove={(e) => setFormHover({ side: 'H', at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setFormHover)}><Home className="w-4 h-4" />Home</span>
+              <span className="text-center text-xs text-slate-400 whitespace-nowrap">{cur.H.gp} · {cur.A.gp} matches</span>
+              <span className="justify-self-end inline-flex items-center gap-1.5 text-sm font-extrabold text-sky-600 cursor-default" onPointerMove={(e) => setFormHover({ side: 'A', at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setFormHover)}>Away<Plane className="w-4 h-4" /></span>
+            </div>
+            {rows.map(([lab, hv, av, lb, fd, fv]) => {
+              const better = hv === av ? null : (lb ? hv < av : hv > av) ? 'H' : 'A';
+              const mx = Math.max(Math.abs(hv), Math.abs(av)) || 1;
+              const show = fv || ((v) => `${v}`);
+              const num = (side) => (!better ? 'font-bold text-slate-900' : better === side ? 'font-extrabold text-slate-900' : 'font-semibold text-slate-400');
+              const op = (side) => (!better || better === side ? 1 : 0.35);
+              return (
+                <div key={lab} data-row="sbs" className="py-[9px] border-b border-slate-100 last:border-b-0 flex flex-col gap-1">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-baseline gap-2">
+                    <span className={`text-[14px] tabular-nums ${num('H')}`}>{show(hv)}</span>
+                    <span className={`${EB} text-slate-500 text-center whitespace-nowrap`}>{lab}</span>
+                    <span className={`text-[14px] tabular-nums text-right ${num('A')}`}>{show(av)}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div data-half="H" className="flex-1 min-w-0 flex justify-end"><div data-bar="H" className="h-2 rounded-[4px]" style={{ width: `${(Math.abs(hv) / mx) * 100}%`, background: HC, opacity: op('H') }} /></div>
+                    <span data-spine className="w-[86px] shrink-0 text-center whitespace-nowrap gsl-big text-[22px] font-extrabold leading-none tracking-[var(--big-track)]" style={{ color: better === 'H' ? HC : better === 'A' ? 'rgb(var(--c-sky-600))' : 'rgb(var(--c-slate-400))' }}>
+                      {better === 'H' ? `◂ ${fd(Math.abs(hv - av))}` : better === 'A' ? `${fd(Math.abs(hv - av))} ▸` : <span className="text-xs font-semibold">Level</span>}
+                    </span>
+                    <div data-half="A" className="flex-1 min-w-0 flex"><div data-bar="A" className="h-2 rounded-[4px]" style={{ width: `${(Math.abs(av) / mx) * 100}%`, background: AC, opacity: op('A') }} /></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div>
           <div className="grid grid-cols-[52px_1fr_118px_1fr_52px] sm:grid-cols-[110px_1fr_200px_1fr_110px] gap-2 sm:gap-4 pb-2 border-b border-slate-200">
             <span className="text-right inline-flex items-center justify-end gap-1.5 text-sm font-extrabold text-slate-900 cursor-default" onPointerMove={(e) => setFormHover({ side: 'H', at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setFormHover)}><Home className="w-4 h-4" style={{ color: HC }} /><span className="hidden sm:inline">Home</span></span>
@@ -1323,6 +1392,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
             );
           })}
         </div>
+        )}
         {formHover && (
           <FloatCard at={formHover.at} width={280}>
             <span className={`${EB} text-slate-500`}>Last 5 {formHover.side === 'H' ? 'at home' : 'away'} · {selTitle}</span>
@@ -1332,8 +1402,39 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
       </Section>
 
       {/* Venue ledger: home and away mirrored around the points split */}
-      <Section title="Venue ledger" sub="Every season, home and away, mirrored around the split. Click a season to show it above."
-        right={<Segmented value={ledMetric} onChange={setLedMetric} options={[{ value: 'pts', label: 'Points' }, { value: 'w', label: 'Wins' }, { value: 'gf', label: 'Goals' }]} />}>
+      <Section title="Venue ledger" accent={accent}
+        info={<>
+          <p><strong>Every season with home and away side by side,</strong> mirrored around the bar that splits them.</p>
+          <p><strong>How to use:</strong> Points, Wins and Goals change what the bar splits. Tap a season to show it in Venue swing. On a desktop, sort by any column. On a phone each side shows one number, the one picked in the switch, with the split bar in the middle.</p>
+        </>}
+        right={<Segmented tap value={ledMetric} onChange={setLedMetric} options={[{ value: 'pts', label: 'Points' }, { value: 'w', label: 'Wins' }, { value: 'gf', label: 'Goals' }]} />}>
+        {phone ? (
+          // Phones: one value a side (the metric in the switch), split bar in the middle
+          <div>
+            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 pb-2">
+              <span className="inline-flex items-center gap-1 text-xs font-bold whitespace-nowrap" style={{ color: HC }}><Home className="w-3.5 h-3.5 shrink-0" />Home</span>
+              <span className={`${EB} text-slate-500 text-center`}>Season · {LM.label} split</span>
+              <span className="justify-self-end inline-flex items-center gap-1 text-xs font-bold whitespace-nowrap text-sky-600">Away<Plane className="w-3.5 h-3.5 shrink-0" /></span>
+            </div>
+            {ledSorted.map((r) => {
+              const t = r.mt || 1, on = sel.includes(r.num);
+              const strong = r.hm === r.am ? null : r.hm > r.am ? 'H' : 'A';
+              const num = (side) => (!strong ? 'font-bold text-slate-900' : strong === side ? 'font-extrabold text-slate-900' : 'font-semibold text-slate-400');
+              const op = (side) => (!strong || strong === side ? 1 : 0.45);
+              return (
+                <div key={r.num} data-row="ledger" onClick={() => toggleSeason(r.num)} className={`grid grid-cols-[44px_1fr_44px] items-center gap-3 min-h-[52px] py-2 border-t border-slate-100 cursor-pointer ${on ? 'bg-indigo-50/60' : ''}`}>
+                  <span className={`text-[16px] tabular-nums ${num('H')}`}>{r.hm}</span>
+                  <div className="min-w-0 flex flex-col gap-1">
+                    <div className="flex items-baseline justify-between gap-2 text-xs"><span className="font-bold text-slate-900">S{r.num}</span><span className="text-slate-500 truncate">{divLabel(r.s.division)}</span></div>
+                    <div className="h-2.5 rounded-[5px] overflow-hidden flex"><div style={{ width: `${(r.hm / t) * 100}%`, background: HC, opacity: op('H') }} /><div style={{ width: `${(r.am / t) * 100}%`, background: AC, opacity: op('A') }} /></div>
+                    <div className="flex justify-between text-[11px] tabular-nums text-slate-500"><span>{Math.round((r.hm / t) * 100)}%</span><span>{Math.round((r.am / t) * 100)}%</span></div>
+                  </div>
+                  <span className={`text-[16px] tabular-nums text-right ${num('A')}`}>{r.am}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div className="rounded-xl border border-slate-200 overflow-x-auto">
           <div className="min-w-[1120px]">
             <div className={`${LG} bg-slate-50 ${EB}`}><div /><div className="pr-8 pt-2 flex items-center justify-end gap-1.5 bg-[rgb(30_58_138/0.06)]"><span style={{ color: HC }}>Home</span><span className="w-2.5 h-2.5 rounded-full" style={{ background: HC }} /></div><div /><div className="pl-8 pt-2 flex items-center gap-1.5 bg-[rgb(56_189_248/0.10)]"><span className="w-2.5 h-2.5 rounded-full" style={{ background: AC }} /><span className="text-sky-700">Away</span></div><div /></div>
@@ -1358,6 +1459,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
             })}
           </div>
         </div>
+        )}
       </Section>
     </div>
   );
