@@ -89,5 +89,10 @@ Code receives one brief per build, the locked decisions only.
 ## Checks before every pull request
 
 Run with the kit in test/ (commands in test/README.md). Syntax, a full render of every page and tab (phone 390 and desktop 1440), browser checks of the
-interactions touched (click, hover, touch), dark mode, no sideways overflow at phone width, and `npm run tap` (every
-League hover target tapped at 390: opens, switches, closes on a blank tap and on scroll).
+interactions touched (click, hover, touch), dark mode, no sideways overflow at phone width, and the touch tap test
+(`npm run tap`, details in test/README.md): every hover target tapped at 390 must open, switch, and close on a blank
+tap and on scroll.
+- Full sweep (every target) on the tabs the build changes: `npm run tap -- --full <tabs>`.
+- Full sweep on every tab whenever ui.js's hover or touch code changes: `npm run tap:full`.
+- A sample (first, middle and last target of each chart) on every other tab, every build, as the regression check.
+- The test polls instead of waiting fixed times, and every run keeps a hard timeout.

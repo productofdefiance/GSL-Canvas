@@ -22,7 +22,7 @@ npm run check        # syntax.js + compile.js + build.js + render.js snap: every
 npm run css          # Tailwind CSS for the browser, prefixed with public/index.html's <style>
 npm run bundle       # browser/app.bundle.js
 npm run overflow     # phone overflow check on every League tab (scrollWidth must equal 390)
-npm run tap          # every League hover target tapped at 390, iPhone-style (see below); exit 1 on a failure
+npm run tap -- --full <tabs the build changes>   # hover cards on touch at 390: full on those tabs, sample elsewhere (see below)
 cd browser && node shots6.js '[{"w":1440,"ov":{"App:sectionId":"league","League:activeTab":"spider"},"out":"x.png","dark":true}]'
 ```
 
@@ -53,12 +53,27 @@ Tab ids: league overview, fixtures, clubs, race, analytics, homeaway, spider.
 - `touch_t.js`: simulated finger drag on the Points race (PointerEvent with pointerType 'touch'); checks the docked card.
 - `sp_t.js`: Spider Matrix: picker, typing focus, swap, quick picks, Group add / remove, table, dark, phone.
 - `rv.js`: a review-fix pass: header alignment by measured positions, two-column list, hover cards, ledger switch.
-- `tap_t.js` (v51.19, `npm run tap`): hover cards on touch. A tap is pointerdown + pointerup only (no pointermove,
-  no click, as iPhone sends for blank space). On every League tab and view at 390, each `[data-hv]` target must open
-  its card (`[data-hv-card]`), switch when another target is tapped, and close on a blank tap and on scroll; plus an [i]
-  closing an open card, the sideways scrub (Points race, Overlay), a Cups sample (HoverProvider) and mouse hover at
-  1440. All of it takes about 15 minutes (Form & Margins alone ~10: 640 targets), so run it in parts with a timeout:
-  `timeout 560 node tap_t.js analytics-single`, `… analytics-overlay`, `… race,spider,homeaway,overview,fixtures,clubs,extras`.
+- `tap_t.js` (v51.19, `npm run tap`): hover cards on touch, tapped the iPhone way: pointerdown + pointerup only
+  (no pointermove, no click, as iPhone sends for blank space). Each `[data-hv]` target tapped at 390 must open its
+  card (`[data-hv-card]`), switch when another target is tapped, close on a blank tap and close on scroll. Extras every
+  run: an [i] closing an open card, the sideways scrub (Points race, Overlay), a Cups sample (HoverProvider), mouse
+  hover at 1440.
+
+  **Which depth, every build:**
+  1. **Full sweep** (every target) on the tabs the build changes: `npm run tap -- --full race,homeaway`.
+     Tab ids: overview, fixtures, clubs, race, analytics, homeaway, spider; single views like `race-pace`,
+     `analytics-overlay`, `spider-group-seasons` work too.
+  2. **Full sweep on every tab** whenever ui.js's hover or touch code changes (useHoverCard, useTapAway, useOverlay,
+     useTouchCard, HoverProvider / useHover, usePointerTrack, useScrub, Sheet, SectionInfo): `npm run tap:full`.
+  3. **Sample** (first, middle and last target of each chart) on every other tab: what `npm run tap` does to any
+     tab not named in `--full`. This is the regression check, about 2 minutes.
+
+  No fixed waits: each step polls (every frame, 500ms cap) until the card opens, changes or closes, or the page
+  stops scrolling. Hard timeouts stay: `--max` seconds inside the script (exit 2) and `timeout` around it. The full
+  sweep of every tab took ~5.5 minutes in v51.19 (Form & Margins has ~640 targets); if it outgrows the limit, split it:
+  `node tap_t.js --full all --only analytics --max 550`, then `--only race,homeaway,spider,overview,fixtures,clubs,extras`.
+  Known: 10 Spider Group dots sit on top of another dot with the same value and are reported as covered (v51.21's
+  tap-to-rank replaces tapping single dots).
 - `ha_t.js` (v51.19): Home vs Away on phones and the section [i]: popover / sheet, blurb text, ledger vs desktop, side-by-side bar widths, 44px tap areas, dark mode.
 - `capsec.js`: captures each section of a tab as HTML for design inventories.
 
