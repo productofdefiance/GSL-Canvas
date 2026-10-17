@@ -21,6 +21,7 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 | src/Cups.js, src/CupsLab.js, src/Pyramid.js, src/Squad.js | Other pages |
 | src/index.js, src/sheetData.js, src/style.css | Entry point; the exported workbook data; leftover stylesheet |
 | test/ | Test kit: `test/setup.sh`, then `cd test && npm run check` (see test/README.md). Test-only dependencies live in test/package.json |
+| briefs/ | One build brief per build (`v51.xx.md`), mock images in `briefs/img/`; `TEMPLATE.md` is the format |
 | CLAUDE.md | This file |
 
 Any restructure is one deliberate step, agreed with the user, checked in StackBlitz (the user's preview), then recorded
@@ -40,6 +41,26 @@ Libraries: React, d3, lucide-react only. Ask before adding anything.
 - Ask before changing any convention (file structure, delivery, naming).
 - The repo is public: no personal details (names, emails, private notes, screenshots) in files, commit
   messages or pull requests. Refer to the owner as "the user".
+
+## Briefs (how a build starts)
+
+Design happens in a separate claude.ai design chat. Its rounds, options and feedback stay there (private);
+Code receives one brief per build, the locked decisions only.
+
+- The brief follows `briefs/TEMPLATE.md`. The user starts a build session with the brief's claude.ai doc link
+  (read it with the docs tools) or its pasted text. No brief and no clear ask: ask before building.
+- Save a copy as `briefs/v51.xx.md` on the build branch, so the brief lands in the same pull request as the code.
+  Mock images the user attaches go to `briefs/img/v51.xx-<n>.png`. The repo is public: mocks cropped to the
+  canvas only, no names or personal screenshots in briefs or images.
+- The Design System (https://claude.ai/artifact/3SAiTFvKEVFGsyrRhoksT9) is the source for tokens and component
+  specs: read `project/README.md`, `project/tokens.json`, `project/components/<Name>/README.md`. Read only:
+  never edit it from Code.
+- Before building, check the brief against this file, the Design System and the code. List conflicts, gaps and
+  anything it would break; ask, don't guess. Build only on the user's go.
+- Measure nothing from images: sizes, gaps and colours must be numbers in the brief or the Design System.
+- Branch: the session's assigned branch (the brief's branch line is a suggestion). Pull request title: from the brief.
+- Report back in the pull request description (section 8 of the template); the user pastes it into the design chat.
+- Where a brief and this file conflict, ask.
 
 ## Code rules
 
