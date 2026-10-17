@@ -79,6 +79,9 @@ Code receives one brief per build, the locked decisions only.
 - Shared patterns go in ui.js; keep existing callers' behaviour and bump the UI version.
 - Hooks before early returns; no components defined inside components when they hold inputs.
 - `useScreen()` or Tailwind prefixes for screen size, never `window.innerWidth`; touch via `pointerType`.
+- Hover cards never keep their own touch logic: every card uses the shared ui.js helpers (`useHoverCard`,
+  `HoverProvider` / `useHover`, `useTouchCard`). On touch a card opens on a tap, switches on another tap, and closes
+  on a tap anywhere else or on scroll; only one overlay (hover card, [i], sheet) is open at a time.
 - Flags are always drawn vectors (ui.js `Flag`, or `SvgFlag` inside charts), never emoji text, anywhere in the canvas.
 - Text floor 11px (SVG too). R10 match order: flag, club, result chip, score. R11: tables sort by headers.
   R12: "us" cards get a top accent strip, "them" cards a left strip.
@@ -86,4 +89,5 @@ Code receives one brief per build, the locked decisions only.
 ## Checks before every pull request
 
 Run with the kit in test/ (commands in test/README.md). Syntax, a full render of every page and tab (phone 390 and desktop 1440), browser checks of the
-interactions touched (click, hover, touch), dark mode, and no sideways overflow at phone width.
+interactions touched (click, hover, touch), dark mode, no sideways overflow at phone width, and `npm run tap` (every
+League hover target tapped at 390: opens, switches, closes on a blank tap and on scroll).

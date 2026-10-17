@@ -6,7 +6,8 @@
     "check": "node syntax.js && node compile.js && node build.js && node render.js snap",
     "css": "node css.js snap cssC.css",
     "bundle": "cd browser && node bundle.js entry.js app.bundle.js",
-    "overflow": "cd browser && node ow.js"
+    "overflow": "cd browser && node ow.js",
+    "tap": "cd browser && node tap_t.js"
   },
   "devDependencies": {
     "@babel/parser": "7.29.0",

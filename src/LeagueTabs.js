@@ -3,7 +3,7 @@
  *  GSL CANVAS: League · Form & Margins and Points tabs
  *  ═══════════════════════════════════════════════════════════════════════════
  *  Version:  LeagueTabs v11
- *  Date:     2026-10-17, 18:00 UTC
+ *  Date:     2026-10-17, 20:00 UTC
  *
  *  The two League tabs redesigned in the v51 Palette Lab (Form & Margins
  *  rounds 1–3, Points rounds 1–5), built as their own module so League.js
@@ -20,7 +20,7 @@
  *
  *  CHANGELOG (newest first)
  *
- *  LeagueTabs v11 — 2026-10-17, 18:00 UTC — Canvas v51.19 (Home vs Away on phones + section [i])
+ *  LeagueTabs v11 — 2026-10-17, 20:00 UTC — Canvas v51.19 (Home vs Away on phones + section [i])
  *   - Section takes info: the section's [i] (ui.js SectionInfo, R14) at the
  *     top right of its header; on desktop it follows the header's controls.
  *   - Home vs Away: Venue swing, the side-by-side and Venue ledger lose their
@@ -35,6 +35,12 @@
  *     shortcuts, Clear, the selection chip and the swing chart's season
  *     columns get 44px tap areas (TAP); ledger rows are 52px tall.
  *   - Desktop unchanged apart from the three descriptions.
+ *   - Every hover card (Points race, Matchday benchmarks heat, Margin
+ *     distribution, Momentum pulse and Overlay, streak pulses, Venue swing,
+ *     last-5 form, Spider axis labels and Group dots) runs on ui.js's
+ *     useHoverCard: a tap opens or switches it, a second tap, a tap anywhere
+ *     else or a scroll closes it; the Points race and Overlay still scrub with
+ *     a sideways slide. Mouse unchanged. pointAt and leaveUnlessTouch removed.
  *
  *  LeagueTabs v10 — 2026-10-17, 07:45 UTC — Canvas v51.18 (quick fixes)
  *   - Minus signs: every signed number (axis labels, pace, deltas, GD, hover
@@ -171,6 +177,7 @@ import {
   SectionInfo,
   TapStyle,
   TAP,
+  useHoverCard,
 } from './ui.js';
 
 // ─── SHARED ─────────────────────────────────────────────────────────
@@ -270,23 +277,21 @@ function ClampList({ items = [], prefix = '', lines = 2 }) {
 // A hover card fixed to the viewport, so no scrolling box can clip it.
 function FloatCard({ at, width = 256, beside = false, children }) {
   if (!at) return null;
-  if (at.touch) return <div className="fixed z-[70] left-2 right-2 bottom-3 pointer-events-none"><div className="bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 p-4 flex flex-col gap-2 text-left">{children}</div></div>;
+  if (at.touch) return <div data-hv-card="" className="fixed z-[70] left-2 right-2 bottom-3 pointer-events-none"><div className="bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 p-4 flex flex-col gap-2 text-left">{children}</div></div>;
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1440;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
   if (beside) {
     // Beside the cursor, flipping sides past the middle of the screen, never off the edges
     const left2 = at.x < vw / 2 ? at.x + 18 : at.x - width - 18;
     const top2 = Math.max(8, Math.min(at.y, vh - 8));
-    return <div className="fixed z-[70] pointer-events-none" style={{ left: Math.max(8, Math.min(left2, vw - width - 8)), top: top2, width, transform: `translateY(-${top2 < vh / 3 ? 10 : top2 > (vh * 2) / 3 ? 90 : 50}%)` }}><div className="bg-white rounded-xl shadow-lg ring-1 ring-slate-200 p-3 flex flex-col gap-1.5 text-left">{children}</div></div>;
+    return <div data-hv-card="" className="fixed z-[70] pointer-events-none" style={{ left: Math.max(8, Math.min(left2, vw - width - 8)), top: top2, width, transform: `translateY(-${top2 < vh / 3 ? 10 : top2 > (vh * 2) / 3 ? 90 : 50}%)` }}><div className="bg-white rounded-xl shadow-lg ring-1 ring-slate-200 p-3 flex flex-col gap-1.5 text-left">{children}</div></div>;
   }
   const left = Math.max(8, Math.min(at.x - width / 2, vw - width - 8));
   const top = at.y - 12;
-  return <div className="fixed z-[70] pointer-events-none" style={{ left, top, width, transform: 'translateY(-100%)' }}><div className="bg-white rounded-xl shadow-lg ring-1 ring-slate-200 p-3 flex flex-col gap-1.5 text-left">{children}</div></div>;
+  return <div data-hv-card="" className="fixed z-[70] pointer-events-none" style={{ left, top, width, transform: 'translateY(-100%)' }}><div className="bg-white rounded-xl shadow-lg ring-1 ring-slate-200 p-3 flex flex-col gap-1.5 text-left">{children}</div></div>;
 }
-const pointAt = (e) => ({ x: e.clientX, y: e.clientY, touch: e.pointerType === 'touch' });
-// Leaving a chart clears its hover, except after a touch: on a phone the card stays
-// up after the finger lifts, so it can be read, until the next touch elsewhere.
-const leaveUnlessTouch = (set) => (e) => { if (e.pointerType !== 'touch') set(null); };
+// Hover cards open, switch and close through ui.js's useHoverCard (v11): mouse
+// on move / leave; touch on a finished tap, closed by a tap elsewhere or a scroll.
 // Every played match, oldest first, with the fields the tabs need
 function useMatches(seasons) {
   return useMemo(() => {
@@ -341,12 +346,12 @@ function StreakCard({ title, current, record, color, track, line, recLine }) {
 
 // The pulse: one column per match; green height = winning margin (cap 7), amber stub = draw
 function Pulse({ list }) {
-  const [hover, setHover] = useState(null);
+  const [hover, hc] = useHoverCard();
   const PX = 5, CAP = 7, H = 40, top = 4, base = H - 2, u = (base - top) / CAP;
   const w = list.length * PX;
   const m = hover ? list[hover.i] : null;
   return (
-    <span className="relative inline-block" style={{ touchAction: 'pan-y' }} onPointerLeave={leaveUnlessTouch(setHover)}>
+    <span className="relative inline-block" style={{ touchAction: 'pan-y' }} onPointerLeave={hc.leave}>
       <svg width={w} height={H} viewBox={`0 0 ${w} ${H}`} className="block overflow-visible">
         <line x1="0" x2={w} y1={base} y2={base} stroke="rgb(var(--c-slate-200))" />
         <line x1="0" x2={w} y1={base - 3 * u} y2={base - 3 * u} stroke="rgb(var(--c-slate-300))" strokeDasharray="2 3" />
@@ -354,7 +359,7 @@ function Pulse({ list }) {
           const g = x.f - x.a;
           const h = g > 0 ? Math.min(g, CAP) * u : 2.5;
           return (
-            <g key={i} onPointerMove={(e) => setHover({ i, at: pointAt(e) })}>
+            <g key={i} {...hc.on(i, () => ({ i }))}>
               <rect x={i * PX} y={0} width={PX} height={H} fill="transparent" />
               <rect x={i * PX + 0.75} y={base - h} width={PX - 1.5} height={h} rx="0.5" fill={g > 0 ? '#10b981' : '#f59e0b'} opacity={!hover || hover.i === i ? 1 : 0.45} />
               {g > CAP && <rect x={i * PX + 0.25} y={top - 3} width={PX - 0.5} height="2" fill="#047857" />}
@@ -403,9 +408,9 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
   // momentum
   const [momSeason, setMomSeason] = useState(null);
   const [momMode, setMomMode] = useState('single');
-  const [momHover, setMomHover] = useState(null);
-  const [ovHover, setOvHover] = useState(null);
-  const [distHover, setDistHover] = useState(null);
+  const [momHover, momHc] = useHoverCard();
+  const [ovHover, ovHc] = useHoverCard();
+  const [distHover, distHc] = useHoverCard();
   const [momRef, momW] = useWidth(1000);
   const momNum = momSeason || (seasonsPlayed.length ? seasonsPlayed[seasonsPlayed.length - 1].num : null);
   const momList = matches.filter((m) => m.season === momNum);
@@ -542,7 +547,7 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
                 <span className="w-16 sm:w-24 shrink-0 text-sm font-semibold text-slate-900">S{r.s.num} <span className="hidden sm:inline text-xs font-medium text-slate-500">{yearLabel(r.s.year)}</span></span>
                 <div className="flex-1 h-6 rounded-md overflow-hidden flex">
                   {TIERS.filter((t) => r.counts[t[0]]).map((t) => (
-                    <div key={t[0]} onPointerMove={(e) => setDistHover({ s: r.s.num, t, at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setDistHover)} className={`h-full flex items-center justify-center text-[11px] font-semibold cursor-default ${distHover && (distHover.s !== r.s.num || distHover.t[0] !== t[0]) ? 'opacity-60' : ''}`} style={{ width: `${(r.counts[t[0]] / r.gp) * 100}%`, background: t[2], color: t[3] }}>{r.counts[t[0]] >= 2 ? r.counts[t[0]] : ''}</div>
+                    <div key={t[0]} {...distHc.on(`${r.s.num}-${t[0]}`, () => ({ s: r.s.num, t }))} onPointerLeave={distHc.leave} className={`h-full flex items-center justify-center text-[11px] font-semibold cursor-default ${distHover && (distHover.s !== r.s.num || distHover.t[0] !== t[0]) ? 'opacity-60' : ''}`} style={{ width: `${(r.counts[t[0]] / r.gp) * 100}%`, background: t[2], color: t[3] }}>{r.counts[t[0]] >= 2 ? r.counts[t[0]] : ''}</div>
                   ))}
                 </div>
                 <span className="hidden sm:block w-10 text-right text-sm font-medium tabular-nums text-slate-500">{r.gp}</span>
@@ -563,7 +568,7 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
 
       {/* Momentum pulse: goal difference per match (one season) or each season's 5-game average (overlay) */}
       <Section title="Momentum pulse" sub={momMode === 'single' ? `Goal difference match by match, Season ${momNum || '–'}, with a 5-game average.` : 'Each season’s 5-game goal-difference average, laid over each other.'}
-        right={<div className="flex flex-wrap items-center gap-2"><Segmented value={momMode} onChange={(v) => { setMomMode(v); setMomHover(null); setOvHover(null); }} options={[{ value: 'single', label: 'One season' }, { value: 'overlay', label: 'Overlay' }]} />{momMode === 'single' && <Segmented value={String(momNum)} onChange={(v) => setMomSeason(Number(v))} options={seasonsPlayed.map((s) => ({ value: String(s.num), label: `S${s.num}` }))} />}</div>}>
+        right={<div className="flex flex-wrap items-center gap-2"><Segmented value={momMode} onChange={(v) => { setMomMode(v); momHc.close(); ovHc.close(); }} options={[{ value: 'single', label: 'One season' }, { value: 'overlay', label: 'Overlay' }]} />{momMode === 'single' && <Segmented value={String(momNum)} onChange={(v) => setMomSeason(Number(v))} options={seasonsPlayed.map((s) => ({ value: String(s.num), label: `S${s.num}` }))} />}</div>}>
         {momMode === 'single' ? (
           <div className="flex flex-wrap gap-5 text-xs font-medium text-slate-600">
             <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-500" />Win</span>
@@ -583,10 +588,11 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
               const maxN = Math.max(1, ...seasonsPlayed.map((s) => matches.filter((m) => m.season === s.num).length));
               const series = seasonsPlayed.map((s) => { const list = matches.filter((m) => m.season === s.num); return { s, list, av: avgOf(list) }; });
               const step = MW / maxN;
+              const ovAt = (e) => { const r = e.currentTarget.getBoundingClientRect(); const x = ((e.clientX - r.left) / r.width) * (MW + 44) - 34; return Math.max(0, Math.min(maxN - 1, Math.floor(x / step))); };
               return (
                 <svg width={momW} height={MH} viewBox={`-34 0 ${MW + 44} ${MH}`} style={{ touchAction: 'pan-y' }}
-                  onPointerMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); const x = ((e.clientX - r.left) / r.width) * (MW + 44) - 34; const i = Math.max(0, Math.min(maxN - 1, Math.floor(x / step))); setOvHover({ i, at: pointAt(e), series }); }}
-                  onPointerLeave={leaveUnlessTouch(setOvHover)}>
+                  {...ovHc.on(ovAt, (e) => ({ i: ovAt(e), series }), { scrub: true })}
+                  onPointerLeave={ovHc.leave}>
                   {grid}
                   {ovHover && <line x1={ovHover.i * step + step / 2} x2={ovHover.i * step + step / 2} y1="10" y2={MH - 10} stroke="rgb(var(--c-slate-900))" strokeOpacity="0.35" />}
                   {ovHover && series.filter((x) => x.av[ovHover.i] != null).map((x) => <circle key={x.s.num} cx={ovHover.i * step + step / 2} cy={mid - x.av[ovHover.i] * msc} r="3.5" fill={seasonHex(x.s.num)} stroke="#fff" strokeWidth="1.2" />)}
@@ -597,12 +603,12 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
             const mn = momList.length || 1, mavg = avgOf(momList);
             const mpts = mavg.map((a, i) => [(i * MW) / mn + MW / mn / 2, mid - a * msc]);
             return (
-              <svg width={momW} height={MH} viewBox={`-34 0 ${MW + 44} ${MH}`} style={{ touchAction: 'pan-y' }} onPointerLeave={leaveUnlessTouch(setMomHover)}>
+              <svg width={momW} height={MH} viewBox={`-34 0 ${MW + 44} ${MH}`} style={{ touchAction: 'pan-y' }} onPointerLeave={momHc.leave}>
                 {grid}
                 {momList.map((m, i) => {
                   const v = m.f - m.a, bw = (MW / mn) * 0.62;
                   return (
-                    <g key={i} onPointerMove={(e) => setMomHover({ i, at: pointAt(e) })}>
+                    <g key={i} {...momHc.on(i, () => ({ i }))}>
                       <rect x={(i * MW) / mn} y="0" width={MW / mn} height={MH} fill="transparent" />
                       <rect x={(i * MW) / mn + (MW / mn - bw) / 2} y={v > 0 ? mid - v * msc : mid} width={bw} height={v ? Math.abs(v) * msc : 3} rx="2" fill={v > 0 ? '#10b981' : v < 0 ? '#f43f5e' : '#fbbf24'} opacity={!momHover || momHover.i === i ? 1 : 0.5} />
                     </g>
@@ -857,8 +863,8 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
   const lastSeason = (() => { const l = played[played.length - 1]; if (!l) return null; if (!l.isComplete) return [...played].reverse().find((s) => s.isComplete && s.num !== l.num) || null; return played.length > 1 ? played[played.length - 2] : null; })();
   const LAST = lastSeason ? ppg(lastSeason) : AVG;
   const baseVal = base === 'rec' ? REC : base === 'last' ? LAST : AVG;
-  const [hoverMd, setHoverMd] = useState(null);
-  const [hoverAt, setHoverAt] = useState(null);
+  const [raceHover, raceHc] = useHoverCard();
+  const hoverMd = raceHover ? raceHover.md : null, hoverAt = raceHover ? raceHover.at : null;
   // Season strip: on load and when the focused season changes, scroll the
   // strip (never the page) so the focused cell is fully in view, 16px in
   // from the edge it was hidden behind.
@@ -916,10 +922,11 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
     let last = -1e9;
     return ends.map(({ s, y, x }) => { const yy = Math.max(y, last + 13); last = yy; return <g key={s.num}><line x1={x + 3} y1={y} x2={W_ - RM + 2} y2={yy} stroke={seasonHex(s.num)} strokeWidth="1" opacity="0.5" /><text x={W_ - RM + 6} y={yy + 4} fontSize="11" fontWeight="700" fill={seasonHex(s.num)}>S{s.num}</text></g>; });
   };
+  const mdAt = (e) => { const r = e.currentTarget.getBoundingClientRect(); const md = Math.round(1 + ((e.clientX - r.left) / r.width) * (maxMd - 1)); return Math.max(1, Math.min(maxMd, md)); };
   const hoverLayer = () => (
     <rect x={X0} y={Y0} width={W_ - RM - X0} height={H_ - Y0 - 30} fill="transparent" style={{ touchAction: 'pan-y' }}
-      onPointerMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); const md = Math.round(1 + ((e.clientX - r.left) / r.width) * (maxMd - 1)); setHoverMd(Math.max(1, Math.min(maxMd, md))); setHoverAt(pointAt(e)); }}
-      onPointerLeave={(e) => { if (e.pointerType !== 'touch') { setHoverMd(null); setHoverAt(null); } }} />
+      {...raceHc.on(mdAt, (e) => ({ md: mdAt(e) }), { scrub: true })}
+      onPointerLeave={raceHc.leave} />
   );
 
 
@@ -1026,7 +1033,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
   // benchmarks
   const [bScope, setBScope] = useState('all');
   const [openMd, setOpenMd] = useState(null);
-  const [hoverCell, setHoverCell] = useState(null);
+  const [hoverCell, cellHc] = useHoverCard();
   const bMatches = matches.filter((m) => bScope === 'all' || (bScope === 'div1' ? /1$/.test(String(m.division).trim()) : !/1$/.test(String(m.division).trim())));
   const byMd = useMemo(() => {
     const g = {};
@@ -1061,7 +1068,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
       <Section title="Points race" sub={mode === 'focus' ? `Season ${focus}, point by point.` : mode === 'compare' ? 'Every season, point by point.' : `Every season against your ${base === 'rec' ? 'record' : 'average'} pace.`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <Segmented value={mode} onChange={(v) => { setMode(v); setHoverMd(null); setHoverAt(null); }} options={[{ value: 'focus', label: 'Focus' }, { value: 'compare', label: 'Compare' }, { value: 'pace', label: 'Pace' }]} />
+            <Segmented value={mode} onChange={(v) => { setMode(v); raceHc.close(); }} options={[{ value: 'focus', label: 'Focus' }, { value: 'compare', label: 'Compare' }, { value: 'pace', label: 'Pace' }]} />
             {mode === 'pace' && <span className="flex items-center gap-2 text-xs font-medium text-slate-500">Measured against <Segmented value={base} onChange={setBase} options={[{ value: 'avg', label: `Your average (${AVG.toFixed(2)})` }, { value: 'rec', label: `Record (${REC.toFixed(2)})` }, ...(lastSeason ? [{ value: 'last', label: `Last season (S${lastSeason.num} · ${LAST.toFixed(2)})` }] : [])]} /></span>}
           </div>
           <Segmented value={div} onChange={(v) => { setDiv(v); setShown(null); }} options={[{ value: 'all', label: 'All' }, ...['1', '2', '3', '4'].filter((d) => played.some((s) => divLabel(s.division) === `Div ${d}`)).map((d) => ({ value: d, label: `Div ${d}` }))]} />
@@ -1095,17 +1102,17 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
             { label: 'Matchdays', value: byMd.length, line: <span>{Math.min(...byMd.map((r) => r.gp))}–{Math.max(...byMd.map((r) => r.gp))} games each</span> },
           ]} />
         )}
-        <div className="relative flex flex-col gap-1.5" onPointerLeave={leaveUnlessTouch(setHoverCell)}>
+        <div className="relative flex flex-col gap-1.5" onPointerLeave={cellHc.leave}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className={`${TYPE.card} text-slate-900`}>Win rate by matchday</span>
             <span className="flex flex-wrap gap-x-2 gap-y-3 sm:gap-3 text-xs text-slate-500">{HEAT.map((h) => <span key={h[2]} className="inline-flex items-center gap-1 whitespace-nowrap"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: h[1] }} />{h[2]}</span>)}</span>
           </div>
           <div className="flex gap-0.5">
-            {byMd.map((r) => <span key={r.md} onPointerEnter={() => setHoverCell(r)} onClick={() => setOpenMd(r.md)} className={`h-7 flex-1 rounded-[3px] cursor-pointer ${hoverCell && hoverCell.md === r.md ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`} style={{ background: heat(r.w / r.gp) }} />)}
+            {byMd.map((r) => <span key={r.md} {...cellHc.on(r.md, () => r)} onClick={() => setOpenMd(r.md)} className={`h-7 flex-1 rounded-[3px] cursor-pointer ${hoverCell && hoverCell.md === r.md ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`} style={{ background: heat(r.w / r.gp) }} />)}
           </div>
           <div className="flex justify-between text-[11px] text-slate-400"><span>MD {byMd.length ? byMd[0].md : ''}</span><span>MD {byMd.length ? byMd[byMd.length - 1].md : ''}</span></div>
           {hoverCell && (
-            <div className="absolute z-20 top-full mt-1 w-60 bg-white rounded-xl shadow-lg ring-1 ring-slate-200 p-3 flex flex-col gap-1.5 pointer-events-none" style={{ left: `${Math.min(80, ((hoverCell.md - 1) / Math.max(1, byMd.length - 1)) * 100)}%` }}>
+            <div data-hv-card="" className="absolute z-20 top-full mt-1 w-60 bg-white rounded-xl shadow-lg ring-1 ring-slate-200 p-3 flex flex-col gap-1.5 pointer-events-none" style={{ left: `${Math.min(80, ((hoverCell.md - 1) / Math.max(1, byMd.length - 1)) * 100)}%` }}>
               <div className="flex items-baseline justify-between"><span className="text-sm font-extrabold text-slate-900">MD {hoverCell.md}</span><span className="text-xs text-slate-500">{hoverCell.gp} seasons</span></div>
               <div className="flex items-center justify-between"><span className="text-sm font-semibold tabular-nums"><WDLRecord w={hoverCell.w} d={hoverCell.d} l={hoverCell.l} /></span><span className="text-sm font-semibold text-slate-900">{Math.round((hoverCell.w / hoverCell.gp) * 100)}% · {(hoverCell.pts / hoverCell.gp).toFixed(2)} PPG</span></div>
               <div className="text-xs text-slate-500">{(() => { const i = ranked.findIndex((r) => r.md === hoverCell.md); return i === 0 ? 'Your weakest matchday' : i === ranked.length - 1 ? 'Your strongest matchday' : `${ORD(ranked.length - i)} best of ${ranked.length}`; })()}</div>
@@ -1189,8 +1196,8 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
   const [metric, setMetric] = useState('pts');
   const [sel, setSel] = useState([]);
   const [combine, setCombine] = useState(false);
-  const [swingHover, setSwingHover] = useState(null);
-  const [formHover, setFormHover] = useState(null);
+  const [swingHover, swingHc] = useHoverCard();
+  const [formHover, formHc] = useHoverCard();
   const [ledMetric, setLedMetric] = useState('pts');
   const [swRef, swW] = useWidth(1000);
   const phone = useScreen() === 'phone';
@@ -1294,7 +1301,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
           {sel.length > 0 && <button type="button" onClick={() => setSel([])} className={`${TAP} ml-auto text-xs font-semibold text-slate-500 hover:text-slate-900 max-sm:min-h-[32px]`}>Clear</button>}
         </div>
         <div ref={swRef} className="w-full">
-          <svg width={SW} height={SH} viewBox={`0 0 ${SW} ${SH}`} style={{ touchAction: 'pan-y' }} onPointerLeave={leaveUnlessTouch(setSwingHover)}>
+          <svg width={SW} height={SH} viewBox={`0 0 ${SW} ${SH}`} style={{ touchAction: 'pan-y' }} onPointerLeave={swingHc.leave}>
             <line x1="20" x2={SW - 20} y1={mid} y2={mid} stroke="rgb(var(--c-slate-400))" />
             <text x="20" y="16" fontSize="11" fontWeight="600" fill={HC}>▲ Home stronger</text>
             <text x="20" y={SH - 4} fontSize="11" fontWeight="600" fill="rgb(var(--c-sky-700))">▼ Away stronger</text>
@@ -1302,7 +1309,7 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
               const d = diffs[i], x = 20 + colw * i + colw / 2, bw = Math.min(48, colw * 0.4);
               const on = !sel.length || sel.includes(r.num), op = on ? 1 : 0.35;
               return (
-                <g key={r.num} className="cursor-pointer" onClick={() => toggleSeason(r.num)} onPointerMove={(e) => setSwingHover({ r, at: pointAt(e) })}>
+                <g key={r.num} className="cursor-pointer" onClick={() => toggleSeason(r.num)} {...swingHc.on(r.num, () => ({ r }))}>
                   <rect data-tap="season" x={x - colw / 2} y="0" width={colw} height={SH} fill="transparent" />
                   <rect x={x - colw / 2 + 4} y="22" width={colw - 8} height={SH - 44} rx="10" fill={sel.includes(r.num) ? '#6366f1' : 'transparent'} fillOpacity="0.07" stroke={sel.includes(r.num) ? '#6366f1' : 'none'} strokeOpacity="0.5" />
                   {d > 0 && <rect x={x - bw / 2} y={mid - d * sc} width={bw} height={d * sc} rx="3" fill={HC} opacity={op} />}
@@ -1335,9 +1342,9 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
         {phone ? (
           <div>
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pb-2 border-b border-slate-200">
-              <span className="inline-flex items-center gap-1.5 text-sm font-extrabold cursor-default" style={{ color: HC }} onPointerMove={(e) => setFormHover({ side: 'H', at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setFormHover)}><Home className="w-4 h-4" />Home</span>
+              <span className="inline-flex items-center gap-1.5 text-sm font-extrabold cursor-default" style={{ color: HC }} {...formHc.on('H', () => ({ side: 'H' }))} onPointerLeave={formHc.leave}><Home className="w-4 h-4" />Home</span>
               <span className="text-center text-xs text-slate-400 whitespace-nowrap">{cur.H.gp} · {cur.A.gp} matches</span>
-              <span className="justify-self-end inline-flex items-center gap-1.5 text-sm font-extrabold text-sky-600 cursor-default" onPointerMove={(e) => setFormHover({ side: 'A', at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setFormHover)}>Away<Plane className="w-4 h-4" /></span>
+              <span className="justify-self-end inline-flex items-center gap-1.5 text-sm font-extrabold text-sky-600 cursor-default" {...formHc.on('A', () => ({ side: 'A' }))} onPointerLeave={formHc.leave}>Away<Plane className="w-4 h-4" /></span>
             </div>
             {rows.map(([lab, hv, av, lb, fd, fv]) => {
               const better = hv === av ? null : (lb ? hv < av : hv > av) ? 'H' : 'A';
@@ -1366,11 +1373,11 @@ export function HomeAwayTab({ seasons = [], accent = 'indigo' }) {
         ) : (
         <div>
           <div className="grid grid-cols-[52px_1fr_118px_1fr_52px] sm:grid-cols-[110px_1fr_200px_1fr_110px] gap-2 sm:gap-4 pb-2 border-b border-slate-200">
-            <span className="text-right inline-flex items-center justify-end gap-1.5 text-sm font-extrabold text-slate-900 cursor-default" onPointerMove={(e) => setFormHover({ side: 'H', at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setFormHover)}><Home className="w-4 h-4" style={{ color: HC }} /><span className="hidden sm:inline">Home</span></span>
+            <span className="text-right inline-flex items-center justify-end gap-1.5 text-sm font-extrabold text-slate-900 cursor-default" {...formHc.on('H', () => ({ side: 'H' }))} onPointerLeave={formHc.leave}><Home className="w-4 h-4" style={{ color: HC }} /><span className="hidden sm:inline">Home</span></span>
             <span />
             <span className="text-center text-xs text-slate-400">{cur.H.gp} · {cur.A.gp} matches</span>
             <span />
-            <span className="inline-flex items-center gap-1.5 text-sm font-extrabold text-slate-900 cursor-default" onPointerMove={(e) => setFormHover({ side: 'A', at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setFormHover)}><span className="hidden sm:inline">Away</span><Plane className="w-4 h-4 text-sky-600" /></span>
+            <span className="inline-flex items-center gap-1.5 text-sm font-extrabold text-slate-900 cursor-default" {...formHc.on('A', () => ({ side: 'A' }))} onPointerLeave={formHc.leave}><span className="hidden sm:inline">Away</span><Plane className="w-4 h-4 text-sky-600" /></span>
           </div>
           {rows.map(([lab, hv, av, lb, fd, fv]) => {
             const better = hv === av ? null : (lb ? hv < av : hv > av) ? 'H' : 'A';
@@ -1580,13 +1587,13 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
   const cx = RW / 2, cy = radPhone ? RH / 2 : RH / 2 + 4, PADX = 0;
   const ptAt = (i, f) => { const a = -Math.PI / 2 + (i * Math.PI) / 3; return [cx + R0 * f * Math.cos(a), cy + R0 * f * Math.sin(a)]; };
   const polyOf = (prof) => PILLARS.map((p, i) => ptAt(i, clamp01(pos(p, prof[p.key]))).map((v) => v.toFixed(1)).join(',')).join(' ');
-  const [axisHover, setAxisHover] = useState(null);
+  const [axisHover, axisHc] = useHoverCard();
   const grid = (
     <g>
       {[0.25, 0.5, 0.75, 1].map((f) => <polygon key={f} points={PILLARS.map((_, i) => ptAt(i, f).join(',')).join(' ')} fill="none" stroke="rgb(var(--c-slate-200))" />)}
       {PILLARS.map((_, i) => { const [x, y] = ptAt(i, 1); return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgb(var(--c-slate-200))" />; })}
       {PILLARS.map((p, i) => {
-        const hover = { className: 'cursor-default', onPointerMove: (e) => setAxisHover({ p, at: pointAt(e) }), onPointerLeave: leaveUnlessTouch(setAxisHover) };
+        const hover = { className: 'cursor-default', ...axisHc.on(p.key, () => ({ p })), onPointerLeave: axisHc.leave };
         if (!radPhone) { const [x, y] = ptAt(i, 1.2); const anchor = Math.abs(x - cx) < 4 ? 'middle' : x > cx ? 'start' : 'end'; return <text key={p.key} x={x} y={y + 4} fontSize="12" fontWeight="700" textAnchor={anchor} fill="rgb(var(--c-slate-700))" {...hover}>{p.label}</text>; }
         // Phone: top and bottom labels centred just outside the rim, side labels beside it
         const [x, y] = ptAt(i, 1); const ls = lblLines(p, i);
@@ -1689,7 +1696,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
   };
 
   // Group dot line for one pillar
-  const [dotHover, setDotHover] = useState(null);
+  const [dotHover, dotHc] = useHoverCard();
   const dotLine = (p) => {
     const vals = gLayers.map((L) => ({ L, v: L.prof[p.key], r: pos(p, L.prof[p.key]) }));
     if (!vals.length) return null;
@@ -1705,7 +1712,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
           <div className="absolute left-0 right-0 top-[9px] h-0.5 bg-slate-200" />
           <div className="absolute top-0.5 h-4 w-0.5 bg-slate-600" style={{ left: `${f(pos(p, career[p.key])) * 100}%` }} />
           {[...vals].sort((a, b) => (a.L.id === hl ? 1 : 0) - (b.L.id === hl ? 1 : 0)).map(({ L, v, r }) => { const k = Math.round(f(r) * 200); const n = seen[k] || 0; seen[k] = n + 1; const on = !hl || hl === L.id; return (
-            <span key={L.id} onPointerMove={(e) => setDotHover({ L, p, v, at: pointAt(e) })} onPointerLeave={leaveUnlessTouch(setDotHover)} className="absolute top-[3px] w-3.5 h-3.5 rounded-full cursor-default" style={{ left: `calc(${f(r) * 100}% - 7px + ${n * 9}px)`, background: L.color, boxShadow: `0 0 0 2px #fff${hl === L.id ? `, 0 0 0 4px ${L.color}` : ''}`, opacity: on ? 1 : 0.3, zIndex: hl === L.id ? 2 : 1 }} />
+            <span key={L.id} {...dotHc.on(`${p.key}-${L.id}`, () => ({ L, p, v }))} onPointerLeave={dotHc.leave} className="absolute top-[3px] w-3.5 h-3.5 rounded-full cursor-default" style={{ left: `calc(${f(r) * 100}% - 7px + ${n * 9}px)`, background: L.color, boxShadow: `0 0 0 2px #fff${hl === L.id ? `, 0 0 0 4px ${L.color}` : ''}`, opacity: on ? 1 : 0.3, zIndex: hl === L.id ? 2 : 1 }} />
           ); })}
           <span className="absolute -top-[18px] -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-slate-700" style={{ left: `${f(best.r) * 100}%` }}>{best.L.short} {p.fmt(best.v)}</span>
           {worst !== best && <span className="absolute top-[22px] -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-slate-700" style={{ left: `${f(worst.r) * 100}%` }}>{worst.L.short} {p.fmt(worst.v)}</span>}

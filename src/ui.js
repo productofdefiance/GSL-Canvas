@@ -2,7 +2,7 @@
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — ui.js (shared building blocks for every section)
  *  Version:  UI v31
- *  Date:     2026-10-17, 18:00 UTC
+ *  Date:     2026-10-17, 20:00 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  Everything here is shared by League, Cups and Pyramid, so the sections
@@ -22,7 +22,7 @@
  *  SectionInfo ..... a section's [i]: popover on desktop, bottom sheet on phones
  *
  *  CHANGELOG
- *  UI v31 — 2026-10-17, 18:00 UTC — Canvas v51.19
+ *  UI v31 — 2026-10-17, 20:00 UTC — Canvas v51.19
  *   - SectionInfo (R14): a section's description in an [i] at the top right
  *     of its header. Lucide Info, 18px, slate-400, in a 44px tap area; the
  *     page accent on a 10% tint while open. Desktop: a 330px popover under
@@ -36,6 +36,17 @@
  *   - TapStyle + TAP: the gsl-tap class gives a small control an invisible
  *     44 × 44px tap area on phones; the control's look doesn't change.
  *     Segmented takes tap to use it on its buttons; existing callers unchanged.
+ *   - Hover cards on touch, one set of rules for every page (iPhone sends no
+ *     pointermove for a plain tap, and no click for a tap on blank space):
+ *     useHoverCard (a card that follows a target: opens on a tap, switches on
+ *     another, closes on a second tap, a tap anywhere else or a scroll; a
+ *     sideways slide scrubs where asked), useTapAway (close on a finished tap
+ *     outside, pointerup, never touch-down or click; and on scroll),
+ *     useOverlay (one overlay at a time: an opening card or [i] closes the
+ *     rest) and useTouchCard (both, for a page's own docked card).
+ *     HoverProvider and usePointerTrack close through useTapAway instead of a
+ *     document click. The [i] popover and sheet sit above hover cards (z 80;
+ *     Sheet takes z). Cards carry data-hv-card for the kit's tap test.
  *
  *  UI v30 — 2026-10-17, 07:45 UTC — Canvas v51.18
  *   - Fonts locked: page titles default to Outfit (LAB_CHOICES.title.def).
@@ -702,6 +713,117 @@ export function FitText({ children, className = '', min = 14 }) {
 // (e.g. "Open profile ›"). Desktop clicks still act straight away.
 // Spread hv(content) onto any element (HTML or SVG): <rect {...hv(c)}/>
 const HoverCtx = createContext(null);
+// ─── OVERLAYS ON TOUCH (UI v31, Canvas v51.19) ───────────────────────
+// One set of rules for every hover card and the section [i], on every page.
+// iPhone sends no pointermove for a plain tap and no click for a tap on
+// something that isn't clickable (blank space, plain divs), so cards open,
+// switch and close at the END of a tap (pointerup), never on touch-down
+// (changing the page mid-tap makes iPhone drop the tap) and never on click.
+//
+// useOverlay(open, close): one overlay at a time. Returns announce(): call it
+// when this overlay opens (a touch card, an [i]); every other open overlay
+// closes. Mouse hover cards listen but don't announce.
+const OVERLAY = 'gsl-overlay';
+let overlaySeq = 0;
+export function useOverlay(open, close) {
+  const id = useRef(0);
+  if (!id.current) id.current = ++overlaySeq;
+  const cb = useRef(close);
+  cb.current = close;
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return undefined;
+    const other = (e) => { if (e.detail !== id.current) cb.current(); };
+    window.addEventListener(OVERLAY, other);
+    return () => window.removeEventListener(OVERLAY, other);
+  }, [open]);
+  const announce = useRef(() => { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(OVERLAY, { detail: id.current })); });
+  return announce.current;
+}
+// useTapAway(active, close, opts): while active, a finished tap (pointerup,
+// moved less than 12px) anywhere outside closes, blank space included, and
+// so does a scroll anywhere on the page. Taps inside `box` (a ref) or on
+// anything matching `keep` (default: hover targets, [data-hv]) are left to
+// their own handlers. mouse: true also closes on a mouse press outside (the
+// [i] popover); scroll: false keeps it open while the page scrolls.
+export function useTapAway(active, close, { box = null, keep = '[data-hv]', mouse = false, scroll = true } = {}) {
+  const cb = useRef(close);
+  cb.current = close;
+  useEffect(() => {
+    if (!active || typeof document === 'undefined') return undefined;
+    let start = null;
+    const kept = (t) => !!t && ((box && box.current && box.current.contains(t)) || (keep && t.closest && t.closest(keep)));
+    const down = (e) => {
+      start = { x: e.clientX, y: e.clientY };
+      if (mouse && e.pointerType === 'mouse' && !kept(e.target)) cb.current();
+    };
+    const up = (e) => {
+      if (e.pointerType === 'mouse') return;
+      const s = start;
+      start = null;
+      if (s && Math.abs(e.clientX - s.x) + Math.abs(e.clientY - s.y) > 12) return;
+      if (!kept(e.target)) cb.current();
+    };
+    const sc = () => cb.current();
+    document.addEventListener('pointerdown', down, true);
+    document.addEventListener('pointerup', up, true);
+    if (scroll) document.addEventListener('scroll', sc, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener('pointerdown', down, true);
+      document.removeEventListener('pointerup', up, true);
+      if (scroll) document.removeEventListener('scroll', sc, { capture: true });
+    };
+  }, [active]);
+}
+// useTouchCard(open, close, opts): for a page's own docked touch card (Pyramid,
+// Squad): useTapAway plus one-overlay-at-a-time, announced when it opens.
+export function useTouchCard(open, close, opts) {
+  const announce = useOverlay(open, close);
+  useTapAway(open, close, opts);
+  useEffect(() => { if (open) announce(); }, [open]);
+}
+// useHoverCard(): a card that follows a target (LeagueTabs' FloatCards).
+//   const [hover, hc] = useHoverCard();
+//   <g {...hc.on(key, (e) => ({ i }))} />   container: onPointerLeave={hc.leave}
+//   {hover && <FloatCard at={hover.at}>…</FloatCard>}   (hover = make(e) + at)
+// Mouse: shows on move, hides on leave, as before. Touch: a tap on a target
+// opens its card or switches to it; tapping the same target again closes it;
+// a tap anywhere else, or a scroll, closes it. scrub: true also lets a
+// sideways slide update the card (key and make read the finger's position).
+// key may be a function of the event (charts that pick a spot along x).
+export function useHoverCard() {
+  const [h, setH] = useState(null);
+  const down = useRef(null);
+  const close = useRef(() => setH(null)).current;
+  const announce = useOverlay(!!h, close);
+  useTapAway(!!(h && h.at.touch), close);
+  const keyOf = (key, e) => (typeof key === 'function' ? key(e) : key);
+  const at = (e, touch) => ({ x: e.clientX, y: e.clientY, touch });
+  const on = (key, make, { scrub = false } = {}) => ({
+    'data-hv': '',
+    onPointerMove: (e) => {
+      if (e.pointerType === 'mouse') { setH({ ...make(e), at: at(e, false), key: keyOf(key, e) }); return; }
+      const d = down.current;
+      if (!scrub || !d) return;
+      if (!d.on) { const dx = Math.abs(e.clientX - d.x), dy = Math.abs(e.clientY - d.y); if (dx > 8 && dx > dy) { d.on = true; announce(); } else return; }
+      setH({ ...make(e), at: at(e, true), key: keyOf(key, e) });
+    },
+    onPointerDown: (e) => { if (e.pointerType !== 'mouse') down.current = { x: e.clientX, y: e.clientY, key: keyOf(key, e), on: false }; },
+    onPointerUp: (e) => {
+      if (e.pointerType === 'mouse') return;
+      const d = down.current;
+      down.current = null;
+      if (!d || d.on || Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 12) return;
+      const k = keyOf(key, e);
+      if (h && h.at.touch && h.key === k) { setH(null); return; }
+      announce();
+      setH({ ...make(e), at: at(e, true), key: k });
+    },
+    onPointerCancel: () => { down.current = null; },
+  });
+  const leave = (e) => { if (e.pointerType === 'mouse') setH(null); };
+  return [h, { on, leave, close }];
+}
+
 export function HoverProvider({ children, light = false }) {
   // UI v17: light = white card (Pyramid's style); default dark
   const [h, setH] = useState(null);
@@ -710,6 +832,7 @@ export function HoverProvider({ children, light = false }) {
   const down = useRef(null);
   const openEl = useRef(null);
   const swallow = useRef(false);
+  const announceRef = useRef(() => {});
   const api = useMemo(() => ({
     show: (e, c) => { openEl.current = null; setH({ x: e.clientX, y: e.clientY, c, docked: false }); },
     move: (e) => setH((o) => (o && !o.docked ? { ...o, x: e.clientX, y: e.clientY } : o)),
@@ -723,30 +846,22 @@ export function HoverProvider({ children, light = false }) {
       swallow.current = true;
       if (openEl.current === e.currentTarget) { openEl.current = null; setH(null); return; }
       openEl.current = e.currentTarget;
+      announceRef.current();
       setH({ x: 0, y: 0, c, docked: true });
     },
     // scrub: show a docked card without a target element (finger sliding along a chart)
-    dock: (c) => { openEl.current = null; setH((o) => (o && o.docked && o.c === c ? o : { x: 0, y: 0, c, docked: true })); },
+    dock: (c) => { openEl.current = null; setH((o) => { if (!(o && o.docked)) announceRef.current(); return o && o.docked && o.c === c ? o : { x: 0, y: 0, c, docked: true }; }); },
     takeSwallow: () => { const v = swallow.current; swallow.current = false; return v; },
     close: () => { openEl.current = null; setH(null); },
   }), []);
-  // A docked card closes on a finished tap outside any hover target, or on
-  // scroll. It listens for the click at the END of the tap: closing on
-  // touch-down changed the page mid-tap, and iPhone then dropped the tap.
+  // A docked card closes on a finished tap outside any hover target or the
+  // card, or on scroll (UI v31: useTapAway listens for pointerup, since iPhone
+  // sends no click for taps on blank space). Opening another overlay (an [i],
+  // another card) closes it too.
   const docked = !!(h && h.docked);
-  useEffect(() => {
-    if (!docked || typeof document === 'undefined') return undefined;
-    const outside = (e) => {
-      if (cardRef.current && cardRef.current.contains(e.target)) return;
-      if (e.target && e.target.closest && e.target.closest('[data-hv]')) return;
-      openEl.current = null;
-      setH(null);
-    };
-    const onScroll = () => { openEl.current = null; setH(null); };
-    document.addEventListener('click', outside, true);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => { document.removeEventListener('click', outside, true); window.removeEventListener('scroll', onScroll); };
-  }, [docked]);
+  const closeAll = useRef(() => { openEl.current = null; setH(null); }).current;
+  useTapAway(docked, closeAll, { box: cardRef });
+  announceRef.current = useOverlay(!!h, closeAll);
   // UI v19: a card can bring its own layout (content.body), width (content.width) and height (content.height)
   const W = (h && h.c && h.c.width) || 300;
   const rich = !!(h && h.c && h.c.body);
@@ -760,11 +875,11 @@ export function HoverProvider({ children, light = false }) {
   const pad = rich ? 'rounded-2xl overflow-hidden' : '';
   return (<HoverCtx.Provider value={api}>{children}
     {body && (h.docked
-      ? (<div ref={cardRef} className={`gsl-keep fixed z-[70] left-3 right-3 bottom-3 mx-auto max-w-sm ${rich ? pad : 'rounded-xl px-3.5 py-2.5 text-[12px] leading-snug'} ${lightNow ? 'bg-white/95 backdrop-blur-md border border-slate-200 text-slate-900' : 'bg-slate-900 text-white'} shadow-2xl`}>
+      ? (<div ref={cardRef} data-hv-card="" className={`gsl-keep fixed z-[70] left-3 right-3 bottom-3 mx-auto max-w-sm ${rich ? pad : 'rounded-xl px-3.5 py-2.5 text-[12px] leading-snug'} ${lightNow ? 'bg-white/95 backdrop-blur-md border border-slate-200 text-slate-900' : 'bg-slate-900 text-white'} shadow-2xl`}>
           {body}
           {h.c.action && (<button type="button" onClick={() => { const run = h.c.action.run; api.close(); run(); }} className={`${rich ? 'mx-4 mb-4 w-[calc(100%-2rem)]' : 'mt-2 w-full'} h-10 rounded-lg ${TYPE.button} ${lightNow ? 'bg-slate-100 hover:bg-slate-200 text-slate-900' : 'bg-white/10 hover:bg-white/20 text-white'}`}>{h.c.action.label} ›</button>)}
         </div>)
-      : (<div className={`gsl-keep fixed z-[70] pointer-events-none ${rich ? pad : 'rounded-lg px-3 py-2 text-[12px] leading-snug'} ${lightNow ? 'bg-white/95 backdrop-blur-md border border-slate-200 text-slate-900' : 'bg-slate-900 text-white'} shadow-xl`} style={{ position: 'fixed', pointerEvents: 'none', width: W, left: Math.max(8, h.x + 16 + W > vw ? h.x - W - 12 : h.x + 16), top: Math.max(8, Math.min(h.y + 14, vh - ((h.c && h.c.height) || 160))) }}>{body}</div>))}
+      : (<div data-hv-card="" className={`gsl-keep fixed z-[70] pointer-events-none ${rich ? pad : 'rounded-lg px-3 py-2 text-[12px] leading-snug'} ${lightNow ? 'bg-white/95 backdrop-blur-md border border-slate-200 text-slate-900' : 'bg-slate-900 text-white'} shadow-xl`} style={{ position: 'fixed', pointerEvents: 'none', width: W, left: Math.max(8, h.x + 16 + W > vw ? h.x - W - 12 : h.x + 16), top: Math.max(8, Math.min(h.y + 14, vh - ((h.c && h.c.height) || 160))) }}>{body}</div>))}
   </HoverCtx.Provider>);
 }
 // Fallback when no provider is around: the browser's own tooltip text
@@ -814,21 +929,18 @@ export function usePointerTrack(boxRef, onX, onClear) {
   cb.current = { onX, onClear };
   const st = useRef(null);
   const [touch, setTouch] = useState(false);
-  useEffect(() => {
-    if (!touch || typeof document === 'undefined') return undefined;
-    const out = (e) => { if (boxRef.current && boxRef.current.contains(e.target)) return; setTouch(false); cb.current.onClear(); };
-    const sc = () => { setTouch(false); cb.current.onClear(); };
-    document.addEventListener('click', out, true);
-    window.addEventListener('scroll', sc, { passive: true });
-    return () => { document.removeEventListener('click', out, true); window.removeEventListener('scroll', sc); };
-  }, [touch]);
+  // UI v31: a finished tap outside the box, a scroll, or another overlay clears it
+  const clear = useRef(() => { setTouch(false); cb.current.onClear(); }).current;
+  useTapAway(touch, clear, { box: boxRef });
+  const announce = useOverlay(touch, clear);
   const props = {
+    'data-hv': '',
     style: { touchAction: 'pan-y' },
     onPointerMove: (e) => {
       if (e.pointerType === 'mouse') { cb.current.onX(e.clientX); return; }
       const s = st.current;
       if (!s) return;
-      if (!s.on) { const dx = Math.abs(e.clientX - s.x), dy = Math.abs(e.clientY - s.y); if (dx > 8 && dx > dy) s.on = true; else return; }
+      if (!s.on) { const dx = Math.abs(e.clientX - s.x), dy = Math.abs(e.clientY - s.y); if (dx > 8 && dx > dy) { s.on = true; if (!touch) announce(); } else return; }
       setTouch(true);
       cb.current.onX(e.clientX);
     },
@@ -838,7 +950,7 @@ export function usePointerTrack(boxRef, onX, onClear) {
       if (e.pointerType === 'mouse') return;
       const s = st.current;
       st.current = null;
-      if (s && !s.on && Math.abs(e.clientX - s.x) + Math.abs(e.clientY - s.y) < 12) { setTouch(true); cb.current.onX(e.clientX); }
+      if (s && !s.on && Math.abs(e.clientX - s.x) + Math.abs(e.clientY - s.y) < 12) { if (!touch) announce(); setTouch(true); cb.current.onX(e.clientX); }
     },
     onPointerCancel: () => { st.current = null; },
   };
@@ -864,7 +976,8 @@ export function useLegendToggle() {
 // centred with a margin from tablet up. Tap outside or Escape to close.
 // fit (UI v31): on phones a bottom sheet as tall as its content (85% at most);
 // a downward swipe that starts on anything marked data-sheet-grab closes it.
-export function Sheet({ onClose, children, maxW = 'sm:max-w-5xl', fit = false }) {
+// z (UI v31): its layer; the [i] sheet sits above hover cards (z-[70]).
+export function Sheet({ onClose, children, maxW = 'sm:max-w-5xl', fit = false, z = 'z-50' }) {
   const [drag, setDrag] = useState(0);
   const from = useRef(null);
   useEffect(() => {
@@ -883,7 +996,7 @@ export function Sheet({ onClose, children, maxW = 'sm:max-w-5xl', fit = false })
     ? `bg-white w-full ${maxW} max-h-[85dvh] sm:max-h-[80vh] rounded-t-2xl sm:rounded-2xl`
     : `bg-slate-50 w-full ${maxW} h-[100dvh] sm:h-auto sm:max-h-[94vh] sm:rounded-2xl`;
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-xs flex items-end sm:items-center justify-center sm:p-6 font-sans" onClick={onClose}>
+    <div className={`fixed inset-0 ${z} bg-slate-950/50 backdrop-blur-xs flex items-end sm:items-center justify-center sm:p-6 font-sans`} onClick={onClose}>
       <style>{'@keyframes gslSheetUp{from{transform:translateY(100%)}to{transform:none}}@media (max-width:639px){.gsl-sheet{animation:gslSheetUp 220ms ease-out}}'}</style>
       <div className={`gsl-sheet ${box} overflow-hidden shadow-2xl flex flex-col`} style={drag ? { transform: `translateY(${drag}px)` } : undefined} onClick={(e) => e.stopPropagation()} {...swipe}>
         {children}
@@ -908,31 +1021,24 @@ export function TapStyle() {
 // Phones: the bottom Sheet, titled by the section. One open at a time across
 // the page. children: the rich text (wrap it in nothing; INFO_TEXT styles
 // paragraphs, lists and bold runs). Keep each section's text next to its code.
-const INFO_OPEN = 'gsl-info-open';
-let infoSeq = 0;
 export const INFO_TEXT = 'flex flex-col gap-2 [&_strong]:font-bold [&_strong]:text-slate-900 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1';
 export function SectionInfo({ title, accent = 'indigo', children }) {
   const phone = useScreen() === 'phone';
   const [open, setOpen] = useState(false);
-  const id = useRef(0);
-  if (!id.current) id.current = ++infoSeq;
   const box = useRef(null);
+  const close = useRef(() => setOpen(false)).current;
+  // UI v31: one overlay at a time (opening an [i] closes any hover card or
+  // other [i]); the popover closes on a mouse press or a finished tap outside
+  const announce = useOverlay(open, close);
+  useTapAway(open && !phone, close, { box, keep: null, mouse: true, scroll: false });
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const other = (e) => { if (e.detail !== id.current) setOpen(false); };
-    window.addEventListener(INFO_OPEN, other);
-    return () => window.removeEventListener(INFO_OPEN, other);
-  }, []);
-  useEffect(() => {
-    if (!open || phone || typeof document === 'undefined') return undefined;
-    const out = (e) => { if (box.current && !box.current.contains(e.target)) setOpen(false); };
+    if (!open || phone || typeof window === 'undefined') return undefined;
     const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('pointerdown', out);
     window.addEventListener('keydown', esc);
-    return () => { document.removeEventListener('pointerdown', out); window.removeEventListener('keydown', esc); };
+    return () => window.removeEventListener('keydown', esc);
   }, [open, phone]);
   const toggle = () => {
-    if (!open && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(INFO_OPEN, { detail: id.current }));
+    if (!open) announce();
     setOpen(!open);
   };
   const hex = ACCENT_HEX[accent] || ACCENT_HEX.indigo;
@@ -945,13 +1051,13 @@ export function SectionInfo({ title, accent = 'indigo', children }) {
         </span>
       </button>
       {open && !phone && (
-        <div role="dialog" aria-label={`About ${title}`} className="absolute right-[13px] top-full mt-1 z-40 w-[330px] max-h-[60vh] overflow-y-auto bg-white border border-slate-300 rounded-[14px] shadow-lg px-[18px] py-4 text-left">
+        <div role="dialog" aria-label={`About ${title}`} className="absolute right-[13px] top-full mt-1 z-[80] w-[330px] max-h-[60vh] overflow-y-auto bg-white border border-slate-300 rounded-[14px] shadow-lg px-[18px] py-4 text-left">
           <div className={`${TYPE.eyebrow} text-slate-500 mb-2`}>About this section</div>
           <div className={`text-[13px] leading-[1.5] font-normal text-slate-700 ${INFO_TEXT}`}>{children}</div>
         </div>
       )}
       {open && phone && (
-        <Sheet onClose={() => setOpen(false)} fit maxW="sm:max-w-md">
+        <Sheet onClose={close} fit maxW="sm:max-w-md" z="z-[80]">
           <div data-sheet-grab className="shrink-0 pt-2 pl-5 pr-2 flex flex-col" style={{ touchAction: 'none' }}>
             <span className="self-center w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
             <div className="flex items-center justify-between gap-2">
@@ -1986,6 +2092,7 @@ export function SegmentBar({ segments, total, context, chip, unit = 'matches', a
       {hover && (
         <div
           ref={cardRef}
+          data-hv-card=""
           className={`fixed ${track.touch ? 'z-[70] left-3 right-3 bottom-3 mx-auto max-w-sm' : 'z-50 w-64'} pointer-events-none shadow-2xl rounded-xl p-3 text-xs bg-white/95 backdrop-blur-md border border-slate-200 text-slate-900`}
           style={track.touch ? { position: 'fixed', pointerEvents: 'none' } : {
             position: 'fixed',

@@ -22,6 +22,7 @@ npm run check        # syntax.js + compile.js + build.js + render.js snap: every
 npm run css          # Tailwind CSS for the browser, prefixed with public/index.html's <style>
 npm run bundle       # browser/app.bundle.js
 npm run overflow     # phone overflow check on every League tab (scrollWidth must equal 390)
+npm run tap          # every League hover target tapped at 390, iPhone-style (see below); exit 1 on a failure
 cd browser && node shots6.js '[{"w":1440,"ov":{"App:sectionId":"league","League:activeTab":"spider"},"out":"x.png","dark":true}]'
 ```
 
@@ -52,6 +53,12 @@ Tab ids: league overview, fixtures, clubs, race, analytics, homeaway, spider.
 - `touch_t.js`: simulated finger drag on the Points race (PointerEvent with pointerType 'touch'); checks the docked card.
 - `sp_t.js`: Spider Matrix: picker, typing focus, swap, quick picks, Group add / remove, table, dark, phone.
 - `rv.js`: a review-fix pass: header alignment by measured positions, two-column list, hover cards, ledger switch.
+- `tap_t.js` (v51.19, `npm run tap`): hover cards on touch. A tap is pointerdown + pointerup only (no pointermove,
+  no click, as iPhone sends for blank space). On every League tab and view at 390, each `[data-hv]` target must open
+  its card (`[data-hv-card]`), switch when another target is tapped, and close on a blank tap and on scroll; plus an [i]
+  closing an open card, the sideways scrub (Points race, Overlay), a Cups sample (HoverProvider) and mouse hover at
+  1440. All of it takes about 15 minutes (Form & Margins alone ~10: 640 targets), so run it in parts with a timeout:
+  `timeout 560 node tap_t.js analytics-single`, `… analytics-overlay`, `… race,spider,homeaway,overview,fixtures,clubs,extras`.
 - `ha_t.js` (v51.19): Home vs Away on phones and the section [i]: popover / sheet, blurb text, ledger vs desktop, side-by-side bar widths, 44px tap areas, dark mode.
 - `capsec.js`: captures each section of a tab as HTML for design inventories.
 
