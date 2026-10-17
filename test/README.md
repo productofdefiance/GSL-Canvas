@@ -81,6 +81,10 @@ Tab ids: league overview, fixtures, clubs, race, analytics, homeaway, spider.
 - `pts_t.js` (v51.20): Points on phones: the folded ledger and its button, the strip scrub (and a vertical swipe
   still scrolling, sent as raw touch events), the docked card against its ledger row, "See in ledger" (centred,
   marked, the mark clearing), the Pace control rows and legend, the [i] text word for word, the dark [i] contrast.
+- `strip_t.js` (v51.20): the Points race season strip keeps the focused season fully inside after late layout:
+  a web font served 1.5s late (once with the cards sized to their text and ResizeObserver switched off, so only the
+  `document.fonts` handlers can act), cards widening after render, Pace → Focus, Div 1 → All, and a user's own
+  scroll not being undone. Prints each measurement (cell edges, strip edges, scroll position).
 - `ha_t.js` (v51.19): Home vs Away on phones and the section [i]: popover / sheet, blurb text, ledger vs desktop, side-by-side bar widths, 44px tap areas, dark mode.
 - `capsec.js`: captures each section of a tab as HTML for design inventories.
 

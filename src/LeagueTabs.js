@@ -39,6 +39,11 @@
  *     three rows; the baseline switch reads Average / Record / Last season and
  *     the legend carries its value ("Average · 2.40 PPG"); "Measured against"
  *     goes. Desktop unchanged.
+ *   - Points race season strip: the focused season is kept in view whenever
+ *     the layout can have moved (focus, mode or division change, web fonts
+ *     arriving, the strip or a cell resizing), not only when focus changes;
+ *     once the user scrolls the strip, it leaves it alone until focus, mode
+ *     or division changes.
  *   - Home vs Away: Venue swing's [i] uses a curly apostrophe (season’s).
  *   - [i] text: the two "Good to know" lines no longer name season lengths
  *     (corrected in the blurbs doc), so they hold for any save.
@@ -892,18 +897,48 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
   const baseVal = base === 'rec' ? REC : base === 'last' ? LAST : AVG;
   const [raceHover, raceHc] = useHoverCard();
   const hoverMd = raceHover ? raceHover.md : null, hoverAt = raceHover ? raceHover.at : null;
-  // Season strip: on load and when the focused season changes, scroll the
-  // strip (never the page) so the focused cell is fully in view, 16px in
-  // from the edge it was hidden behind.
+  // Season strip: scroll the strip (never the page) so the focused cell is
+  // fully in view, 16px in from the edge it was hidden behind. v12: it runs
+  // again whenever the layout can have moved: focus, mode or division change,
+  // web fonts arriving (document.fonts), and the strip or any cell changing
+  // size (ResizeObserver). Once the user scrolls the strip themselves (touch,
+  // pen or wheel on it), it stops until focus, mode or division changes.
   const stripRef = useRef(null);
-  useEffect(() => {
+  const stripUser = useRef(false);
+  const fitStrip = useRef(() => {});
+  fitStrip.current = () => {
     const strip = stripRef.current;
-    const cell = strip && strip.querySelector(`[data-season="${focus}"]`);
+    const cell = !stripUser.current && strip && strip.querySelector(`[data-season="${focus}"]`);
     if (!cell) return;
     const sb = strip.getBoundingClientRect(), cb = cell.getBoundingClientRect();
     if (cb.right > sb.right) strip.scrollLeft += cb.right - sb.right + 16;
     else if (cb.left < sb.left) strip.scrollLeft -= sb.left - cb.left + 16;
-  }, [focus]);
+  };
+  useEffect(() => { stripUser.current = false; fitStrip.current(); }, [focus, mode, div]);
+  const stripCells = pool.map((s) => s.num).join(',');
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip || typeof window === 'undefined') return undefined;
+    const fit = () => fitStrip.current();
+    const mine = () => { stripUser.current = true; };
+    let live = true;
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(fit) : null;
+    // The strip (its visible width) and its row of cells (their total width). The row is a
+    // stable box: the cells themselves are re-created on every render, so they can't be watched.
+    if (ro) { ro.observe(strip); if (strip.firstElementChild) ro.observe(strip.firstElementChild); }
+    const fonts = typeof document !== 'undefined' && document.fonts;
+    if (fonts && fonts.ready) fonts.ready.then(() => { if (live) fit(); });
+    if (fonts && fonts.addEventListener) fonts.addEventListener('loadingdone', fit);
+    strip.addEventListener('pointerdown', mine);
+    strip.addEventListener('wheel', mine, { passive: true });
+    return () => {
+      live = false;
+      if (ro) ro.disconnect();
+      if (fonts && fonts.removeEventListener) fonts.removeEventListener('loadingdone', fit);
+      strip.removeEventListener('pointerdown', mine);
+      strip.removeEventListener('wheel', mine);
+    };
+  }, [stripCells]);
 
   const maxMd = Math.max(38, ...pool.map((s) => s.gp));
   const [raceRef, raceW] = useWidth(1250);
@@ -1149,7 +1184,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
           {divSwitch}
         </div>
         )}
-        <div className="flex items-center gap-3"><div ref={stripRef} className="flex gap-1.5 overflow-x-auto pb-1 pr-4 sm:pr-0 min-w-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
+        <div className="flex items-center gap-3"><div ref={stripRef} className="overflow-x-auto pb-1 min-w-0"><div data-strip-row="" className="flex gap-1.5 w-max pr-4 sm:pr-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div></div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
         <div className="flex flex-wrap gap-5 text-xs font-medium text-slate-600">
           {mode === 'focus' ? (
             <>
