@@ -1,8 +1,8 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — ui.js (shared building blocks for every section)
- *  Version:  UI v28
- *  Date:     2026-10-09, 09:00 UTC
+ *  Version:  UI v29
+ *  Date:     2026-10-17, 12:00 UTC
  * ════════════════════════════════════════════════════════════════════
  *
  *  Everything here is shared by League, Cups and Pyramid, so the sections
@@ -21,6 +21,13 @@
  *  SegmentBar ...... a bar split into segments, with a hover card
  *
  *  CHANGELOG
+ *  UI v29 — 2026-10-17, 12:00 UTC — Canvas v51.17
+ *   - useDark(): true while the open page is shown dark (the switch is on and
+ *     the page is converted). App passes it in ChromeContext. Only for code
+ *     that works with colour values (e.g. clash checks); classes and CSS
+ *     variables already swap by themselves.
+ *   - INK_HEX: the ink token as hex, { light: '#0f172a', dark: '#f1f5f9' }.
+ *
  *  UI v28 — 2026-10-09, 09:00 UTC — Canvas v51.14
  *   - FilterPills: optional icon before the label (Opponents nation flags).
  *
@@ -562,7 +569,13 @@ export function useWidth(initial = 800) {
 }
 // Page chrome shared with the sections (App provides it).
 // headerFolded: the Title Row is folded away and only the Tab Bar sticks.
-export const ChromeContext = createContext({ headerFolded: false });
+// dark: the open page is shown dark (switch on and the page converted).
+export const ChromeContext = createContext({ headerFolded: false, dark: false });
+// For code that needs colour values per mode (clash checks, mixing);
+// classes and CSS variables swap by themselves.
+export function useDark() { return useContext(ChromeContext).dark === true; }
+// The ink token (Design System) as hex, per mode.
+export const INK_HEX = { light: '#0f172a', dark: '#f1f5f9' };
 // A row that scrolls sideways, with a faded edge on any side that has more
 // to see. The child marked data-active="true" scrolls into view when
 // activeKey changes. fade = the background colour behind the row.
