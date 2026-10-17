@@ -9,7 +9,7 @@
  *
  *  Canvas v51.18 — 2026-10-17, 07:45 UTC — Quick fixes
  *   - The Lab bar is rendered only while SHOW_LAB_BAR (ui.js) is true; it is
- *     false, so the bar is gone. Version line updated.
+ *     false, so the bar is gone. Version line updated (Cups v19 too).
  *
  *  Canvas v51.17 — 2026-10-17, 12:00 UTC — Dark-mode fixes
  *   - ChromeContext also carries dark (the page is shown dark), read with
@@ -322,7 +322,7 @@ import { PAGE_WIDTH, ChromeContext, LabBar, SHOW_LAB_BAR, registerClubSheets } f
 
 // Footer: which version of each file is running, and when this Canvas
 // version was published (v50: replaces the floating corner tag).
-const VERSION_TAG = 'Canvas v51.18 • League v36 • LeagueTabs v10 • Cups v18 • Cups Lab v2 • Pyramid v29 • Squad v31 • UI v30';
+const VERSION_TAG = 'Canvas v51.18 • League v36 • LeagueTabs v10 • Cups v19 • Cups Lab v2 • Pyramid v29 • Squad v31 • UI v30';
 const PUBLISHED = '17 Oct 2026, 07:45 UTC';
 
 // Pages that have been converted to the design system, and so can go dark.

@@ -1,9 +1,12 @@
 <!--
   GSL CANVAS — public/index.html
   Version:  Canvas v51.18 · 2026-10-17, 07:45 UTC
+  v51.18: no literal html tag in any comment. react-scripts injects its
+  script after the first one it finds, so a tag inside a comment hid the
+  app's script and the page stayed blank.
   v51.18: fonts locked. Page titles default to Outfit (--font-title). The
   script that re-applied a saved Lab font choice before the page draws is
-  removed: ui.js puts the locked set on <html> on every load (and LabBar
+  removed: ui.js puts the locked set on the html element on every load (and LabBar
   applies a saved choice again if SHOW_LAB_BAR is turned back on).
   v51.07: division colours (--c-div1…4; bright partners in dark mode) and
   .gsl-divstrip / .gsl-divchip / .gsl-divbar / .gsl-divtext.
@@ -102,7 +105,7 @@ html[data-big-track="t10"] { --big-track: 0.1em; }
 .gsl-divstrip, .gsl-divchip { background-color: rgb(var(--d)); color: #fff; }
 .gsl-divbar { background-color: rgb(var(--d)); }
 .gsl-divtext { color: rgb(var(--d)); }
-/* ── v51.06: dark mode. App puts .gsl-dark on <html> only while a page that
+/* ── v51.06: dark mode. App puts .gsl-dark on the html element only while a page that
    has been converted is open (League first). Every Tailwind colour reads a
    CSS variable, so dark mode swaps the variables: greys run light-to-dark in
    reverse; colour tints (50-300) darken, text shades (700-950) lighten,

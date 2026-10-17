@@ -3,12 +3,13 @@
   "private": true,
   "description": "Checks for every GSL Canvas build: syntax, server render, browser. Not part of the app.",
   "scripts": {
-    "check": "node syntax.js && node build.js && node render.js snap",
+    "check": "node syntax.js && node compile.js && node build.js && node render.js snap",
     "css": "node css.js snap cssC.css",
     "bundle": "cd browser && node bundle.js entry.js app.bundle.js",
     "overflow": "cd browser && node ow.js"
   },
   "devDependencies": {
+    "@babel/parser": "7.29.0",
     "playwright": "1.56.1",
     "postcss": "8.4.49",
     "react": "18.2.0",
