@@ -33,6 +33,7 @@ const VIEWS=[
  ['analytics',{'LeagueTabs:momMode':'single'}],['analytics',{'LeagueTabs:momMode':'overlay'}],
  ['homeaway',{}],
  ['spider',{'LeagueTabs:mode':'versus'}],['spider',{'LeagueTabs:mode':'group','LeagueTabs:gKind':'seasons'}],['spider',{'LeagueTabs:mode':'group','LeagueTabs:gKind':'clubs'}],
+ ['spider',{'LeagueTabs:mode':'group','LeagueTabs:gKind':'seasons','LeagueTabs:gTable':true}],['spider',{'LeagueTabs:mode':'group','LeagueTabs:gKind':'clubs','LeagueTabs:gTable':true}],
 ];
 const viewName=(tab,x)=>(Object.keys(x).length?`${tab}-${Object.values(x).join('-')}`:tab);
 const inList=(L,tab,x)=>L.includes('all')||L.includes(tab)||L.includes(viewName(tab,x));

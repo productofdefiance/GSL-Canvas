@@ -2,8 +2,8 @@
  *  ═══════════════════════════════════════════════════════════════════════════
  *  GSL CANVAS: League · Form & Margins and Points tabs
  *  ═══════════════════════════════════════════════════════════════════════════
- *  Version:  LeagueTabs v12
- *  Date:     2026-10-17, 22:00 UTC
+ *  Version:  LeagueTabs v13
+ *  Date:     2026-10-17, 23:30 UTC
  *
  *  The two League tabs redesigned in the v51 Palette Lab (Form & Margins
  *  rounds 1–3, Points rounds 1–5), built as their own module so League.js
@@ -20,7 +20,34 @@
  *
  *  CHANGELOG (newest first)
  *
- *  LeagueTabs v12 — 2026-10-17, 22:00 UTC — Canvas v51.20 (Points on phones)
+ *  LeagueTabs v13 — 2026-10-17, 23:30 UTC — Canvas v51.21 (Spider Matrix on phones)
+ *   - Versus on phones: a "Quick picks" eyebrow, then every quick pick on one
+ *     row that scrolls sideways (36px chips, 44px tap areas); the selected one
+ *     kept in view (ui.js useKeepInView). Each scorecard pillar gets a verdict
+ *     chip on its header line (the desktop column's words; the leading layer's
+ *     colour on its 10% / 15% tint, or ink where that colour can't reach 4.5:1),
+ *     in place of the desktop column. Desktop unchanged.
+ *   - Group on phones, Lines: the pillar row is the tap target ("Tap to rank ›")
+ *     and opens a docked ranked card (best first, ties share a rank, the career
+ *     average as a divider row; a layer row brings it forward). The tapped row
+ *     is marked (accent tint, 3px bar); dots are no longer tap targets on
+ *     phones. Desktop dots keep their hover cards.
+ *   - Group: a finished tap on a chip, an outline or a table row brings that
+ *     layer forward (toggles); mouse hover as before.
+ *   - [i] on the comparison, Group and Highs & lows; "Outlines only." and both
+ *     Highs & lows subtitles removed.
+ *   - 44px tap areas on phones: Versus / Group, Change ▾, ⇄, quick picks, the
+ *     picker's kinds, rows, venue chips, search and Us / Them switch, Seasons /
+ *     Clubs, Lines / Table, chip ✕, Add menu rows, table rows, By club / By
+ *     season, the minimum-games filter, the radar's pillar labels.
+ *   - Points race season strip: its keep-in-view logic moved to ui.js
+ *     (useKeepInView); same behaviour.
+ *   - Sideways rows use ui.js ScrollRow, so an edge fades where more is
+ *     hidden: the Points season strip and the picker's kinds on phones (white
+ *     card), the quick picks and the Group chips (page background), in light
+ *     and dark. Ranked card rows are 44px tall. Verdict chips name a club
+ *     layer by its abbreviation ("CHE by 12.7%").
+ — 2026-10-17, 22:00 UTC — Canvas v51.20 (Points on phones)
  *   - Points race and Matchday benchmarks: subtitles removed; their words
  *     (from the section [i] blurbs) live in each section's [i].
  *   - Matchday benchmarks on phones: the ledger starts folded under "Show all
@@ -206,6 +233,8 @@ import {
   TapStyle,
   TAP,
   useHoverCard,
+  useKeepInView,
+  ScrollRow,
   ACCENT_HEX,
   ACCENT_HEX_LIGHT,
 } from './ui.js';
@@ -897,48 +926,11 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
   const baseVal = base === 'rec' ? REC : base === 'last' ? LAST : AVG;
   const [raceHover, raceHc] = useHoverCard();
   const hoverMd = raceHover ? raceHover.md : null, hoverAt = raceHover ? raceHover.at : null;
-  // Season strip: scroll the strip (never the page) so the focused cell is
-  // fully in view, 16px in from the edge it was hidden behind. v12: it runs
-  // again whenever the layout can have moved: focus, mode or division change,
-  // web fonts arriving (document.fonts), and the strip or any cell changing
-  // size (ResizeObserver). Once the user scrolls the strip themselves (touch,
-  // pen or wheel on it), it stops until focus, mode or division changes.
+  // Season strip: the focused season stays fully in view, scrolling only the
+  // strip (ui.js useKeepInView, from v13; built here in v12): on focus, mode or
+  // division changes, web fonts arriving and resizes, until the user scrolls it.
   const stripRef = useRef(null);
-  const stripUser = useRef(false);
-  const fitStrip = useRef(() => {});
-  fitStrip.current = () => {
-    const strip = stripRef.current;
-    const cell = !stripUser.current && strip && strip.querySelector(`[data-season="${focus}"]`);
-    if (!cell) return;
-    const sb = strip.getBoundingClientRect(), cb = cell.getBoundingClientRect();
-    if (cb.right > sb.right) strip.scrollLeft += cb.right - sb.right + 16;
-    else if (cb.left < sb.left) strip.scrollLeft -= sb.left - cb.left + 16;
-  };
-  useEffect(() => { stripUser.current = false; fitStrip.current(); }, [focus, mode, div]);
-  const stripCells = pool.map((s) => s.num).join(',');
-  useEffect(() => {
-    const strip = stripRef.current;
-    if (!strip || typeof window === 'undefined') return undefined;
-    const fit = () => fitStrip.current();
-    const mine = () => { stripUser.current = true; };
-    let live = true;
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(fit) : null;
-    // The strip (its visible width) and its row of cells (their total width). The row is a
-    // stable box: the cells themselves are re-created on every render, so they can't be watched.
-    if (ro) { ro.observe(strip); if (strip.firstElementChild) ro.observe(strip.firstElementChild); }
-    const fonts = typeof document !== 'undefined' && document.fonts;
-    if (fonts && fonts.ready) fonts.ready.then(() => { if (live) fit(); });
-    if (fonts && fonts.addEventListener) fonts.addEventListener('loadingdone', fit);
-    strip.addEventListener('pointerdown', mine);
-    strip.addEventListener('wheel', mine, { passive: true });
-    return () => {
-      live = false;
-      if (ro) ro.disconnect();
-      if (fonts && fonts.removeEventListener) fonts.removeEventListener('loadingdone', fit);
-      strip.removeEventListener('pointerdown', mine);
-      strip.removeEventListener('wheel', mine);
-    };
-  }, [stripCells]);
+  useKeepInView(stripRef, `[data-season="${focus}"]`, `${focus}|${mode}|${div}`, pool.map((s) => s.num).join(','));
 
   const maxMd = Math.max(38, ...pool.map((s) => s.gp));
   const [raceRef, raceW] = useWidth(1250);
@@ -1184,7 +1176,7 @@ export function PointsTab({ seasons = [], accent = 'indigo' }) {
           {divSwitch}
         </div>
         )}
-        <div className="flex items-center gap-3"><div ref={stripRef} className="overflow-x-auto pb-1 min-w-0"><div data-strip-row="" className="flex gap-1.5 w-max pr-4 sm:pr-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div></div>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
+        <div className="flex items-center gap-3"><ScrollRow boxRef={stripRef} surface="card" className="pb-1"><div data-strip-row="" className="flex gap-1.5 w-max pr-4 sm:pr-0">{pool.map((s) => <Cell key={s.num} s={s} />)}</div></ScrollRow>{mode !== 'focus' && <div className="shrink-0 self-stretch mb-1 flex flex-col rounded-lg ring-1 ring-slate-200 bg-slate-50 overflow-hidden text-[11px] font-semibold"><button type="button" onClick={() => setShown(new Set(pool.map((s) => s.num)))} className={`flex-1 px-3 ${shownSet.size === pool.length ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>All</button><span className="h-px bg-slate-200" /><button type="button" onClick={() => setShown(new Set())} className={`flex-1 px-3 ${shownSet.size === 0 ? 'bg-slate-900 text-slate-50' : 'text-slate-600 hover:bg-slate-100'}`}>None</button></div>}</div>
         <div className="flex flex-wrap gap-5 text-xs font-medium text-slate-600">
           {mode === 'focus' ? (
             <>
@@ -1666,6 +1658,18 @@ const tooClose = (a, b) => { const x = hexRgb(a), y = hexRgb(b); if (!x || !y) r
 // mode. The clash check needs a hex, so it uses INK_HEX for the mode that is
 // on (useDark).
 const INK = 'rgb(var(--c-slate-900))';
+// Verdict chips on phones (v13): the leading layer's colour on a 10% tint of it
+// (15% in dark mode) over the card; where that colour can't reach 4.5:1 against
+// its tint (light seasons on white, dark clubs on the dark card), ink text on the tint.
+const lumOf = (c) => { const v = c.map((x) => { const y = x / 255; return y <= 0.03928 ? y / 12.92 : ((y + 0.055) / 1.055) ** 2.4; }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+const contrastOf = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const verdictColors = (hex, dark) => {
+  const c = hexRgb(hex) || [100, 116, 139];
+  const card = dark ? [15, 23, 42] : [255, 255, 255], ink = dark ? [241, 245, 249] : [15, 23, 42], a = dark ? 0.15 : 0.1;
+  const tint = c.map((v, i) => Math.round(v * a + card[i] * (1 - a)));
+  const text = contrastOf(c, tint) >= 4.5 ? c : ink;
+  return { color: `rgb(${text.join(' ')})`, background: `rgb(${tint.join(' ')})` };
+};
 
 export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = 'indigo' }) {
   const matches = useMatches(seasons);
@@ -1707,6 +1711,9 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
     clubsByGames[0] && { label: `Career vs ${String(clubsByGames[0].c.name || '').toLowerCase().replace(/\b\w/g, (x) => x.toUpperCase())}`, a: { kind: 'career' }, b: { kind: 'opp', key: clubsByGames[0].abbr, persp: 'us' } },
   ].filter(Boolean);
   const isQuick = (q) => JSON.stringify(q.a) === JSON.stringify(LA) && JSON.stringify(q.b) === JSON.stringify(LB);
+  // Phones (v13): quick picks on one sideways row; the selected one kept in view (ui.js useKeepInView)
+  const quickRef = useRef(null);
+  useKeepInView(quickRef, '[data-quick-on]', JSON.stringify([LA, LB]), quick.map((q) => q.label).join('|'));
 
   // Group mode
   const [gKind, setGKind] = useState('seasons');
@@ -1762,7 +1769,11 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
         const anchor = i % 3 === 0 ? 'middle' : x > cx ? 'start' : 'end';
         const tx = anchor === 'middle' ? x : anchor === 'start' ? x + LBL_GAP : x - LBL_GAP;
         const y0 = i === 0 ? y - LBL_GAP - 3 : i === 3 ? y + LBL_GAP + LBL - 1 : y + 4 - ((ls.length - 1) * LBL_LINE) / 2;
-        return <text key={p.key} x={tx} y={y0} fontSize={LBL} fontWeight="700" textAnchor={anchor} fill="rgb(var(--c-slate-700))" {...hover}>{ls.map((l, k) => <tspan key={k} x={tx} dy={k ? LBL_LINE : 0}>{l}</tspan>)}</text>;
+        // v13: an invisible box of at least 44 x 44 around the label takes the tap
+        const tw = Math.max(...ls.map((l) => l.length * LBL * 0.62)), th = LBL + (ls.length - 1) * LBL_LINE;
+        const bx = anchor === 'middle' ? tx - tw / 2 : anchor === 'start' ? tx : tx - tw, by = y0 - LBL + 2;
+        const hw = Math.max(44, tw), hh = Math.max(44, th);
+        return <g key={p.key} {...hover}><rect data-axis-tap="" x={bx + tw / 2 - hw / 2} y={by + th / 2 - hh / 2} width={hw} height={hh} fill="transparent" /><text x={tx} y={y0} fontSize={LBL} fontWeight="700" textAnchor={anchor} fill="rgb(var(--c-slate-700))">{ls.map((l, k) => <tspan key={k} x={tx} dy={k ? LBL_LINE : 0}>{l}</tspan>)}</text></g>;
       })}
     </g>
   );
@@ -1780,33 +1791,36 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
     const kinds = [['career', 'Career', 'Your whole history', 1, Trophy], ['seasons', 'Seasons', 'One campaign', played.length, Calendar], ['venue', 'Venue', 'Home or away', 2, Home], ['opp', 'Opponents', 'Your record against a club', clubsByGames.length, Shield]];
     return (
       <div className="absolute z-40 top-full right-0 mt-2 w-[min(620px,calc(100vw-2rem))] bg-white rounded-xl shadow-xl ring-1 ring-slate-200 flex flex-col sm:flex-row text-left" onClick={(e) => e.stopPropagation()}>
-        <div className="sm:w-44 shrink-0 border-b sm:border-b-0 sm:border-r border-slate-100 p-2 flex sm:flex-col gap-1 overflow-x-auto">
-          {kinds.map(([k, t, d, n, I]) => (
-            <button key={k} type="button" onClick={() => (k === 'career' ? choose({ kind: 'career' }) : setPickKind(k))} className={`flex items-start gap-2 rounded-lg px-2 py-2 text-left shrink-0 ${pickKind === k ? 'bg-slate-100' : 'hover:bg-slate-50'}`}>
+        {(() => { const kindButtons = kinds.map(([k, t, d, n, I]) => (
+            <button key={k} type="button" onClick={() => (k === 'career' ? choose({ kind: 'career' }) : setPickKind(k))} className={`flex items-start gap-2 rounded-lg px-2 py-2 max-sm:min-h-[44px] text-left shrink-0 ${pickKind === k ? 'bg-slate-100' : 'hover:bg-slate-50'}`}>
               <I className="w-4 h-4 text-slate-500 mt-0.5" /><span className="min-w-0"><span className="flex justify-between gap-2 text-sm font-semibold text-slate-900"><span>{t}</span><span className="text-xs font-medium text-slate-400">{n}</span></span><span className="hidden sm:block text-[11px] text-slate-500 leading-snug">{d}</span></span>
             </button>
-          ))}
-        </div>
+          ));
+          // Phones (v13): the kinds scroll sideways in a ScrollRow (fading where more is hidden); from 640px a column
+          return radPhone
+            ? <div className="shrink-0 border-b border-slate-100"><ScrollRow surface="card" className="p-2 flex gap-1">{kindButtons}</ScrollRow></div>
+            : <div className="sm:w-44 shrink-0 border-b sm:border-b-0 sm:border-r border-slate-100 p-2 flex sm:flex-col gap-1 overflow-x-auto">{kindButtons}</div>;
+        })()}
         <div className="flex-1 p-2 max-h-[360px] overflow-y-auto">
           {pickKind === 'seasons' && <>
             <div className={`flex justify-between px-3 py-1 ${EB} text-slate-400`}><span>Season</span><span>PPG</span></div>
             {played.map((s) => { const pr = seasonProf[s.num]; const on = curL.kind === 'season' && curL.key === s.num; return (
-              <button key={s.num} type="button" onClick={() => choose({ kind: 'season', key: s.num })} className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left ${on ? 'bg-slate-50 ring-1 ring-slate-300' : 'hover:bg-slate-50'}`} style={{ boxShadow: `inset 3px 0 0 ${seasonHex(s.num)}` }}>
+              <button key={s.num} type="button" onClick={() => choose({ kind: 'season', key: s.num })} className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 max-sm:min-h-[44px] text-left ${on ? 'bg-slate-50 ring-1 ring-slate-300' : 'hover:bg-slate-50'}`} style={{ boxShadow: `inset 3px 0 0 ${seasonHex(s.num)}` }}>
                 <span className="w-7 text-sm font-extrabold text-slate-900">S{s.num}</span><span className="w-16 text-xs text-slate-500">{yearLabel(s.year)}</span><span className="w-12 text-xs font-semibold text-slate-500">{divLabel(s.division)}</span><span className="hidden sm:inline text-xs font-semibold tabular-nums"><WDLRecord w={pr.w} d={pr.d} l={pr.l} /></span><span className="ml-auto text-sm font-semibold tabular-nums text-slate-900">{pr.ppg.toFixed(2)}</span><span className="w-3 text-xs font-bold">{on ? '✓' : ''}</span>
               </button>
             ); })}
           </>}
           {pickKind === 'venue' && <>
-            <div className="flex flex-wrap gap-1 px-1 pb-2">{[0, ...played.map((s) => s.num)].map((n) => <button key={n} type="button" onClick={() => setVenueScope(n)} className={`text-xs font-semibold rounded-md px-2 py-1 ${venueScope === n ? 'bg-slate-900 text-slate-50' : 'bg-slate-100 text-slate-600'}`}>{n ? `S${n}` : 'All seasons'}</button>)}</div>
+            <div className="flex flex-wrap gap-1 max-sm:gap-x-3.5 max-sm:gap-y-3 px-1 pb-2 max-sm:pt-2">{[0, ...played.map((s) => s.num)].map((n) => <button key={n} type="button" onClick={() => setVenueScope(n)} className={`${TAP} text-xs font-semibold rounded-md px-2 py-1 max-sm:min-h-[32px] ${venueScope === n ? 'bg-slate-900 text-slate-50' : 'bg-slate-100 text-slate-600'}`}>{n ? `S${n}` : 'All seasons'}</button>)}</div>
             {['H', 'A'].map((v) => { const list = matches.filter((x) => x.venue === v && (!venueScope || x.season === venueScope)); const pr = profile(list); const I = v === 'H' ? Home : Plane; return (
-              <button key={v} type="button" onClick={() => choose({ kind: 'venue', key: v, scope: venueScope || undefined })} className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-50"><I className="w-4 h-4" style={{ color: v === 'H' ? HC : 'rgb(var(--c-sky-600))' }} /><span className="text-sm font-semibold text-slate-900">{v === 'H' ? 'Home' : 'Away'}</span><span className="text-xs text-slate-500">{list.length} GP</span><span className="ml-auto text-xs font-semibold tabular-nums"><WDLRecord w={pr.w} d={pr.d} l={pr.l} /></span><span className="w-12 text-right text-sm font-semibold tabular-nums">{pr.ppg.toFixed(2)}</span></button>
+              <button key={v} type="button" onClick={() => choose({ kind: 'venue', key: v, scope: venueScope || undefined })} className="w-full flex items-center gap-3 rounded-lg px-3 py-2 max-sm:min-h-[44px] text-left hover:bg-slate-50"><I className="w-4 h-4" style={{ color: v === 'H' ? HC : 'rgb(var(--c-sky-600))' }} /><span className="text-sm font-semibold text-slate-900">{v === 'H' ? 'Home' : 'Away'}</span><span className="text-xs text-slate-500">{list.length} GP</span><span className="ml-auto text-xs font-semibold tabular-nums"><WDLRecord w={pr.w} d={pr.d} l={pr.l} /></span><span className="w-12 text-right text-sm font-semibold tabular-nums">{pr.ppg.toFixed(2)}</span></button>
             ); })}
           </>}
           {pickKind === 'opp' && <>
-            <div className="flex flex-wrap items-center gap-2 px-1 pb-2"><input value={oppQuery} onChange={(e) => setOppQuery(e.target.value)} placeholder={`Search ${clubsByGames.length} clubs…`} className="flex-1 min-w-[140px] h-9 rounded-lg ring-1 ring-slate-200 px-3 text-sm bg-white" /><Segmented value={persp} onChange={setPersp} options={[{ value: 'us', label: 'Us vs them' }, { value: 'them', label: 'Them vs us' }]} /></div>
+            <div className="flex flex-wrap items-center gap-2 max-sm:gap-y-3 px-1 pb-2"><input value={oppQuery} onChange={(e) => setOppQuery(e.target.value)} placeholder={`Search ${clubsByGames.length} clubs…`} className="flex-1 min-w-[140px] h-9 max-sm:h-11 rounded-lg ring-1 ring-slate-200 px-3 text-sm bg-white" /><Segmented tap value={persp} onChange={setPersp} options={[{ value: 'us', label: 'Us vs them' }, { value: 'them', label: 'Them vs us' }]} /></div>
             <div className={`flex justify-between px-3 py-1 ${EB} text-slate-400`}><span>Most played · avg rank</span><span>Your record</span></div>
             {clubsByGames.filter((x) => !oppQuery || String(x.c.name).toLowerCase().includes(oppQuery.toLowerCase())).slice(0, 40).map((x) => { const pr = profile(matches.filter((m) => m.opp === x.abbr)); return (
-              <button key={x.abbr} type="button" onClick={() => choose({ kind: 'opp', key: x.abbr, persp })} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-slate-50"><Flag emoji={x.c.flag} size={18} /><span className="text-sm font-semibold text-slate-900 truncate">{String(x.c.name || x.abbr).toUpperCase()}</span>{x.c.avg > 0 && <span className="text-xs text-slate-400 tabular-nums">{x.c.avg.toFixed(1)}</span>}<span className="ml-auto text-xs font-semibold tabular-nums"><WDLRecord w={pr.w} d={pr.d} l={pr.l} /></span><span className="w-12 text-right text-xs text-slate-500">{x.n} GP</span></button>
+              <button key={x.abbr} type="button" onClick={() => choose({ kind: 'opp', key: x.abbr, persp })} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 max-sm:min-h-[44px] text-left hover:bg-slate-50"><Flag emoji={x.c.flag} size={18} /><span className="text-sm font-semibold text-slate-900 truncate">{String(x.c.name || x.abbr).toUpperCase()}</span>{x.c.avg > 0 && <span className="text-xs text-slate-400 tabular-nums">{x.c.avg.toFixed(1)}</span>}<span className="ml-auto text-xs font-semibold tabular-nums"><WDLRecord w={pr.w} d={pr.d} l={pr.l} /></span><span className="w-12 text-right text-xs text-slate-500">{x.n} GP</span></button>
             ); })}
           </>}
         </div>
@@ -1823,7 +1837,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
           <span className="text-xs font-medium text-slate-500">{d.sub}</span>
         </span>
         <span className="relative shrink-0">
-          <button type="button" onClick={(e) => { e.stopPropagation(); setPickKind(which === 'A' ? (LA.kind === 'career' ? 'seasons' : LA.kind === 'season' ? 'seasons' : LA.kind) : (LB.kind === 'career' ? 'seasons' : LB.kind === 'season' ? 'seasons' : LB.kind)); setMenu(menu === which ? null : which); }} className={`text-xs font-semibold rounded-md px-2 py-1 min-h-[32px] ${menu === which ? 'bg-slate-900 text-slate-50' : 'text-slate-600 ring-1 ring-slate-200 bg-white'}`}>Change ▾</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); setPickKind(which === 'A' ? (LA.kind === 'career' ? 'seasons' : LA.kind === 'season' ? 'seasons' : LA.kind) : (LB.kind === 'career' ? 'seasons' : LB.kind === 'season' ? 'seasons' : LB.kind)); setMenu(menu === which ? null : which); }} className={`${TAP} text-xs font-semibold rounded-md px-2 py-1 min-h-[32px] ${menu === which ? 'bg-slate-900 text-slate-50' : 'text-slate-600 ring-1 ring-slate-200 bg-white'}`}>Change ▾</button>
           {menu === which && renderPicker(which)}
         </span>
       </div>
@@ -1840,6 +1854,11 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
     const f = (v) => clamp01(pos(p, v) / over);
     const car = career[p.key], bst = bestSeasonVal(p);
     const lead = better(p, va, vb);
+    const verdict = lead === 0 ? 'Level' : `${(lead > 0 ? A : B).title.split(' · ').pop()} by ${p.gap(Math.abs(va - vb))}`;
+    // Phones: a club layer goes by its abbreviation ("CHE by 12.7%"); seasons, Career, Home and Away as on desktop
+    const leadL = lead > 0 ? LA : LB;
+    const chipText = lead !== 0 && leadL.kind === 'opp' ? `${leadL.key} by ${p.gap(Math.abs(va - vb))}` : verdict;
+    const vc = lead === 0 ? null : verdictColors(hexOf((lead > 0 ? A : B).color), dark);
     const bar = (v, color) => (
       <div className="relative h-[9px] rounded-full bg-slate-100">
         <div className="absolute left-0 top-0 bottom-0 rounded-full" style={{ width: `${f(v) * 100}%`, background: color }} />
@@ -1849,14 +1868,29 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
     );
     return (
       <div key={p.key} className="grid grid-cols-[minmax(0,1fr)_64px] sm:grid-cols-[140px_minmax(0,1fr)_72px_120px] items-center gap-x-4 gap-y-1 py-3 border-b border-slate-100 last:border-b-0">
-        <div className="col-span-2 sm:col-span-1"><div className="text-sm font-semibold text-slate-900">{p.label}</div><div className="text-[11px] text-slate-500">{p.sub}{stretchedMax != null ? ` · scale to ${p.fmt(stretchedMax)}` : ''}</div></div>
+        <div className="col-span-2 sm:col-span-1 flex items-start justify-between gap-2">
+          <div><div className="text-sm font-semibold text-slate-900">{p.label}</div><div className="text-[11px] text-slate-500">{p.sub}{stretchedMax != null ? ` · scale to ${p.fmt(stretchedMax)}` : ''}</div></div>
+          {/* Phones (v13): the verdict as a chip on the pillar's header line, in place of the desktop column */}
+          {radPhone && <span data-verdict="" className={`shrink-0 whitespace-nowrap text-[11px] font-bold tabular-nums rounded-[6px] px-[7px] py-[3px] ${vc ? '' : 'text-slate-600 bg-slate-100'}`} style={vc || undefined}>{chipText}</span>}
+        </div>
         <div className="flex flex-col gap-2">{bar(va, A.color)}{bar(vb, B.color)}</div>
         <div className="flex flex-col gap-1.5 text-right"><span className={`text-sm tabular-nums ${lead > 0 ? 'font-extrabold text-slate-900' : 'font-medium text-slate-500'}`}>{p.fmt(va)}</span><span className={`text-sm tabular-nums ${lead < 0 ? 'font-extrabold text-slate-900' : 'font-medium text-slate-500'}`}>{p.fmt(vb)}</span></div>
-        <span className="hidden sm:block text-xs font-semibold" style={{ color: lead > 0 ? A.color : lead < 0 ? B.color : undefined }}>{lead === 0 ? 'Level' : `${(lead > 0 ? A : B).title.split(' · ').pop()} by ${p.gap(Math.abs(va - vb))}`}</span>
+        <span data-verdict-col="" className="hidden sm:block text-xs font-semibold" style={{ color: lead > 0 ? A.color : lead < 0 ? B.color : undefined }}>{verdict}</span>
       </div>
     );
   };
 
+  // Bring a Group layer forward: mouse on hover, as before; touch (v13) on a
+  // finished tap, which toggles it, so it stays forward after the finger lifts.
+  const forward = (id) => ({
+    onPointerEnter: (e) => { if (e.pointerType === 'mouse') setHl(id); },
+    onPointerLeave: (e) => { if (e.pointerType === 'mouse') setHl(null); },
+    onPointerUp: (e) => { if (e.pointerType !== 'mouse') setHl((h) => (h === id ? null : id)); },
+  });
+  // Phones (v13), Lines view: the pillar row opens the ranked card (shared useHoverCard: another
+  // pillar switches it, a tap elsewhere or a scroll closes it); the dots are no longer targets.
+  const [rankHover, rankHc] = useHoverCard();
+  const accentHex = (dark ? ACCENT_HEX_LIGHT : ACCENT_HEX)[accent] || (dark ? ACCENT_HEX_LIGHT : ACCENT_HEX).indigo;
   // Group dot line for one pillar
   const [dotHover, dotHc] = useHoverCard();
   const dotLine = (p) => {
@@ -1868,13 +1902,16 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
     const best = sorted[0], worst = sorted[sorted.length - 1];
     const seen = {};
     return (
-      <div key={p.key} className="grid grid-cols-1 sm:grid-cols-[140px_minmax(0,1fr)] items-center gap-x-4 py-3 border-b border-slate-100 last:border-b-0">
-        <div><div className="text-sm font-semibold text-slate-900">{p.label}</div><div className="text-[11px] text-slate-500">{p.sub}{over > 1 ? ' · scale stretched' : ''}</div></div>
+      <div key={p.key} data-pillar-row={radPhone ? p.key : undefined} {...(radPhone ? rankHc.on(p.key, () => ({ p })) : {})} className={`grid grid-cols-1 sm:grid-cols-[140px_minmax(0,1fr)] items-center gap-x-4 py-3 border-b border-slate-100 last:border-b-0${radPhone ? ' -mx-3 px-3 cursor-pointer' : ''}`} style={radPhone && rankHover && rankHover.p.key === p.key ? { background: `${accentHex}1a`, boxShadow: `inset 3px 0 0 ${accentHex}` } : undefined}>
+        <div className={radPhone ? 'flex items-start justify-between gap-2' : undefined}>
+          <div><div className="text-sm font-semibold text-slate-900">{p.label}</div><div className="text-[11px] text-slate-500">{p.sub}{over > 1 ? ' · scale stretched' : ''}</div></div>
+          {radPhone && <span className="shrink-0 text-xs text-slate-500">Tap to rank ›</span>}
+        </div>
         <div className="relative h-5 my-4 mx-2">
           <div className="absolute left-0 right-0 top-[9px] h-0.5 bg-slate-200" />
           <div className="absolute top-0.5 h-4 w-0.5 bg-slate-600" style={{ left: `${f(pos(p, career[p.key])) * 100}%` }} />
           {[...vals].sort((a, b) => (a.L.id === hl ? 1 : 0) - (b.L.id === hl ? 1 : 0)).map(({ L, v, r }) => { const k = Math.round(f(r) * 200); const n = seen[k] || 0; seen[k] = n + 1; const on = !hl || hl === L.id; return (
-            <span key={L.id} {...dotHc.on(`${p.key}-${L.id}`, () => ({ L, p, v }))} onPointerLeave={dotHc.leave} className="absolute top-[3px] w-3.5 h-3.5 rounded-full cursor-default" style={{ left: `calc(${f(r) * 100}% - 7px + ${n * 9}px)`, background: L.color, boxShadow: `0 0 0 2px #fff${hl === L.id ? `, 0 0 0 4px ${L.color}` : ''}`, opacity: on ? 1 : 0.3, zIndex: hl === L.id ? 2 : 1 }} />
+            <span key={L.id} {...(radPhone ? {} : { ...dotHc.on(`${p.key}-${L.id}`, () => ({ L, p, v })), onPointerLeave: dotHc.leave })} className={`absolute top-[3px] w-3.5 h-3.5 rounded-full ${radPhone ? 'pointer-events-none' : 'cursor-default'}`} style={{ left: `calc(${f(r) * 100}% - 7px + ${n * 9}px)`, background: L.color, boxShadow: `0 0 0 2px #fff${hl === L.id ? `, 0 0 0 4px ${L.color}` : ''}`, opacity: on ? 1 : 0.3, zIndex: hl === L.id ? 2 : 1 }} />
           ); })}
           <span className="absolute -top-[18px] -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-slate-700" style={{ left: `${f(best.r) * 100}%` }}>{best.L.short} {p.fmt(best.v)}</span>
           {worst !== best && <span className="absolute top-[22px] -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-slate-700" style={{ left: `${f(worst.r) * 100}%` }}>{worst.L.short} {p.fmt(worst.v)}</span>}
@@ -1888,19 +1925,43 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
 
   return (
     <div className="space-y-6" onClick={() => menu && setMenu(null)}>
+      <TapStyle />
       <div className="flex items-center justify-between gap-3">
         <span className={`${EB} text-slate-500`}>Spider matrix</span>
-        <Segmented value={mode} onChange={(v) => { setMode(v); setMenu(null); }} options={[{ value: 'versus', label: 'Versus' }, { value: 'group', label: 'Group' }]} />
+        <Segmented tap value={mode} onChange={(v) => { setMode(v); setMenu(null); }} options={[{ value: 'versus', label: 'Versus' }, { value: 'group', label: 'Group' }]} />
       </div>
 
       {mode === 'versus' && A && B && <>
         <div className="flex flex-col sm:flex-row items-stretch gap-3">
           {renderLayerCard(A, 'A')}
-          <button type="button" title="Swap sides" onClick={() => { const a = LA; setLA(LB); setLB(a); }} className="self-center w-10 h-10 shrink-0 rounded-full bg-white ring-1 ring-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:text-slate-900"><ArrowLeftRight className="w-4 h-4" /></button>
+          <button type="button" title="Swap sides" onClick={() => { const a = LA; setLA(LB); setLB(a); }} className={`${TAP} self-center w-10 h-10 shrink-0 rounded-full bg-white ring-1 ring-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:text-slate-900`}><ArrowLeftRight className="w-4 h-4" /></button>
           {renderLayerCard(B, 'B', true)}
         </div>
+        {radPhone ? (
+          // Phones (v13): an eyebrow, then every quick pick on one row that scrolls sideways
+          <div className="flex flex-col gap-1">
+            <span className={`${EB} text-slate-500`}>Quick picks</span>
+            <ScrollRow boxRef={quickRef} surface="page" data-quick-row="" className="py-1">
+              <div className="flex gap-2 w-max text-xs">{quick.map((q) => <button key={q.label} type="button" data-quick-on={isQuick(q) ? '' : undefined} onClick={() => { setLA(q.a); setLB(q.b); }} className={`${TAP} whitespace-nowrap rounded-md px-2 py-1 font-semibold min-h-[36px] ${isQuick(q) ? 'bg-slate-900 text-slate-50' : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:text-slate-900'}`}>{q.label}</button>)}</div>
+            </ScrollRow>
+          </div>
+        ) : (
         <div className="flex flex-wrap items-center gap-2 text-xs"><span className="text-slate-500 font-semibold">Quick picks</span>{quick.map((q) => <button key={q.label} type="button" onClick={() => { setLA(q.a); setLB(q.b); }} className={`rounded-md px-2 py-1 font-semibold min-h-[32px] ${isQuick(q) ? 'bg-slate-900 text-slate-50' : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:text-slate-900'}`}>{q.label}</button>)}</div>
-        <Section title={`${A.title.split(' · ').pop()} vs ${B.title.split(' · ').pop()}`}>
+        )}
+        <Section title={`${A.title.split(' · ').pop()} vs ${B.title.split(' · ').pop()}`} accent={accent}
+          info={<>
+            <p><strong>Two layers measured on six pillars.</strong> The radar shows the overall shape; the scorecard shows each pillar on its own fixed scale, and says who leads it.</p>
+            <ul>
+              <li><strong>Win rate:</strong> wins per game played.</li>
+              <li><strong>Defensive steel:</strong> goals conceded per game (fewer is better).</li>
+              <li><strong>Clean sheets:</strong> share of games without conceding.</li>
+              <li><strong>Points efficiency:</strong> points per game.</li>
+              <li><strong>Blowout rate:</strong> share of games won by 3 or more.</li>
+              <li><strong>Attacking output:</strong> goals scored per game.</li>
+            </ul>
+            <p><strong>How to use:</strong> use Change on either card to pick a layer: your career, one season, home or away (all seasons or one), or your record against a club. The ⇄ button swaps the two. Quick picks load common pairings in one tap.</p>
+            <p><strong>Good to know:</strong> the scales are fixed (win rate 0–100%, conceded 2.5 down to 0, clean sheets 0–70%, points per game 0–3, blowouts 0–70%, scored 0–4), so shapes mean the same in any save. A value past the scale sits on the edge with a marker. In the scorecard, the plain tick is your career average and the orange tick your best season.</p>
+          </>}>
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,520px)_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
             <div ref={radRef} className="w-full">
               <svg width={RW} height={RH} viewBox={`0 0 ${RW} ${RH}`} className="max-w-full overflow-visible">
@@ -1932,13 +1993,13 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
 
       {mode === 'group' && <>
         <div className="flex flex-wrap items-center gap-3">
-          <Segmented value={gKind} onChange={(v) => { setGKind(v); setHl(null); }} options={[{ value: 'seasons', label: 'Seasons' }, { value: 'clubs', label: 'Clubs' }]} />
+          <Segmented tap value={gKind} onChange={(v) => { setGKind(v); setHl(null); rankHc.close(); }} options={[{ value: 'seasons', label: 'Seasons' }, { value: 'clubs', label: 'Clubs' }]} />
           <span className="text-xs text-slate-500">{gLayers.length} of {maxG}{gKind === 'clubs' ? ' · your record against each' : ''}</span>
         </div>
-        <div className="flex items-stretch gap-1.5 overflow-x-auto pb-1">
+        <ScrollRow surface="page" className="flex items-stretch gap-1.5 pb-1 max-sm:pt-3 max-sm:pb-3 max-sm:-my-3">
           {gLayers.map((L) => (
-            <div key={L.id} onPointerEnter={() => setHl(L.id)} onPointerLeave={() => setHl(null)} className={`w-[148px] shrink-0 rounded-lg px-2.5 py-1.5 ring-1 ${hl === L.id ? 'bg-white ring-slate-900' : 'bg-slate-50 ring-slate-200'}`} style={{ boxShadow: L.us ? `inset 0 3px 0 ${L.color}` : `inset 4px 0 0 ${L.color}` }}>
-              <div className="flex items-center justify-between gap-1"><span className="flex items-center gap-1.5 min-w-0">{L.flag && <Flag emoji={L.flag} size={16} />}<span className="text-xs font-extrabold text-slate-900 truncate">{gKind === 'seasons' ? `${L.short} · ${L.sub}` : L.name}</span></span><button type="button" onClick={() => { if (gKind === 'seasons') setGSeasons(seasonsSel.filter((n) => `S${n}` !== L.id)); else setGClubs(clubsSel.filter((a) => a !== L.id)); }} className="text-slate-400 hover:text-slate-900 shrink-0"><X className="w-3.5 h-3.5" /></button></div>
+            <div key={L.id} data-gchip={L.id} {...forward(L.id)} className={`w-[148px] shrink-0 rounded-lg px-2.5 py-1.5 ring-1 ${hl === L.id ? 'bg-white ring-slate-900' : 'bg-slate-50 ring-slate-200'}`} style={{ boxShadow: L.us ? `inset 0 3px 0 ${L.color}` : `inset 4px 0 0 ${L.color}` }}>
+              <div className="flex items-center justify-between gap-1"><span className="flex items-center gap-1.5 min-w-0">{L.flag && <Flag emoji={L.flag} size={16} />}<span className="text-xs font-extrabold text-slate-900 truncate">{gKind === 'seasons' ? `${L.short} · ${L.sub}` : L.name}</span></span><button type="button" onClick={() => { if (gKind === 'seasons') setGSeasons(seasonsSel.filter((n) => `S${n}` !== L.id)); else setGClubs(clubsSel.filter((a) => a !== L.id)); }} aria-label={`Remove ${L.short}`} className={`${TAP} text-slate-400 hover:text-slate-900 shrink-0`}><X className="w-3.5 h-3.5" /></button></div>
               <div className="flex items-baseline justify-between mt-1"><span className="text-[11px] font-semibold tabular-nums"><WDLRecord w={L.prof.w} d={L.prof.d} l={L.prof.l} /></span><span className="text-[11px] font-semibold tabular-nums text-slate-500">{L.prof.ppg.toFixed(2)}</span></div>
             </div>
           ))}
@@ -1947,22 +2008,26 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
               <button type="button" onClick={(e) => { e.stopPropagation(); setMenu(menu === 'add' ? null : 'add'); }} className="h-full min-h-[52px] w-[110px] rounded-lg ring-1 ring-dashed ring-slate-300 flex items-center justify-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900"><Plus className="w-3.5 h-3.5" />Add {gKind === 'seasons' ? 'season' : 'club'}</button>
               {menu === 'add' && (
                 <div className="absolute z-40 top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl ring-1 ring-slate-200 p-2 max-h-80 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                  {gKind === 'clubs' && <input value={addQuery} onChange={(e) => setAddQuery(e.target.value)} placeholder="Search clubs…" className="w-full h-9 rounded-lg ring-1 ring-slate-200 px-3 text-sm mb-1" />}
+                  {gKind === 'clubs' && <input value={addQuery} onChange={(e) => setAddQuery(e.target.value)} placeholder="Search clubs…" className="w-full h-9 max-sm:h-11 rounded-lg ring-1 ring-slate-200 px-3 text-sm mb-1" />}
                   {gKind === 'seasons'
-                    ? addOptions.map((s) => <button key={s.num} type="button" onClick={() => { setGSeasons([...seasonsSel, s.num].sort((a, b) => a - b)); setMenu(null); }} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-slate-50" style={{ boxShadow: `inset 3px 0 0 ${seasonHex(s.num)}` }}><span className="text-sm font-extrabold">S{s.num}</span><span className="text-xs text-slate-500">{yearLabel(s.year)} · {divLabel(s.division)}</span></button>)
-                    : addOptions.filter((x) => !addQuery || String(x.c.name).toLowerCase().includes(addQuery.toLowerCase())).slice(0, 30).map((x) => <button key={x.abbr} type="button" onClick={() => { setGClubs([...clubsSel, x.abbr]); setMenu(null); setAddQuery(''); }} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-slate-50"><Flag emoji={x.c.flag} size={16} /><span className="text-sm font-semibold truncate">{String(x.c.name).toUpperCase()}</span><span className="ml-auto text-xs text-slate-500">{x.n} GP</span></button>)}
+                    ? addOptions.map((s) => <button key={s.num} type="button" onClick={() => { setGSeasons([...seasonsSel, s.num].sort((a, b) => a - b)); setMenu(null); }} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 max-sm:min-h-[44px] text-left hover:bg-slate-50" style={{ boxShadow: `inset 3px 0 0 ${seasonHex(s.num)}` }}><span className="text-sm font-extrabold">S{s.num}</span><span className="text-xs text-slate-500">{yearLabel(s.year)} · {divLabel(s.division)}</span></button>)
+                    : addOptions.filter((x) => !addQuery || String(x.c.name).toLowerCase().includes(addQuery.toLowerCase())).slice(0, 30).map((x) => <button key={x.abbr} type="button" onClick={() => { setGClubs([...clubsSel, x.abbr]); setMenu(null); setAddQuery(''); }} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 max-sm:min-h-[44px] text-left hover:bg-slate-50"><Flag emoji={x.c.flag} size={16} /><span className="text-sm font-semibold truncate">{String(x.c.name).toUpperCase()}</span><span className="ml-auto text-xs text-slate-500">{x.n} GP</span></button>)}
                 </div>
               )}
             </span>
           )}
-        </div>
-        <Section title={gKind === 'seasons' ? 'Your seasons, side by side' : 'Your record against each club'} sub="Outlines only."
-          right={<Segmented value={gTable ? 'table' : 'lines'} onChange={(v) => setGTable(v === 'table')} options={[{ value: 'lines', label: 'Lines' }, { value: 'table', label: 'Table' }]} />}>
+        </ScrollRow>
+        <Section title={gKind === 'seasons' ? 'Your seasons, side by side' : 'Your record against each club'} accent={accent}
+          info={<>
+            <p><strong>Up to eight seasons, or clubs, on the same six pillars,</strong> drawn as outlines so they can overlap.</p>
+            <p><strong>How to use:</strong> switch between Seasons and Clubs; add or remove them with the chips. Lines shows each pillar as a row of dots against your career average; Table shows the numbers. Hover or tap a chip, a shape or a dot to bring that one forward. On a phone, tap a pillar to see every season ranked on it.</p>
+          </>}
+          right={<Segmented tap value={gTable ? 'table' : 'lines'} onChange={(v) => setGTable(v === 'table')} options={[{ value: 'lines', label: 'Lines' }, { value: 'table', label: 'Table' }]} />}>
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,520px)_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
             <div ref={radRef} className="w-full">
               <svg width={RW} height={RH} viewBox={`0 0 ${RW} ${RH}`} className="max-w-full overflow-visible">
                 {grid}
-                {gLayers.filter((L) => L.id !== hl).map((L) => <polygon key={L.id} points={polyOf(L.prof)} fill="none" stroke={L.color} strokeWidth="1.6" strokeOpacity={hl ? 0.3 : 0.85} onPointerEnter={() => setHl(L.id)} onPointerLeave={() => setHl(null)} />)}
+                {gLayers.filter((L) => L.id !== hl).map((L) => <polygon key={L.id} points={polyOf(L.prof)} fill="none" stroke={L.color} strokeWidth="1.6" strokeOpacity={hl ? 0.3 : 0.85} {...forward(L.id)} />)}
                 {hl && gLayers.filter((L) => L.id === hl).map((L) => <g key={L.id}><polygon points={polyOf(L.prof)} fill="none" stroke={L.color} strokeWidth="3.2" />{dots(L.prof, L.color, false)}{marks(L.prof, L.color)}</g>)}
               </svg>
             </div>
@@ -1974,7 +2039,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
                 <div className="rounded-xl border border-slate-200 overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead><tr className={`${EB} text-slate-500 bg-slate-50`}><th className="text-left px-3 py-2">{gKind === 'seasons' ? 'Season' : 'Club'}</th>{PILLARS.map((p) => <th key={p.key} className="px-2 py-2 text-right whitespace-nowrap">{p.label}</th>)}</tr></thead>
-                    <tbody>{gLayers.map((L) => <tr key={L.id} className="border-t border-slate-100" onPointerEnter={() => setHl(L.id)} onPointerLeave={() => setHl(null)}><td className="px-3 py-2 font-semibold text-slate-900 whitespace-nowrap"><span className="inline-block w-2 h-2 rounded-full mr-2" style={{ background: L.color }} />{gKind === 'seasons' ? L.short : L.name}</td>{PILLARS.map((p) => <td key={p.key} className="px-2 py-2 text-right tabular-nums text-slate-700">{p.fmt(L.prof[p.key])}</td>)}</tr>)}</tbody>
+                    <tbody>{gLayers.map((L) => <tr key={L.id} data-trow={L.id} className="border-t border-slate-100 max-sm:h-11" {...forward(L.id)}><td className="px-3 py-2 font-semibold text-slate-900 whitespace-nowrap"><span className="inline-block w-2 h-2 rounded-full mr-2" style={{ background: L.color }} />{gKind === 'seasons' ? L.short : L.name}</td>{PILLARS.map((p) => <td key={p.key} className="px-2 py-2 text-right tabular-nums text-slate-700">{p.fmt(L.prof[p.key])}</td>)}</tr>)}</tbody>
                   </table>
                 </div>
               )}
@@ -1984,8 +2049,13 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
       </>}
 
       {/* Highs & lows: the best and worst at each pillar, career-wide */}
-      <Section title="Highs & lows" sub={hlBy === 'club' ? 'The best and worst opponent in each pillar.' : 'Your best and worst season in each pillar.'}
-        right={<div className="flex flex-wrap gap-2"><Segmented value={hlBy} onChange={setHlBy} options={[{ value: 'club', label: 'By club' }, { value: 'season', label: 'By season' }]} />{hlBy === 'club' && <Segmented value={hlMin} onChange={setHlMin} options={[{ value: 'all', label: 'All' }, { value: '5', label: '5+' }, { value: '10', label: '10+' }, { value: 'top', label: 'Top 10' }]} />}</div>}>
+      <Section title="Highs & lows" accent={accent}
+        info={<>
+          <p><strong>Your best and worst opponent on each pillar.</strong></p>
+          <p><strong>How to use:</strong> By club compares opponents, By season compares your seasons. With By club, the filter sets who counts: every club, clubs you’ve played at least 5 or 10 times, or the ten strongest clubs by average rank.</p>
+          <p><strong>Good to know:</strong> a club met only once or twice can top a pillar by luck; the 5+ filter, on by default, keeps the list honest.</p>
+        </>}
+        right={<div className="flex flex-wrap gap-2 max-sm:gap-y-3"><Segmented tap value={hlBy} onChange={setHlBy} options={[{ value: 'club', label: 'By club' }, { value: 'season', label: 'By season' }]} />{hlBy === 'club' && <Segmented tap value={hlMin} onChange={setHlMin} options={[{ value: 'all', label: 'All' }, { value: '5', label: '5+' }, { value: '10', label: '10+' }, { value: 'top', label: 'Top 10' }]} />}</div>}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {PILLARS.map((p) => {
             const pool = extremesPool.filter((x) => x.prof && x.prof.gp > 0);
@@ -2002,6 +2072,36 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
         </div>
       </Section>
 
+      {/* Phones (v13): the ranked card for a Group pillar, docked at the bottom */}
+      {radPhone && mode === 'group' && !gTable && rankHover && (() => {
+        const p = rankHover.p;
+        const items = gLayers.map((L) => ({ L, v: L.prof[p.key], r: pos(p, L.prof[p.key]) })).sort((a, b) => b.r - a.r);
+        // Equal values (as shown) share a rank, written "=1"
+        let rank = 0;
+        const ranked = items.map((x, i) => { if (i === 0 || p.fmt(x.v) !== p.fmt(items[i - 1].v)) rank = i + 1; return { ...x, rank }; });
+        const shared = (rk) => ranked.filter((x) => x.rank === rk).length > 1;
+        const cv = career[p.key], cr = pos(p, cv);
+        const at = ranked.findIndex((x) => x.r < cr);
+        const careerRow = <div key="career" data-career-row="" className="flex items-center gap-2 h-6 text-xs text-slate-500"><span className="w-7 shrink-0" /><span className="w-0.5 h-3 shrink-0 bg-slate-900" />Career average · {p.fmt(cv)}</div>;
+        const rows = ranked.map((x) => (
+          <button key={x.L.id} type="button" data-rank-row={x.L.id} onClick={() => setHl(x.L.id)} className={`w-full h-11 shrink-0 flex items-center gap-2 rounded-md px-1 text-left ${hl === x.L.id ? 'bg-slate-100' : ''}`}>
+            <span className="w-7 shrink-0 text-xs font-bold tabular-nums text-slate-500">{shared(x.rank) ? '=' : ''}{x.rank}</span>
+            <span className="w-3 h-3 shrink-0 rounded-full" style={{ background: x.L.color }} />
+            <span className="w-14 shrink-0 flex items-center gap-1 text-xs font-bold text-slate-900">{x.L.flag && <Flag emoji={x.L.flag} size={14} />}{x.L.short}</span>
+            <span className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><span className="block h-full rounded-full" style={{ width: `${clamp01(x.r) * 100}%`, background: x.L.color }} /></span>
+            <span data-rank-value="" className="w-14 shrink-0 text-right text-[13px] font-bold tabular-nums text-slate-900">{p.fmt(x.v)}</span>
+          </button>
+        ));
+        if (at === -1) rows.push(careerRow); else rows.splice(at, 0, careerRow);
+        return (
+          <div data-hv-card="" className="fixed z-[70] left-2 right-2 bottom-3">
+            <div className="bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 p-4 flex flex-col gap-2 text-left">
+              <div className="flex items-baseline justify-between gap-3"><span className="text-[15px] font-extrabold text-slate-900">{p.label}</span><span className="text-xs text-slate-500 text-right">{gLayers.length} {gKind === 'seasons' ? 'seasons' : 'clubs'} · tap one to bring it forward</span></div>
+              <div data-rank-list="" className="max-h-[60vh] overflow-y-auto flex flex-col">{rows}</div>
+            </div>
+          </div>
+        );
+      })()}
       {axisHover && (
         <FloatCard at={axisHover.at} width={260}>
           <span className="text-sm font-extrabold text-slate-900">{axisHover.p.label}</span>

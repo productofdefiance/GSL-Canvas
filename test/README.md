@@ -81,6 +81,13 @@ Tab ids: league overview, fixtures, clubs, race, analytics, homeaway, spider.
 - `pts_t.js` (v51.20): Points on phones: the folded ledger and its button, the strip scrub (and a vertical swipe
   still scrolling, sent as raw touch events), the docked card against its ledger row, "See in ledger" (centred,
   marked, the mark clearing), the Pace control rows and legend, the [i] text word for word, the dark [i] contrast.
+- `fade_t.js` (v51.21): every chip or switch row that scrolls sideways is a ScrollRow whose edge fades match the
+  surface behind it, light and dark (Points season strip; Spider quick picks, Group chips, picker kinds), and no
+  League tab has a plain sideways-scrolling box other than the wide tables.
+- `spider_t.js` (v51.21): Spider on phones: the quick-picks row (one line, selected chip in view), verdict chips
+  against the desktop column with their contrast in light and dark, Group tap-to-rank (order, ties, career row,
+  bring forward, switch, close), dots not tappable, the [i] text word for word, and 44px tap areas in ten states
+  (menus and the ranked card open). Known exceptions are reported, not failed.
 - `strip_t.js` (v51.20): the Points race season strip keeps the focused season fully inside after late layout:
   a web font served 1.5s late (once with the cards sized to their text and ResizeObserver switched off, so only the
   `document.fonts` handlers can act), cards widening after render, Pace → Focus, Div 1 → All, and a user's own
