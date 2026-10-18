@@ -1,6 +1,15 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
 <!--
   GSL CANVAS — public/index.html
-  Version:  Canvas v51.18 · 2026-10-17, 07:45 UTC
+  Version:  Canvas v51.23 · 2026-10-18, 04:30 UTC
+  v51.23: html, head (charset, title) and body written out. No doctype
+  yet, on purpose: browsers draw this page in quirks mode, and a doctype
+  (standards mode) moves 72 of 120 views; it gets its own build.
+  Tailwind is compiled ahead of time from tailwind.config.js
+  (src/index.css); the play CDN and its inline config are gone.
+  Playfair Display is no longer downloaded here: LabBar adds it.
   v51.18: no literal html tag in any comment. react-scripts injects its
   script after the first one it finds, so a tag inside a comment hid the
   app's script and the page stayed blank.
@@ -29,9 +38,10 @@
      looks different. A palette trial changes these values only.
 -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GSL Canvas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@200..800&family=Lexend:wght@100..900&family=Outfit:wght@100..900&family=Playfair+Display:wght@600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@200..800&family=Lexend:wght@100..900&family=Outfit:wght@100..900&display=swap">
 <style>
 :root {
   /* Fonts. Device = Tailwind's default stack (what the canvas used before v51). */
@@ -180,18 +190,8 @@ html[data-big-track="t10"] { --big-track: 0.1em; }
 .gsl-dark .gsl-keep .bg-white, .gsl-dark .gsl-keep.bg-white { background-color: rgb(255 255 255); }
 .gsl-dark .gsl-keep.bg-white\/95 { background-color: rgb(255 255 255 / 0.95); }
 </style>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  // Every colour scale reads its CSS variable; the page font is --font-text.
-  (function () {
-    var fam = ['slate','gray','zinc','neutral','stone','red','orange','amber','yellow','lime','green','emerald','teal','cyan','sky','blue','indigo','violet','purple','fuchsia','pink','rose'];
-    var shades = [50,100,200,300,400,500,600,700,800,900,950];
-    var colors = {};
-    fam.forEach(function (f) {
-      colors[f] = {};
-      shades.forEach(function (s) { colors[f][s] = 'rgb(var(--c-' + f + '-' + s + ') / <alpha-value>)'; });
-    });
-    tailwind.config = { theme: { extend: { colors: colors, fontFamily: { sans: ['var(--font-text)'] } } } };
-  })();
-</script>
+</head>
+<body>
 <div id="root"></div>
+</body>
+</html>

@@ -1,9 +1,9 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — ui.js (shared building blocks for every section)
- *  Version:  UI v34
- *  Date:     2026-10-18, 02:05 UTC
- *  Latest:   Canvas v51.22 code tidy: viewport() and seasonGames() added.
+ *  Version:  UI v35
+ *  Date:     2026-10-18, 04:30 UTC
+ *  Latest:   Canvas v51.23 page build: LabBar loads Playfair Display itself.
  *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
@@ -245,9 +245,23 @@ function readLab() {
   out.open = saved.open !== false;
   return out;
 }
+// v51.23: Playfair Display is only a Lab choice, so the page no longer downloads it;
+// LabBar adds its stylesheet when it mounts (once, kept if the bar unmounts).
+const PLAYFAIR_CSS = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap';
+function loadPlayfair() {
+  try {
+    if (document.querySelector('link[data-gsl-playfair]')) return;
+    const l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = PLAYFAIR_CSS;
+    l.setAttribute('data-gsl-playfair', '');
+    document.head.appendChild(l);
+  } catch (e) { /* no page (server render): nothing to load */ }
+}
 // The lab bar: sits above the Footer; a button opens and closes it.
 export function LabBar() {
   const [f, setF] = useState(readLab);
+  useEffect(loadPlayfair, []);
   useEffect(() => {
     try {
       const h = document.documentElement;

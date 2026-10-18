@@ -6,6 +6,60 @@ and each file now keeps a short header (version, date, latest change). From v51.
 
 <!-- NEW ENTRIES GO BELOW THIS LINE -->
 
+## Canvas v51.23
+
+### App.js: Canvas v51.23 — 2026-10-18, 04:30 UTC — Page build · UI v35, Index v1, Config v1, CSS v1
+
+- Version line updated. No other changes to this file.
+
+### public/index.html: Canvas v51.23 — 2026-10-18, 04:30 UTC — Page build
+
+- The page written out: `html lang="en"`, a head (charset, the header comment, viewport, title "GSL Canvas", the font
+  preconnects and stylesheet, the existing style block) and a body holding the root div. Until now the file had none
+  of these; the browser and react-scripts filled them in.
+- No doctype yet (the user's call, 18 Oct): without one, browsers draw the page in quirks mode, and adding it
+  (standards mode, which the test kit has always used) moves 72 of 120 views: icon and emoji rows take their full
+  line height, table rows grow from 29px to 31.5px, table text turns from black to slate-900. The doctype gets its
+  own build, with those views reviewed.
+- The Tailwind play CDN and its inline config are removed: Tailwind is compiled ahead of time (tailwind.config.js,
+  src/index.css). The compiled stylesheet still loads after the style block, as the CDN's styles did.
+- Playfair Display is no longer in the font download (only the hidden Lab bar offers it). Lexend, Outfit and
+  Atkinson Hyperlegible Next load as before.
+
+### tailwind.config.js: Config v1 — 2026-10-18, 04:30 UTC — Canvas v51.23 (new)
+
+- What the inline config did: every colour family and shade as `rgb(var(--c-<family>-<shade>) / <alpha-value>)`, and
+  `fontFamily.sans: ['var(--font-text)']`. Content: `./src/**/*.js` and `./public/index.html`.
+- Safelist: `text-<colour>-600` and `text-<colour>-700` for every colour family, the classes ui.js builds at runtime
+  (lightTone turns a light text shade into its -700, HighlightCard's icon tone into its -600).
+
+### src/index.css: CSS v1 · src/index.js: Index v1 — 2026-10-18, 04:30 UTC — Canvas v51.23 (new)
+
+- index.css holds the three `@tailwind` lines; index.js imports it once and gets a short header.
+
+### ui.js: UI v35 — 2026-10-18, 04:30 UTC — Canvas v51.23 (page build)
+
+- LabBar adds the Playfair Display stylesheet when it mounts (once), so the Lab's "Playfair Display 600" choice still
+  works if SHOW_LAB_BAR is switched back on. Nothing else changes.
+
+### package.json — Canvas v51.23
+
+- `tailwindcss` 3.4.17 (exact pin, devDependencies), which react-scripts 5 runs through PostCSS because
+  tailwind.config.js exists.
+
+### Test kit and repo — Canvas v51.23
+
+- css.js builds from ../tailwind.config.js (the site's own file) instead of its own copy of the config. With a
+  snapshot folder it also fails if a rendered page uses a class the build lacks (a class name built at runtime).
+- Known: the kit's own pages (render, bundle, pixel.js without PX_SITE) carry a doctype, so they draw in standards
+  mode while the live page draws in quirks mode, until the doctype build.
+- New browser/prod.js (production builds of a git ref or the working tree, with the `__OV` test hook or `--plain`),
+  browser/site.js (serves a build; a stand-in for the play CDN, which cloud sessions can't reach) and browser/load.js
+  (load numbers at 390 with 4x CPU slowdown). pixel.js shoots a production build with `PX_SITE` (and `PX_PLAYCDN`).
+- CLAUDE.md: Tailwind is compiled ahead of time; class names written whole or safelisted with a reason; one config
+  for the kit and the site; the layout lists tailwind.config.js and src/index.css. README.md lists them too.
+- Brief saved as briefs/v51.23.md.
+
 ## Canvas v51.22
 
 ### App.js: Canvas v51.22 — 2026-10-18, 02:05 UTC — Code tidy · League v37, LeagueTabs v14, UI v34, Cups v20, Cups Lab v3, Pyramid v31, Squad v33

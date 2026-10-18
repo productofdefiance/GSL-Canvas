@@ -1,0 +1,10 @@
+/*
+ * GSL CANVAS — index.css (Tailwind's styles, compiled ahead of time from tailwind.config.js)
+ * Version:  CSS v1
+ * Date:     2026-10-18, 04:30 UTC
+ * Latest:   Canvas v51.23: new; replaces the play CDN. Imported once, in index.js.
+ * History:  CHANGELOG.md
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
