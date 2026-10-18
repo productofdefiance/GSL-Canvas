@@ -1,9 +1,9 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — Pyramid.js (Pyramid section)
- *  Version:  Pyramid v31
- *  Date:     2026-10-18, 02:05 UTC
- *  Latest:   Canvas v51.22 code tidy: unused names removed; history in CHANGELOG.md.
+ *  Version:  Pyramid v32
+ *  Date:     2026-10-18, 07:30 UTC
+ *  Latest:   Canvas v51.24 doctype: filter labels and season ticks keep their old spacing.
  *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
@@ -611,7 +611,7 @@ function ProgressionChartTab({ teams, filteredTeams, divisionFilter, setDivision
     {/* Controls (shared kit) */}
     <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-3 font-sans">
     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
-    <div className="space-y-1.5 min-w-0 max-w-full">
+    <div className="space-y-1.5 min-w-0 max-w-full flex flex-col">
     <ControlLabel accent="teal" icon={Layers}>Division</ControlLabel>
     <FilterPills accent="teal" value={presetFilter === 'all' ? divisionFilter : ''} onChange={(v) => { setDivisionFilter(v); setPresetFilter('all'); }} options={[
         { value: 'all', label: `All ${TOTAL_CLUBS}` },
@@ -627,7 +627,7 @@ function ProgressionChartTab({ teams, filteredTeams, divisionFilter, setDivision
     </div>
     </div>
     <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
-    <div className="space-y-1.5 min-w-0 max-w-full">
+    <div className="space-y-1.5 min-w-0 max-w-full flex flex-col">
     <ControlLabel accent="teal" icon={Sparkles}>Presets</ControlLabel>
     <FilterPills accent="teal" value={presetFilter} onChange={(v) => { setPresetFilter(presetFilter === v ? 'all' : v); setDivisionFilter('all'); }} options={[
         { value: 'wrexham', label: `${CLUB_DISPLAY_NAME} Ascent`, title: 'Your club' },
@@ -709,7 +709,7 @@ function ProgressionChartTab({ teams, filteredTeams, divisionFilter, setDivision
         {seasonNums.map((s) => {
             const latest = s === lastSeason;
             return (<div key={`sh-${s}`} className="absolute top-1.5 -translate-x-1/2" style={{ left: getX(s) }}>
-            <span className={`text-xs whitespace-nowrap ${latest ? 'font-extrabold' : 'font-semibold text-slate-500'}`} style={latest ? { color: PYRAMID_ACCENT } : undefined}>
+            <span className={`block text-xs whitespace-nowrap ${latest ? 'font-extrabold' : 'font-semibold text-slate-500'}`} style={latest ? { color: PYRAMID_ACCENT } : undefined}>
             S{s}
             </span>
             </div>);
@@ -1373,7 +1373,7 @@ function EuropeanQualification({ teams, winners, onSelectTeam }) {
     <HighlightCard label="From outside Div 1" icon={TrendingUp} iconClassName="text-emerald-300" value={outsideDiv1} valueClassName="text-2xl sm:text-3xl font-black text-emerald-200" left={`${outsideDiv1ViaCup} via a cup route`} right=""/>
     </HighlightsBar>
 
-    {view !== 'ledger' && (<div className="space-y-1.5 min-w-0 max-w-full">
+    {view !== 'ledger' && (<div className="space-y-1.5 min-w-0 max-w-full flex flex-col">
     <ControlLabel accent="teal" icon={Calendar}>Season</ControlLabel>
     <FilterPills accent="teal" value={season} onChange={(v) => { setSeason(v); setHover(null); }} options={[
         { value: 'all', label: 'All Seasons', badge: allQuals.length },
@@ -1583,11 +1583,11 @@ function EuroTax({ quals, onSelectTeam }) {
     <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-xs bg-rose-500"/>Lower</span>
     </div>
     <div className="flex flex-wrap items-end justify-between gap-3">
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 flex flex-col items-start sm:block">
     <ControlLabel accent="teal" icon={Globe}>Competition</ControlLabel>
     <Segmented value={comp} onChange={setComp} options={[{ value: 'all', label: 'All' }, ...EURO_COMPS.map((c) => ({ value: c, label: c }))]}/>
     </div>
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 flex flex-col items-start sm:block">
     <ControlLabel accent="teal" icon={BarChart2}>Sort</ControlLabel>
     <Segmented value={sortBy} onChange={setSortBy} options={[{ value: 'season', label: 'Season' }, { value: 'rank', label: 'Qualifying finish' }, { value: 'change', label: 'Biggest drop' }]}/>
     </div>
@@ -1899,7 +1899,7 @@ function StayingPower({ teams, after, setAfter, onSelectTeam }) {
     };
     return (<div className="space-y-4">
     <div className="flex flex-wrap items-end justify-between gap-3">
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 flex flex-col items-start sm:block">
     <ControlLabel accent="teal" icon={Layers}>After</ControlLabel>
     <Segmented value={after} onChange={(v) => { setAfter(v); setHover(null); }} options={[{ value: 'promotion', label: 'Promotion: how long they stay' }, { value: 'relegation', label: 'Relegation: how long to get back' }]}/>
     </div>
@@ -2008,11 +2008,11 @@ function RangeDashboard({ teams, onSelectTeam }) {
     <HighlightCard label="Average range" icon={Layers} iconClassName="text-sky-300" value={avgRange.toFixed(1)} valueClassName="text-2xl sm:text-3xl font-black text-sky-200" left="places, per club" right=""/>
     </HighlightsBar>
     <div className="flex flex-wrap items-end justify-between gap-3">
-    <div className="space-y-1.5 min-w-0 max-w-full">
+    <div className="space-y-1.5 min-w-0 max-w-full flex flex-col">
     <ControlLabel accent="teal" icon={Layers}>Current division</ControlLabel>
     <FilterPills accent="teal" value={div} onChange={setDiv} options={[{ value: 'all', label: `All ${TOTAL_CLUBS}` }, ...DIV_STARTS.map((_, i) => ({ value: String(i + 1), label: `Div ${i + 1}` }))]}/>
     </div>
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 flex flex-col items-start sm:block">
     <ControlLabel accent="teal" icon={BarChart2}>Sort</ControlLabel>
     <Segmented value={sortBy} onChange={setSortBy} options={[{ value: 'range', label: 'Widest range' }, { value: 'avg', label: 'Best average' }, { value: 'now', label: 'Current rank' }, { value: 'peak', label: 'Furthest from peak' }]}/>
     </div>
@@ -2160,11 +2160,11 @@ function NationalPowerIndex({ teams, onSelectTeam }) {
     <HighlightCard label="Biggest faller" icon={TrendingDown} iconClassName="text-rose-300" value={faller ? faller.name : '–'} valueClassName="text-lg sm:text-xl font-black text-rose-200" left={faller ? `avg finish ${signedAvg(faller.trend)} since S${first}` : ''} right=""/>
     </HighlightsBar>
     <div className="flex flex-wrap items-end justify-between gap-3">
-    <div className="space-y-1.5 min-w-0 max-w-full">
+    <div className="space-y-1.5 min-w-0 max-w-full flex flex-col">
     <ControlLabel accent="teal" icon={Users}>Nation size</ControlLabel>
     <FilterPills accent="teal" value={size} onChange={(v) => { setSize(v); setOpen(null); }} options={[{ value: 'all', label: 'All', badge: nations.length }, ...NATION_SIZES.map(z => ({ value: z.value, label: `${z.label} (${z.note})`, badge: nations.filter(n => n.size === z.value).length }))]}/>
     </div>
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 flex flex-col items-start sm:block">
     <ControlLabel accent="teal" icon={BarChart2}>Sort</ControlLabel>
     <Segmented value={sortBy} onChange={setSortBy} options={[{ value: 'clubs', label: 'Most clubs' }, { value: 'now', label: 'Best average now' }, { value: 'trend', label: 'Biggest rise' }, { value: 'div1', label: 'Most in Div 1' }]}/>
     </div>
@@ -2932,7 +2932,7 @@ function TrophiesTab({ teams, winners = {}, onSelectTeam }) {
     </div>
     <Segmented className="self-start lg:self-auto" value={view} onChange={setView} options={[{ value: 'table', label: 'By Club' }, { value: 'honours', label: 'Roll of Honour' }]}/>
     </div>
-    <div className="space-y-1.5 min-w-0 max-w-full">
+    <div className="space-y-1.5 min-w-0 max-w-full flex flex-col">
     <ControlLabel accent="teal" icon={Filter}>Trophies</ControlLabel>
     <FilterPills accent="teal" value={group} onChange={setGroup} options={TROPHY_GROUPS}/>
     </div>

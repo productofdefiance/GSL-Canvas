@@ -14,10 +14,16 @@ for (const f of fs.readdirSync(SRC).filter((f) => f.endsWith('.js')).sort()) {
     console.log(`${f}: ${e.message}`);
   }
 }
-// public/index.html has no <html> or <head> tags: react-scripts puts its
-// script after the first "<html…>" text it finds. If that text sits inside
-// a comment, the script is commented out and the page stays blank.
+// react-scripts puts its script after the first "<html…>" text it finds in
+// public/index.html. If that text sits inside a comment, the script is
+// commented out and the page stays blank.
 const HTML = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+// v51.24: the page must start with the doctype. Without it browsers draw the
+// live site in quirks mode, while the kit draws standards mode.
+if (!/^<!doctype html>/i.test(HTML)) {
+  bad++;
+  console.log('index.html: does not start with <!doctype html> (the live site would draw in quirks mode)');
+}
 const tag = HTML.match(/<html[^>]*>/i);
 if (tag) {
   const before = HTML.slice(0, tag.index);

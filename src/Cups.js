@@ -1,9 +1,9 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — Cups.js (Cups section)
- *  Version:  Cups v20
- *  Date:     2026-10-18, 02:05 UTC
- *  Latest:   Canvas v51.22 code tidy: unused names removed; history in CHANGELOG.md.
+ *  Version:  Cups v21
+ *  Date:     2026-10-18, 07:30 UTC
+ *  Latest:   Canvas v51.24 doctype: lines that grew in standards mode keep their old spacing.
  *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
@@ -2250,7 +2250,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
 
             {/* Filter Bar (shared controls, same as League) */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 flex flex-col">
                 <ControlLabel accent="amber">Season</ControlLabel>
                 <FilterPills accent="amber" value={selectedSeason} onChange={setSelectedSeason} options={[
                   { value: 'ALL', label: 'All Seasons' },
@@ -2630,7 +2630,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
         {/* VIEW 2: FINALS ARCHIVE */}
         {activeTab === 'finals' && (<div className="space-y-6">
             {/* Competition switch (drives everything on this tab) */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-1.5">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-1.5 flex flex-col">
               <ControlLabel accent="amber" icon={Trophy}>Competition</ControlLabel>
               <FilterPills accent="amber" value={finalsCompFilter} onChange={setFinalsCompFilter} options={[
                 { value: 'ALL', label: 'All Competitions', badge: finals.length },
@@ -2651,7 +2651,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                 {finalsViewStats.foes.map((foe, i) => (<div key={i} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
-                    <Flag emoji={foe.flag} size={22}/>
+                    <Flag emoji={foe.flag} size={22} className="!flex mx-auto"/>
                     <div className="text-xs font-bold text-slate-900 mt-1 truncate">{foe.name}</div>
                     <div className="text-[11px] text-slate-600 font-medium tabular-nums mt-0.5">
                       {foe.w}W - {foe.l}L ({foe.p > 0 ? ((foe.w / foe.p) * 100).toFixed(0) : 0}%)
@@ -2689,7 +2689,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                         <Flag emoji={fin.flag} size={26}/>
                         <div>
                           <div className="text-sm font-black text-slate-900">{fin.opponent}</div>
-                          {fin.isEsl && fin.eslRank != null ? (<span className="text-[11px] font-semibold tabular-nums text-emerald-700">ESL #{fin.eslRank}</span>) : fin.leagueCode ? (<span className="text-[11px] font-semibold tracking-wider text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">{fin.leagueCode}</span>) : null}
+                          {fin.isEsl && fin.eslRank != null ? (<span className="block text-[11px] font-semibold tabular-nums text-emerald-700">ESL #{fin.eslRank}</span>) : fin.leagueCode ? (<span className="block w-fit -my-px text-[11px] font-semibold tracking-wider text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">{fin.leagueCode}</span>) : null}
                         </div>
                       </div>
                       <div className="tabular-nums text-xl font-black text-slate-900 bg-slate-100 px-3 py-1 rounded-lg">
@@ -2735,7 +2735,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                       <div>
                         <div className="text-[11px] font-semibold text-rose-600">{prettyStage(elm.round)}</div>
                         <div className="text-sm font-black text-slate-900">{elm.opponent}</div>
-                        {elm.isEsl && elm.eslRank != null ? (<span className="text-[11px] font-semibold tabular-nums text-emerald-700">ESL #{elm.eslRank}</span>) : elm.leagueCode ? (<span className="text-[11px] font-semibold tracking-wider text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">{elm.leagueCode}</span>) : null}
+                        {elm.isEsl && elm.eslRank != null ? (<span className="block text-[11px] font-semibold tabular-nums text-emerald-700">ESL #{elm.eslRank}</span>) : elm.leagueCode ? (<span className="block w-fit -my-px text-[11px] font-semibold tracking-wider text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">{elm.leagueCode}</span>) : null}
                       </div>
                     </div>
                     <div className="tabular-nums text-lg font-black text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg">
@@ -2834,7 +2834,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                     { value: 'matrix', label: 'Tier Matrix Table' },
                 ]}/>}/>
                 <div className="space-y-3">
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 flex flex-col">
                     <ControlLabel accent="amber" icon={Calendar}>Season</ControlLabel>
                     <FilterPills accent="amber" value={formSeason} onChange={setFormSeason} options={[
                         { value: 'all', label: 'All Seasons', badge: formTypeMatches.length },
@@ -2843,7 +2843,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                   </div>
                   <div className="flex flex-wrap items-end justify-between gap-3">
                     <div className="flex flex-wrap items-end gap-3">
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 flex flex-col items-start sm:block">
                         <ControlLabel accent="amber" icon={Filter}>Matches</ControlLabel>
                         <Segmented value={formType} onChange={setFormType} options={FORM_TYPES}/>
                       </div>
@@ -2942,7 +2942,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                   </span>}/>
                 {formData.ties.length === 0 ? (<FormEmpty>No two-leg ties played yet.</FormEmpty>) : (<>
                   <div className="space-y-3">
-                    <div className="space-y-1.5 min-w-0">
+                    <div className="space-y-1.5 min-w-0 flex flex-col">
                       <ControlLabel accent="amber" icon={Calendar}>Season</ControlLabel>
                       <FilterPills accent="amber" value={tieSeason} onChange={setTieSeason} options={[
                           { value: 'all', label: 'All Seasons', badge: tiesInComp.length },
@@ -2962,7 +2962,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                   </div>
 
                   {/* Tags: a tie can have several. Tap one to filter the ties below. */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex flex-col">
                     <ControlLabel accent="amber" icon={Activity}>Tags</ControlLabel>
                     <div className="flex flex-wrap gap-1.5">
                       {TIE_TAGS.map(g => {
@@ -3011,7 +3011,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                               <Flag emoji={t.flag} size={22} className="shrink-0"/>
                               <div className="min-w-0">
                                 <div className="text-sm font-black text-slate-900 truncate" title={t.opponent}>{t.opponent}</div>
-                                {t.isEsl && t.eslRank != null ? (<span className="text-[11px] font-semibold tabular-nums text-emerald-700">ESL #{t.eslRank}</span>) : t.leagueCode ? (<span className="text-[11px] font-semibold text-slate-500">{t.leagueCode}</span>) : null}
+                                {t.isEsl && t.eslRank != null ? (<span className="block text-[11px] font-semibold tabular-nums text-emerald-700">ESL #{t.eslRank}</span>) : t.leagueCode ? (<span className="block text-[11px] font-semibold text-slate-500">{t.leagueCode}</span>) : null}
                               </div>
                             </div>
                             <div className="flex items-stretch gap-1.5 mt-2.5">
@@ -3059,7 +3059,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
 
                   {/* Split */}
                   <div className="space-y-3">
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 flex flex-col items-start sm:block">
                       <ControlLabel accent="amber" icon={BarChart3}>Split by</ControlLabel>
                       <Segmented value={shootSplit} onChange={setShootSplit} options={[
                           { value: 'comp', label: 'Competition' },
@@ -3096,7 +3096,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                             <Flag emoji={s.flag} size={22} className="shrink-0"/>
                             <div className="min-w-0">
                               <div className="text-sm font-black text-slate-900 truncate" title={s.opponent}>{s.opponent}</div>
-                              {s.isEsl && s.eslRank != null ? (<span className="text-[11px] font-semibold tabular-nums text-emerald-700">ESL #{s.eslRank}</span>) : s.leagueCode ? (<span className="text-[11px] font-semibold text-slate-500">{s.leagueCode}</span>) : null}
+                              {s.isEsl && s.eslRank != null ? (<span className="block text-[11px] font-semibold tabular-nums text-emerald-700">ESL #{s.eslRank}</span>) : s.leagueCode ? (<span className="block text-[11px] font-semibold text-slate-500">{s.leagueCode}</span>) : null}
                             </div>
                           </div>
                           <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-200/70">
@@ -3299,7 +3299,7 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                                 <div className="flex items-center justify-between gap-2.5">
                                   <div className="flex items-center space-x-2.5 min-w-0">
                                     <span className="text-3xl shrink-0 group-hover:scale-110 transition-transform">
-                                      <Flag emoji={club.flag} size={16}/>
+                                      <Flag emoji={club.flag} size={16} className="!flex"/>
                                     </span>
                                     <div className="min-w-0">
                                       <div className="flex items-center space-x-1.5 flex-wrap">
@@ -3913,17 +3913,17 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
                               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Finals</span>
                               <span className="text-xl font-black tabular-nums text-slate-900 leading-tight mt-0.5 block">{comp.finalsCount}</span>
-                              <span className="text-[11px] text-slate-400 font-semibold">{comp.finalWinRate.toFixed(0)}% W</span>
+                              <span className="block text-[11px] text-slate-400 font-semibold">{comp.finalWinRate.toFixed(0)}% W</span>
                             </div>
                             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
                               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">Campaigns</span>
                               <span className="text-xl font-black tabular-nums text-slate-900 leading-tight mt-0.5 block">{comp.appearances}</span>
-                              <span className="text-[11px] text-slate-400 font-semibold">Runs</span>
+                              <span className="block text-[11px] text-slate-400 font-semibold">Runs</span>
                             </div>
                             <div className="bg-rose-50/60 border border-rose-200/80 rounded-xl p-2.5 text-center">
                               <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 block">KO Exits</span>
                               <span className="text-xl font-black tabular-nums text-rose-700 leading-tight mt-0.5 block">{comp.knockoutExits}</span>
-                              <span className="text-[11px] text-rose-500 font-semibold">Exits</span>
+                              <span className="block text-[11px] text-rose-500 font-semibold">Exits</span>
                             </div>
                           </div>
                           {/* Record Strip & Tri-Color Ratio Bar */}

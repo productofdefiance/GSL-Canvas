@@ -15,7 +15,7 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 | --- | --- |
 | package.json | Project settings |
 | netlify.toml | Netlify build for pull-request previews: `CI=false npm run build`, publishes `build/`, Node 20 |
-| public/index.html | The page: head (title, Google Fonts, colour variables, division and dark-mode CSS) and the root div. No doctype yet: browsers draw it in quirks mode (the test kit draws standards mode) |
+| public/index.html | The page: doctype, head (title, Google Fonts, colour variables, division and dark-mode CSS) and the root div |
 | tailwind.config.js | Tailwind's config (colours as `--c-*` variables, page font, safelist); compiled ahead of time by react-scripts. The test kit reads the same file |
 | src/index.css | The three `@tailwind` lines, imported once in index.js |
 | src/App.js | Shell: Top Bar, page switching, dark-mode switch, footer, `VERSION_TAG` / `PUBLISHED` |
@@ -96,6 +96,10 @@ Code receives one brief per build, the locked decisions only.
   the source. Write class names whole (never assembled at runtime, like `` `bg-${tone}-500` ``), or add them to the
   config's `safelist` with a comment saying where they're used. The kit (`test/css.js`) and the site share that one
   config; `npm run css` fails if a rendered page uses a class the build lacks.
+- `public/index.html` starts with `<!doctype html>`: the live site draws in standards mode, as the kit does (the kit's
+  compile check fails without it). A small inline element alone on its line takes the parent's full line height in
+  standards mode; give it `block` (or put label-over-control wrappers in `flex flex-col`) rather than letting the
+  line grow.
 - Flags are always drawn vectors (ui.js `Flag`, or `SvgFlag` inside charts), never emoji text, anywhere in the canvas.
 - Text floor 11px (SVG too); the small-text baseline may never rise. R10 match order: flag, club, result chip, score. R11: tables sort by headers.
   R12: "us" cards get a top accent strip, "them" cards a left strip.
@@ -103,7 +107,7 @@ Code receives one brief per build, the locked decisions only.
 ## Checks before every pull request
 
 Run with the kit in test/ (commands in test/README.md). `npm run check` runs, and must pass:
-- Syntax and compile; the **rules check** (`rules.js`: `window.innerWidth` / `innerHeight`, `(hover: none)`, club names
+- Syntax and compile (including: index.html starts with the doctype); the **rules check** (`rules.js`: `window.innerWidth` / `innerHeight`, `(hover: none)`, club names
   or codes in code, `useState('<club code>')`, typed-in counts, plain `overflow-x-auto` rows); the **lint baseline**
   (`lint.js`: ESLint findings per file may not rise; lower `lint-baseline.json` when they fall); a full render of every
   page and tab (phone 390 and desktop 1440) with the **small-text baseline** (text under 11px per page and tab,

@@ -1,12 +1,13 @@
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <!--
   GSL CANVAS — public/index.html
-  Version:  Canvas v51.23 · 2026-10-18, 04:30 UTC
-  v51.23: html, head (charset, title) and body written out. No doctype
-  yet, on purpose: browsers draw this page in quirks mode, and a doctype
-  (standards mode) moves 72 of 120 views; it gets its own build.
+  Version:  Canvas v51.24 · 2026-10-18, 07:30 UTC
+  v51.24: the doctype comes first, so browsers draw the page in standards
+  mode, as the test kit always has (the kit fails without it).
+  v51.23: html, head (charset, title) and body written out.
   Tailwind is compiled ahead of time from tailwind.config.js
   (src/index.css); the play CDN and its inline config are gone.
   Playfair Display is no longer downloaded here: LabBar adds it.
