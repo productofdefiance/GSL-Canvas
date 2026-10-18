@@ -15,20 +15,26 @@ rolled back) · where it was resolved (pull request or version). The repo is pub
   size-watcher there changes the size it watches within one frame. Nothing visible breaks and Chromium doesn't report
   it. webkit.js prints these as notes, not failures, so each new one is seen; this flag stays open until the loop is
   traced (likely a ScrollRow or useKeepInView observer on the phone layout).
+- **Decision (the user, 18 Oct):** parked, low priority. The Safari engine check stays on.
 
 ### F17 · Pyramid Progression, desktop: a long name runs into its change figure
 - **Raised by:** Code (v51.25 future-save check) · **Date:** 2026-10-18 · **Status:** open
 - In the ranked list to the right of the chart (1440), "WOLVERHAMPTON W…" overlaps its change figure ("+16"). Seen
   with the future save's full names ("WOLVERHAMPTON WANDERERS FC"); today's short names fit.
+- **Decision (the user, 18 Oct):** desktop only; folds into the club name-length standard (no separate fix).
 
 ### F16 · Pyramid Progression, phone: season labels run together after S9
 - **Raised by:** Code (v51.25 future-save check) · **Date:** 2026-10-18 · **Status:** open
 - With 14 completed seasons at 390, the labels above and below the chart touch: "S9S10S11S12S13S14".
+- **Decision (the user, 18 Oct):** after S9 the season labels alternate (every other season labelled); the full label
+  shows in the card.
 
 ### F15 · Home vs Away Venue swing, phone: 15 seasons crowd the columns
 - **Raised by:** Code (v51.25 future-save check) · **Date:** 2026-10-18 · **Status:** open
 - At 15 seasons each season column is about 23px wide at 390 and neighbouring labels touch ("S9S10"). Makes F4 worse
   as the save grows.
+- **Decision (the user's direction, 18 Oct):** Venue swing scrolls sideways and opens on the latest season. This also
+  answers F4.
 
 ### F14 · The kit drew icons with a stand-in, not the real icon library
 - **Raised by:** Code (v51.24) · **Date:** 2026-10-18 · **Status:** fixed · **Resolved:** Canvas v51.25
@@ -72,7 +78,8 @@ rolled back) · where it was resolved (pull request or version). The repo is pub
 
 ### F4 · Venue swing season columns are under 44px wide on phones
 - **Raised by:** design chat · **Date:** 2026-10-17/18 · **Status:** open
-- About 35 × 260px at 390 with 8 seasons (ha_t's three known exceptions); decision pending. See F15.
+- About 35 × 260px at 390 with 8 seasons (ha_t's three known exceptions). Answered by F15's decision (18 Oct): Venue
+  swing scrolls sideways and opens on the latest season.
 
 ### F3 · Home vs Away has two Points / Wins / Goals switches that don't follow each other
 - **Raised by:** design chat · **Date:** 2026-10-17/18 · **Status:** open
