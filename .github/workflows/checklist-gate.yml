@@ -1,0 +1,25 @@
+# Checklist gate (v51.25, review layer 2): red while any box under "The user's checks" in the pull request description
+# is unticked, green once all are ticked. Runs again whenever the description is edited. It reads the event's own copy
+# of the description (no access to the pull request beyond that), with read-only permissions and no secrets.
+name: Checklist gate
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+permissions:
+  contents: read
+jobs:
+  gate:
+    name: Checklist gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: test/gate.js
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Every box under "The user's checks" is ticked
+        timeout-minutes: 1
+        run: node test/gate.js "$GITHUB_EVENT_PATH"

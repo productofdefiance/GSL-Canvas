@@ -7,6 +7,7 @@
 
 - **Date:** YYYY-MM-DD
 - **Goal (one line):** …
+- **Size:** Invisible / S / M / L (how much the user reviews on a device; L needs a rollback plan in the pull request).
 - **Branch:** the first build in a session uses the session's assigned branch; each later build in the same session
   makes a new branch from an up-to-date main, named `claude/v51-xx-<short-name>` (if the session can't push one, Code
   stops and asks for a fresh session). Never a merged branch.
@@ -51,6 +52,11 @@ toggles, filters, columns, drawers, sorting, empty states.
 - Named interaction checks, e.g. "drag across the Points race at 390: the card docks at the bottom and stays after lifting".
 - Dark mode on every tab touched; no sideways overflow at 390 (`ow.js`).
 
+**The user's checks** (Code copies them into the pull request as tick-boxes under "The user's checks"; the Checklist
+gate check stays red until all are ticked):
+
+1. …
+
 ## 7. Updates in the repo
 
 - Each changed file: version bump and its short header (file name, version, date and time UTC, one line on the
@@ -59,8 +65,14 @@ toggles, filters, columns, drawers, sorting, empty states.
 - App.js: `VERSION_TAG` and `PUBLISHED`.
 - CLAUDE.md: only if a rule or convention changed in this build.
 
+## Carry-over flags
+
+Flags from the design chat for FLAGS.md (Code copies them in): number if known, title, status, one line each. "None" if
+there are none.
+
 ## 8. Report back (the pull request description)
 
-The pull request description is the report: what's in · anything beyond this brief and why · checks run and
-their results · the Netlify preview link (`https://deploy-preview-<PR number>--gslcanvas1.netlify.app`) · known gaps. Code gives the user the pull request link; the user passes the link to the design chat,
+The pull request description is the report, in `.github/pull_request_template.md`'s sections: what's in · anything
+beyond this brief and why · checks run and their results · flags opened or closed · what wasn't checked · rollback
+(size L) · the Netlify preview link (`https://deploy-preview-<PR number>--gslcanvas1.netlify.app`) · known gaps. Code gives the user the pull request link; the user passes the link to the design chat,
 which reads the description there and logs it.

@@ -13,7 +13,7 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 
 | Path | What it is |
 | --- | --- |
-| package.json | Project settings |
+| package.json, package-lock.json | Project settings; every dependency pinned to an exact version, installed with `npm ci` from the lockfile |
 | netlify.toml | Netlify build for pull-request previews: `CI=false npm run build`, publishes `build/`, Node 20 |
 | public/index.html | The page: doctype, head (title, Google Fonts, colour variables, division and dark-mode CSS) and the root div |
 | tailwind.config.js | Tailwind's config (colours as `--c-*` variables, page font, safelist); compiled ahead of time by react-scripts. The test kit reads the same file |
@@ -26,12 +26,14 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 | test/ | Test kit: `test/setup.sh`, then `cd test && npm run check` (see test/README.md). Test-only dependencies live in test/package.json |
 | briefs/ | One build brief per build (`v51.xx.md`), mock images in `briefs/img/`; `TEMPLATE.md` is the format |
 | CHANGELOG.md | Every build's changes, newest first, grouped by canvas version (one entry per file) |
+| FLAGS.md | The flags log (review layer 1): everything noticed and not fixed in the build that found it |
+| .github/ | `pull_request_template.md` (the build message) and `workflows/` (the GitHub checks, review layer 3) |
 | CLAUDE.md | This file |
 
 Any restructure is one deliberate step, agreed with the user, checked in StackBlitz (the user's preview), then recorded
 here and in the living handoff.
 
-Libraries: React, d3, lucide-react only. Ask before adding anything. Tailwind (pinned, exact version) is a build step,
+Libraries: React, d3, lucide-react only, at exact versions (the lockfile holds the rest). Ask before adding anything. Tailwind (pinned, exact version) is a build step,
 not a library the code imports.
 
 ## How work runs
@@ -48,12 +50,41 @@ not a library the code imports.
 - The repo is public: no personal details (names, emails, private notes, screenshots) in files, commit
   messages or pull requests. Refer to the owner as "the user".
 
+## Review layers (pilot from Canvas v51.25, reviewed at v51.35)
+
+The owner can't review code, and Code, the design chat and the evaluator are all Claude models with shared blind spots.
+Five layers, arranged so their holes don't line up (full design: the living handoff, "Review layers"):
+
+1. **Flags log** (`FLAGS.md`): Code and the design chat hold each other to account. Anything noticed and not fixed in
+   that build gets an entry: next number (F1, F2 …), title, raised by (Code / design chat / the user / eval), date,
+   status (open, fixed, accepted, rolled back), where it was resolved. Newest first. Code keeps the file; the design
+   chat's flags arrive in a brief's "Carry-over flags" section and Code copies them in. A check that finds a real bug
+   outside the build's scope: add a flag, don't fix it there. Every pull request lists the flags it opened, closed or
+   touched.
+2. **The user's on-device review**, sized to the change. Each brief has a size (Invisible / S / M / L) and "The user's
+   checks"; Code copies those checks into the pull request as tick-boxes under the heading "The user's checks" (the
+   template, `.github/pull_request_template.md`, has the sections). The **Checklist gate** check stays red until every
+   box there is ticked. Size L needs a written rollback plan.
+3. **GitHub checks** (`.github/workflows/`), on every pull request and push to main, each a separately named check:
+   **Kit** (`npm run check`), **Browser** (css, bundle, overflow, the tap sample, edge fades), **Production build**
+   (`npm ci` + `CI=false npm run build`, as Netlify builds), **Safari engine** (every page and tab of a production build
+   in WebKit at 390 and 1440: no page error, no sideways scroll), **Checklist gate**. Read-only, no secrets, hard
+   timeouts. The slow sweeps stay manual: `npm run tap:full` and `npm run pixel`, run when a brief asks.
+4. **Golden numbers** (`test/golden.json`, checked inside `npm run check` against the rendered page): **golden** values
+   were verified by the user against the save's sheet, and a change fails the build; **pinned** values aren't in the
+   sheet, and a change is reported for a look. Never edit `test/golden.json` without the design chat and the user.
+   **Future-save fixture** (`test/future.js`, also inside `npm run check`): today's workbook run to the save's limits
+   (15 seasons, 4 divisions, 92 Pyramid clubs, a relegation, a half-played season, the longest names in the data).
+   Every page and tab must render with no error, no "NaN" / "undefined" / "null" and no sideways scroll; what renders
+   but looks wrong becomes a flag.
+5. **Independent eval**, firewalled from this repo's working sessions.
+
 ## Briefs (how a build starts)
 
 Design happens in a separate claude.ai design chat. Its rounds, options and feedback stay there (private);
 Code receives one brief per build, the locked decisions only.
 
-- The brief follows `briefs/TEMPLATE.md`. The user starts a build session with the brief's claude.ai doc link
+- The brief follows `briefs/TEMPLATE.md` (with its Size, "The user's checks" and "Carry-over flags"). The user starts a build session with the brief's claude.ai doc link
   (read it with the docs tools) or its pasted text. No brief and no clear ask: ask before building.
 - Save a copy as `briefs/v51.xx.md` on the build branch, so the brief lands in the same pull request as the code.
   Mock images the user attaches go to `briefs/img/v51.xx-<n>.png`. The repo is public: mocks cropped to the
@@ -107,12 +138,13 @@ Code receives one brief per build, the locked decisions only.
 ## Checks before every pull request
 
 Run with the kit in test/ (commands in test/README.md). `npm run check` runs, and must pass:
-- Syntax and compile (including: index.html starts with the doctype); the **rules check** (`rules.js`: `window.innerWidth` / `innerHeight`, `(hover: none)`, club names
+- Syntax and compile (including: index.html starts with the doctype; the kit's lucide-react matches the site's); the **rules check** (`rules.js`: `window.innerWidth` / `innerHeight`, `(hover: none)`, club names
   or codes in code, `useState('<club code>')`, typed-in counts, plain `overflow-x-auto` rows); the **lint baseline**
   (`lint.js`: ESLint findings per file may not rise; lower `lint-baseline.json` when they fall); a full render of every
   page and tab (phone 390 and desktop 1440) with the **small-text baseline** (text under 11px per page and tab,
-  `baseline.json`, may not rise); and the **empty-save check** (`empty.js`: every page and tab on an empty and a
-  headers-only workbook, no React error, no "NaN", "undefined", "null" or club name on screen).
+  `baseline.json`, may not rise); the **golden numbers** (`golden.js`); the **empty-save check** (`empty.js`: every page and tab on an empty and a
+  headers-only workbook, no React error, no "NaN", "undefined", "null" or club name on screen); and the **future-save
+  check** (`future.js`).
 - Exceptions to the rules check and the empty-save check go only through `test/rules-allow.json`, each with its file,
   rule, kind and a reason. Kinds: where a rule is implemented, page debt (Cups, Pyramid, Squad: counts that only go
   down), not a club (same letters), wide table, standards review. A new kind or entry is agreed with the user first.

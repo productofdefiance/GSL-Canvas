@@ -1,0 +1,134 @@
+# GSL Canvas checks (v51.25, review layer 3). Each job is a separately named check, so main can require them by name:
+# Kit, Browser, Production build, Safari engine. Read-only; no secrets. Every job and step has a hard timeout.
+# The slow sweeps stay manual (test/README.md): npm run tap:full, npm run pixel.
+name: Checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+env:
+  NODE_VERSION: '20'
+jobs:
+  kit:
+    name: Kit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: test/package-lock.json
+      - name: Install the test kit
+        working-directory: test
+        timeout-minutes: 5
+        run: npm ci --no-audit --no-fund
+      - name: Install Chromium
+        working-directory: test
+        timeout-minutes: 5
+        run: npx playwright install --with-deps chromium
+      - name: npm run check (syntax, compile, doctype, rules, lint, render, small text, golden numbers, empty save, future save)
+        working-directory: test
+        timeout-minutes: 10
+        run: npm run check
+
+  browser:
+    name: Browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: test/package-lock.json
+      - name: Install the test kit
+        working-directory: test
+        timeout-minutes: 5
+        run: npm ci --no-audit --no-fund
+      - name: Install Chromium
+        working-directory: test
+        timeout-minutes: 5
+        run: npx playwright install --with-deps chromium
+      - name: Build the kit's pages
+        working-directory: test
+        timeout-minutes: 3
+        run: node build.js && node render.js snap
+      - name: CSS (from tailwind.config.js, with the runtime class-name check)
+        working-directory: test
+        timeout-minutes: 2
+        run: npm run css
+      - name: Bundle
+        working-directory: test
+        timeout-minutes: 2
+        run: npm run bundle
+      - name: No sideways scroll at 390 (League)
+        working-directory: test
+        timeout-minutes: 3
+        run: npm run overflow
+      - name: Tap test, sample of every tab
+        working-directory: test
+        timeout-minutes: 10
+        run: npm run tap -- --sample
+      - name: Edge fades
+        working-directory: test/browser
+        timeout-minutes: 5
+        run: timeout 280 node fade_t.js
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: npm ci (from the lockfile)
+        timeout-minutes: 8
+        run: npm ci --no-audit --no-fund
+      - name: Build exactly as Netlify does
+        timeout-minutes: 6
+        run: CI=false npm run build
+
+  safari:
+    name: Safari engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            test/package-lock.json
+      - name: npm ci (site, from the lockfile)
+        timeout-minutes: 8
+        run: npm ci --no-audit --no-fund
+      - name: npm ci (test kit)
+        working-directory: test
+        timeout-minutes: 5
+        run: npm ci --no-audit --no-fund
+      - name: Install WebKit
+        working-directory: test
+        timeout-minutes: 6
+        run: npx playwright install --with-deps webkit
+      - name: Production build (prod.js opens each page and tab; nothing else in the source changes)
+        working-directory: test/browser
+        timeout-minutes: 6
+        run: node prod.js . ../out/prod
+      - name: Every page and tab in WebKit at 390 and 1440
+        working-directory: test/browser
+        timeout-minutes: 9
+        run: node webkit.js ../out/prod
