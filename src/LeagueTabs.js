@@ -1,219 +1,15 @@
 /*
- *  ═══════════════════════════════════════════════════════════════════════════
- *  GSL CANVAS: League · Form & Margins and Points tabs
- *  ═══════════════════════════════════════════════════════════════════════════
- *  Version:  LeagueTabs v13
- *  Date:     2026-10-17, 23:30 UTC
- *
- *  The two League tabs redesigned in the v51 Palette Lab (Form & Margins
- *  rounds 1–3, Points rounds 1–5), built as their own module so League.js
- *  only has to hand them the seasons and the clubs.
- *
- *  Everything is worked out here from each season's fixtures (matchday,
- *  venue, opponent, score, result), so no new sheet columns are needed.
- *  One known gap: the sheet records the matchday a title was sealed only
- *  for some seasons; Fastest Title Seal uses the seasons that have it.
- *
- *  Rules followed: R1 records, R2 scores, R5 Highlights bar first, R6 no
- *  repeats, R8 section cards neutral, R10 match order (flag, club, result,
- *  score), accents never colour data.
- *
- *  CHANGELOG (newest first)
- *
- *  LeagueTabs v13 — 2026-10-17, 23:30 UTC — Canvas v51.21 (Spider Matrix on phones)
- *   - Versus on phones: a "Quick picks" eyebrow, then every quick pick on one
- *     row that scrolls sideways (36px chips, 44px tap areas); the selected one
- *     kept in view (ui.js useKeepInView). Each scorecard pillar gets a verdict
- *     chip on its header line (the desktop column's words; the leading layer's
- *     colour on its 10% / 15% tint, or ink where that colour can't reach 4.5:1),
- *     in place of the desktop column. Desktop unchanged.
- *   - Group on phones, Lines: the pillar row is the tap target ("Tap to rank ›")
- *     and opens a docked ranked card (best first, ties share a rank, the career
- *     average as a divider row; a layer row brings it forward). The tapped row
- *     is marked (accent tint, 3px bar); dots are no longer tap targets on
- *     phones. Desktop dots keep their hover cards.
- *   - Group: a finished tap on a chip, an outline or a table row brings that
- *     layer forward (toggles); mouse hover as before.
- *   - [i] on the comparison, Group and Highs & lows; "Outlines only." and both
- *     Highs & lows subtitles removed.
- *   - 44px tap areas on phones: Versus / Group, Change ▾, ⇄, quick picks, the
- *     picker's kinds, rows, venue chips, search and Us / Them switch, Seasons /
- *     Clubs, Lines / Table, chip ✕, Add menu rows, table rows, By club / By
- *     season, the minimum-games filter, the radar's pillar labels.
- *   - Points race season strip: its keep-in-view logic moved to ui.js
- *     (useKeepInView); same behaviour.
- *   - Sideways rows use ui.js ScrollRow, so an edge fades where more is
- *     hidden: the Points season strip and the picker's kinds on phones (white
- *     card), the quick picks and the Group chips (page background), in light
- *     and dark. Ranked card rows are 44px tall. Verdict chips name a club
- *     layer by its abbreviation ("CHE by 12.7%").
- — 2026-10-17, 22:00 UTC — Canvas v51.20 (Points on phones)
- *   - Points race and Matchday benchmarks: subtitles removed; their words
- *     (from the section [i] blurbs) live in each section's [i].
- *   - Matchday benchmarks on phones: the ledger starts folded under "Show all
- *     N matchdays ▾" (N from the data). The strip scrubs: a sideways slide
- *     reads the matchday under the finger (cellAt); a tap opens or switches
- *     a cell's card. The open cell gets a 2px ink outline 2px out, the rest
- *     drop to 35%; a hint shows while no card is open (hidden, not removed,
- *     so the page never shrinks and scrolls). The docked card: MD,
- *     games and season range, Record, Win % (a tag in the cell's heat colour),
- *     PPG, GD, the rank line, Best win (drawn flag, club code, score, season)
- *     and "See in ledger →", which unfolds the ledger, scrolls the row to the
- *     middle and marks it (accent tint, 3px accent bar) until another row
- *     opens, the ledger folds or the filter changes. On phones a tap on a
- *     cell no longer opens its row. Desktop unchanged.
- *   - Pace on phones (option A): mode, baseline and division switches on
- *     three rows; the baseline switch reads Average / Record / Last season and
- *     the legend carries its value ("Average · 2.40 PPG"); "Measured against"
- *     goes. Desktop unchanged.
- *   - Points race season strip: the focused season is kept in view whenever
- *     the layout can have moved (focus, mode or division change, web fonts
- *     arriving, the strip or a cell resizing), not only when focus changes;
- *     once the user scrolls the strip, it leaves it alone until focus, mode
- *     or division changes.
- *   - Home vs Away: Venue swing's [i] uses a curly apostrophe (season’s).
- *   - [i] text: the two "Good to know" lines no longer name season lengths
- *     (corrected in the blurbs doc), so they hold for any save.
- *
- *  LeagueTabs v11 — 2026-10-17, 20:00 UTC — Canvas v51.19 (Home vs Away on phones + section [i])
- *   - Section takes info: the section's [i] (ui.js SectionInfo, R14) at the
- *     top right of its header; on desktop it follows the header's controls.
- *   - Home vs Away: Venue swing, the side-by-side and Venue ledger lose their
- *     descriptions; the words (from the section [i] blurbs) live in their [i].
- *   - Venue ledger on phones: one value a side (the metric in the switch),
- *     the season, its division and the split bar with both shares in the
- *     middle; the stronger side in ink, the weaker faded. Rows still select.
- *   - Side-by-side on phones: values on a top line with the label centred;
- *     bars grow out from an 86px spine holding the gap (22px, ◂ / ▸ at the
- *     stronger venue). Bar = value ÷ the row's larger value × half the row.
- *   - Tap targets on phones: metric switches, Combine seasons, its chips and
- *     shortcuts, Clear, the selection chip and the swing chart's season
- *     columns get 44px tap areas (TAP); ledger rows are 52px tall.
- *   - Desktop unchanged apart from the three descriptions.
- *   - Every hover card (Points race, Matchday benchmarks heat, Margin
- *     distribution, Momentum pulse and Overlay, streak pulses, Venue swing,
- *     last-5 form, Spider axis labels and Group dots) runs on ui.js's
- *     useHoverCard: a tap opens or switches it, a second tap, a tap anywhere
- *     else or a scroll closes it; the Points race and Overlay still scrub with
- *     a sideways slide. Mouse unchanged. pointAt and leaveUnlessTouch removed.
- *
- *  LeagueTabs v10 — 2026-10-17, 07:45 UTC — Canvas v51.18 (quick fixes)
- *   - Minus signs: every signed number (axis labels, pace, deltas, GD, hover
- *     cards) goes through ui.js's signed(): true minus sign, no sign on zero.
- *   - Points: Best season's date sits on its own line under the Invincible
- *     chip on phones and never wraps. Perfect matchdays wraps to two lines at
- *     most, then ends with "+N" (ClampList); never "…". Heat legend "<25%",
- *     on one line at 390. The season strip scrolls (never the page) to keep
- *     the focused season in view, 16px in from the edge.
- *   - Points race on phones: the plot uses the full width (right margin =
- *     the longest end label + 6px) and the x-axis shows bare numbers; desktop
- *     keeps "MD 1". Ticks come from the data: 1, every 10, and each
- *     completed season's length (a multiple of 10 within 4 of one is dropped).
- *   - Home vs Away: on phones the Points card comes first at full width. The
- *     swing bar's away figures keep light mode's dark ink in dark mode.
- *   - Spider Matrix on phones: the radar fills its box and every pillar label
- *     sits inside it, 8px clear; side labels wrap to two lines and the web
- *     shrinks to fit. Desktop unchanged. Versus subtitle removed; Group's
- *     count line drops its hover hint; its subtitle is "Outlines only."
- *
- *  LeagueTabs v9 — 2026-10-17, 12:00 UTC — Canvas v51.17 (dark-mode fixes)
- *   - Spider Matrix: the Career layer colour (INK) is the ink token as a CSS
- *     variable, so its radar line and dots, scorecard bars, legend swatch,
- *     card swatch and top strip show in dark mode. The opponent clash check
- *     compares against the ink hex of the mode that is on (useDark).
- *   - Selected chips (Points season strip All / None, Home vs Away combine
- *     seasons, Spider Change ▾, Venue season scope, quick picks) use
- *     text-slate-50 instead of text-white, so they stay readable in dark mode.
- *
- *  LeagueTabs v8 — 2026-10-09, 11:00 UTC — Canvas v51.15
- *   - Momentum Overlay hover card: titled by matchday; shows the plotted
- *     value (5-game average GD), the change from the previous matchday,
- *     rank, and the result with the opponent's flag and code.
- *   - Highs & lows: "Biggest wins vs top teams", explainer text removed.
- *
- *  LeagueTabs v7 — 2026-10-09, 09:00 UTC — Canvas v51.14 (Anish's League review)
- *   - Points race: the compare card ranks on points, then goal difference,
- *     with a cumulative GD column; All / None is one compact control.
- *   - Matchday benchmarks: the drawer uses club codes, four columns, compact
- *     rows (as in Streaks).
- *   - Form & Margins: Margin distribution loses its Table view; Momentum
- *     pulse Overlay gets a hover card (each season's 5-game average, rank and
- *     that match's result); Biggest scalps becomes "Top-ranked clubs beaten",
- *     with each club's average rank labelled.
- *   - Home vs Away: spine labels sit lower (between the row top and the
- *     number); the Venue ledger's split follows its Points / Wins / Goals
- *     switch.
- *
- *  LeagueTabs v6 — 2026-10-09, 05:00 UTC — Canvas v51.13
- *   - New SpiderTab (locked design): Versus (two layer cards with R12 strips,
- *     picker anchored under Change: Career, Seasons, Venue with season scope,
- *     Opponents with search and the us / them toggle; swap; quick picks) and
- *     Group (seasons or clubs, up to 8 / 6, chips with remove and Add, outline
- *     radar with highlight, dot lines or a table). Pillar spec: more is
- *     better, shared scales (win 0–100%, conceded 2.5–0, clean sheets 0–70%,
- *     PPG 0–3, blowouts 0–70%, scored 0–4); off-scale values clamp on the web
- *     with an arrow and stretch only that row. Radar Option 1 (only each
- *     layer's lead is filled). Highs & lows by club (All, 5+, 10+, Top 10) or
- *     by season. Axis labels explain each pillar on hover.
- *
- *  LeagueTabs v5 — 2026-10-09, 02:00 UTC — Canvas v51.12
- *   - New HomeAwayTab (locked design): career Highlights bar with venue tags;
- *     Venue swing with the career split bar, Points / Wins / Goals, click a
- *     season, Combine seasons (plus Div 1 / lower-division shortcuts); the
- *     side-by-side for the selection (spine option E) with last-5 hover on
- *     Home / Away; Venue ledger mirrored around the points split, its own
- *     metric switch, sortable, rows select seasons.
- *   - Points race: magnifier removed; the hover card floats beside the cursor
- *     (flips sides) instead of the side panel; chart full width; Average and
- *     Record labels at the left; works by touch (drag to scrub).
- *   - Every hover in this file works by touch: on a phone the card shows
- *     fixed at the bottom of the screen and stays up after the finger lifts.
- *
- *  LeagueTabs v4 — 2026-10-08, 04:00 UTC — Canvas v51.11
- *   - Sorting now uses the shared useSort from ui.js (same behaviour).
- *
- *  LeagueTabs v3 — 2026-10-08, 02:00 UTC — Canvas v51.10
- *   - Points race: the hover card moves into a side panel beside the chart,
- *     so it never covers the magnifier; at rest it shows the season's end.
- *     Pace view gets the same panel (pace gap, rank, PPG) and a third
- *     baseline, last season's PPG. All / None for the season strip.
- *   - Streaks: headers never wrap (sorting by goals no longer breaks the
- *     row); more room between the first columns; Ended by uses club codes;
- *     the drawer's rows are compact, with wide gutters between columns.
- *   - Dropped points by season: Dropped shows the total with a draws /
- *     defeats split bar; clubs listed under Drawn with (amber) and Lost to
- *     (rose), ×2 when it happened twice.
- *
- *  LeagueTabs v2 — 2026-10-07, 22:00 UTC — Canvas v51.09 (Anish's v51.08 notes)
- *   - Hover cards back: Margin distribution segments (count, share, the
- *     matches) and Momentum pulse bars (fixture, GD, 5-game average). Hover
- *     cards now sit on the page (fixed), so no table can clip them.
- *   - Momentum pulse fills its card; One season / Overlay (each season's
- *     5-game average) restored.
- *   - Highs & lows: filter removed; six cards: Biggest wins, Heaviest defeats,
- *     Highest-scoring draws, Biggest scalps (wins over the best-ranked clubs),
- *     Most common scores, Clean sheets and blanks (now with longest runs and
- *     the best season).
- *   - Streaks: length filter removed (all runs of 2+, longest first); the
- *     drawer uses club codes and fits four columns.
- *   - Every table sorts by its headers (Streaks, Dropped points both views,
- *     Matchday benchmarks).
- *   - Dropped points by season lists every club points were dropped against
- *     (code, points, draws and defeats); the top card shows the club's flag.
- *   - Points race: fills its card; Focus has a hover card (points, fixture,
- *     against record pace); the record-pace label moves clear of the season
- *     label; the magnifier follows the cursor (rests on the run-in); the
- *     season strip's ticks show in dark mode; S1 is lime, not slate.
- *   - Matchday benchmarks: best and worst decided by PPG, then goal
- *     difference, then goals; the cards show GD; Perfect matchdays lists them.
- *
- *  LeagueTabs v1 — 2026-10-07, 18:00 UTC — Canvas v51.08
- *   - First version: FormMarginsTab, PointsTab.
- * ═══════════════════════════════════════════════════════════════════════════
+ * ════════════════════════════════════════════════════════════════════
+ *  GSL CANVAS — LeagueTabs.js (League: Form & Margins, Points, Home vs Away, Spider Matrix)
+ *  Version:  LeagueTabs v14
+ *  Date:     2026-10-18, 02:05 UTC
+ *  Latest:   Canvas v51.22 code tidy: hover cards use ui.js viewport(); unused names out.
+ *  History:  CHANGELOG.md (every build, newest first)
+ * ════════════════════════════════════════════════════════════════════
  */
 
 import React, { useMemo, useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { Activity, Target, Zap, Star, Trophy, ChevronDown, ChevronUp, Search, Home, Plane, X, ArrowLeftRight, Calendar, Shield, Plus } from 'lucide-react';
+import { Target, Zap, Star, Trophy, ChevronDown, Search, Home, Plane, X, ArrowLeftRight, Calendar, Shield, Plus } from 'lucide-react';
 import {
   TYPE,
   HighlightsBar,
@@ -222,7 +18,6 @@ import {
   Segmented,
   Score,
   WDLRecord,
-  RecordKey,
   Flag,
   useSort,
   useDark,
@@ -237,6 +32,7 @@ import {
   ScrollRow,
   ACCENT_HEX,
   ACCENT_HEX_LIGHT,
+  viewport,
 } from './ui.js';
 
 // ─── SHARED ─────────────────────────────────────────────────────────
@@ -337,8 +133,7 @@ function ClampList({ items = [], prefix = '', lines = 2 }) {
 function FloatCard({ at, width = 256, beside = false, children }) {
   if (!at) return null;
   if (at.touch) return <div data-hv-card="" className="fixed z-[70] left-2 right-2 bottom-3 pointer-events-none"><div className="bg-white rounded-2xl shadow-2xl ring-1 ring-slate-200 p-4 flex flex-col gap-2 text-left">{children}</div></div>;
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1440;
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+  const { w: vw, h: vh } = viewport(1440, 900);
   if (beside) {
     // Beside the cursor, flipping sides past the middle of the screen, never off the edges
     const left2 = at.x < vw / 2 ? at.x + 18 : at.x - width - 18;
@@ -561,12 +356,6 @@ export function FormMarginsTab({ seasons = [], clubs = [], accent = 'indigo' }) 
       ))}
     </div>
   );
-
-  // momentum chart geometry
-  const MW = 1000, MH = 220, mid = 130, msc = 18;
-  const mn = momList.length || 1;
-  const mavg = momList.map((_, i) => { const sl = momList.slice(Math.max(0, i - 4), i + 1); return sl.reduce((t, m) => t + (m.f - m.a), 0) / sl.length; });
-  const mpts = mavg.map((a, i) => [(i * MW) / mn + MW / mn / 2, mid - a * msc]);
 
   return (
     <div className="space-y-6">
@@ -1753,7 +1542,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
   const RW = radPhone ? radW : Math.min(520, Math.max(300, radW));
   const R0 = radPhone ? phoneR0 : Math.min(RW * 0.27, Math.round(RW * 0.8) * 0.36);
   const RH = radPhone ? Math.round(2 * R0 + 2 * (LBL_GAP + LBL + LBL_EDGE) + 8) : Math.round(RW * 0.8);
-  const cx = RW / 2, cy = radPhone ? RH / 2 : RH / 2 + 4, PADX = 0;
+  const cx = RW / 2, cy = radPhone ? RH / 2 : RH / 2 + 4;
   const ptAt = (i, f) => { const a = -Math.PI / 2 + (i * Math.PI) / 3; return [cx + R0 * f * Math.cos(a), cy + R0 * f * Math.sin(a)]; };
   const polyOf = (prof) => PILLARS.map((p, i) => ptAt(i, clamp01(pos(p, prof[p.key]))).map((v) => v.toFixed(1)).join(',')).join(' ');
   const [axisHover, axisHc] = useHoverCard();
@@ -1799,7 +1588,7 @@ export function SpiderTab({ seasons = [], clubs = [], ownClub = null, accent = '
           // Phones (v13): the kinds scroll sideways in a ScrollRow (fading where more is hidden); from 640px a column
           return radPhone
             ? <div className="shrink-0 border-b border-slate-100"><ScrollRow surface="card" className="p-2 flex gap-1">{kindButtons}</ScrollRow></div>
-            : <div className="sm:w-44 shrink-0 border-b sm:border-b-0 sm:border-r border-slate-100 p-2 flex sm:flex-col gap-1 overflow-x-auto">{kindButtons}</div>;
+            : <div className="sm:w-44 shrink-0 border-b sm:border-b-0 sm:border-r border-slate-100 p-2 flex sm:flex-col gap-1">{kindButtons}</div>;
         })()}
         <div className="flex-1 p-2 max-h-[360px] overflow-y-auto">
           {pickKind === 'seasons' && <>

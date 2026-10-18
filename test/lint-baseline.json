@@ -1,0 +1,16 @@
+{
+  "about": "ESLint findings per file (test/lint.js). Lower it when a file improves; it may never rise.",
+  "total": 37,
+  "files": {
+    "src/App.js": 0,
+    "src/Cups.js": 2,
+    "src/CupsLab.js": 1,
+    "src/League.js": 1,
+    "src/LeagueTabs.js": 2,
+    "src/Pyramid.js": 7,
+    "src/Squad.js": 18,
+    "src/index.js": 0,
+    "src/sheetData.js": 0,
+    "src/ui.js": 6
+  }
+}

@@ -1,370 +1,16 @@
 /*
  * ════════════════════════════════════════════════════════════════════
- *  GSL CANVAS — Pyramid.js
- *  Version:  Pyramid v30
- *  Date:     2026-10-17, 20:00 UTC
- *  Reads the "Pyramid" tab, plus "Winners" for European routes
- *  (both passed in by App.js).
- * ════════════════════════════════════════════════════════════════════
- *
- *  SETTINGS (top of the file): CLUB_ABBR, CLUB_DISPLAY_NAME,
- *  ENABLE_EDITING (off), TOP_RISER_PLACES, PYRAMID_ACCENT.
- *
- *  CHANGELOG (newest first)
- *
- *  Pyramid v30 — 2026-10-17, 20:00 UTC — Canvas v51.19 (touch hover cards)
- *   - Progression's touch scrub, the European positions card and Staying
- *     power's card close through ui.js's useTouchCard: a finished tap
- *     anywhere else (iPhone sends no click for blank space), a scroll, or
- *     another card or [i] opening. They used to wait for a click.
- *
- *  Pyramid v29 — 2026-10-05, 01:30 UTC — Canvas v51.02
- *   - Title case: "Finishes Over Time", "Records Side By Side" (Head to Head).
- *
- *  Pyramid v28 — 2026-10-04, 23:30 UTC — Canvas v51.01 (design tokens, step 1)
- *   - PYRAMID_ACCENT now comes from ui.js (ACCENT_HEX.teal). Same colour.
- *   - Where you land: cell numbers never below 11px (narrow cells dropped
- *     to 10px, column headers to 9.5px).
- *
- *  Pyramid v27 — 2026-10-03, 21:40 UTC — Canvas v50.10
- *   - Expanded sheet (phones): 6 columns (season, crown, rank, division,
- *     change, tags); the crown sits just left of the rank; tags side by side
- *     as P / R.
- *
- *  Pyramid v26 — 2026-10-03, 20:58 UTC — Canvas v50.09
- *   - Touch rule on every touch screen (phones and tablets): in Compact and
- *     Standard a tap scrubs; pin and profile come from the club bar.
- *   - Pinned chips: 3-letter codes on phones and tablets, short names on
- *     desktop.
- *   - Expanded sheet (phones): season rows in 5 even columns (tags share
- *     the last, stacked).
- *   - Staying power: tap-first on touch (card with Open profile); a mouse
- *     click still opens the profile.
- *   - Head to Head: each season's trophies stack in their own column (up to
- *     3, then +N); tap or hover lists them by name.
- *
- *  Pyramid v25 — 2026-10-03, 20:40 UTC — Canvas v50.08
- *   - Progression (phones): hover card gone; the club bar shows the
- *     scrubbed season (S2 · 23 (Div 2) ▲4); View profile, Pin club and
- *     close as icons stacked on the right; bar shorter (112px).
- *   - Expanded: taps focus again, so the focus sheet opens (v24 broke it).
- *   - Range: light hover card; button label fixed (one ›).
- *   - European Qualification: on touch a tap shows the card first, with
- *     Open profile; a mouse click still opens the profile.
- *   - Biggest Risers & Fallers: short names on every screen. Yo-Yo Clubs:
- *     3-letter codes on phones.
- *   - Pyramid's hover cards use the light style (HoverProvider light).
- *
- *  Pyramid v24 — 2026-10-03, 20:17 UTC — Canvas v50.07
- *   - Progression: compare up to 5 clubs (was 3). Phones: Compact uses the
- *     width (no left pin tags; right room only while pinned); tap the chart
- *     to scrub (drag follows the nearest line, page held; tap outside stops),
- *     taps no longer pin; card docked at the bottom; club bar taller with
- *     View Profile and Pin club.
- *   - Expanded sheet: crowns on title seasons, tags right after the rank
- *     change, buttons pinned to the bottom.
- *   - European Qualification (phones): no 300px floor, Div 1 about half the
- *     line so Div 2–4 come into view, fewer place ticks.
- *   - Where you land (phones): band names hidden; range, colour and count
- *     pinned left while the grid scrolls.
- *   - Staying power: solid header; phones show 3-letter codes, season
- *     numbers without S, outcomes like "3 ▼".
- *   - Range: hover / tap card (finishes, best, worst, range, average, now).
- *     Pyramid sits inside ui.js's HoverProvider.
- *   - National Power Index and every Pyramid pill row: control groups can
- *     shrink (they widened the page). Drawer: movement right after the name
- *     on phones.
- *   - Div 1 Royalty, Mainstay, Yo-Yo: 3-letter codes on phones, short names
- *     on desktop.
- *   - Trophies: table scrolls in its own box with its header pinned.
- *   - Head to Head (phones): both clubs on one row, the score underneath.
- *
- *  Pyramid v23 — 2026-10-03, 15:45 UTC — Canvas v50.06 (mobile phase 4a)
- *   - Progression on phones: opens in Compact; every view fits the screen
- *     (3-letter club codes, no right-hand labels, no 240px plot floor).
- *     Desktop unchanged.
- *   - Expanded: a club's focus panel opens as a Sheet on phones.
- *   - Club viewer and club editor: full screen on phones.
- *   - Analytics: Staying Power and Range rows use narrower name columns on
- *     phones.
- *   - 11px floor: 61 pieces of smaller text raised to 11px.
- *   - Division champions tooltip: one string (React warned about it).
- *
- *  Pyramid v22 — 2026-10-03, 05:34 UTC — Canvas v50 (mobile foundation)
- *   - Progression's pinned season strip and the compare header follow the
- *     folded / unfolded header (no gap when the Title Row is folded).
- *
- *  Pyramid v21 — 2026-09-27, 23:39 UTC — National Power Index layout
- *   - "Divisions now" strip fills its column, with D1-D4 labels where
- *     there's room and a hover count per division.
- *   - "Average finish" (renamed): taller line (60px) with a hover guide
- *     showing the season, the average and its division.
- *   - Drawer: clubs in two columns on the left half, the division grid on
- *     the right half.
- *
- *  Pyramid v20 — 2026-09-27, 21:34 UTC — National Power Index refinements
- *   - Sizes: Big 7+ clubs (France joins), Medium 3-6, Small 1-2.
- *   - New columns: best and worst season average (with the season).
- *   - The season-by-season column is now a line of the nation's average
- *     finish on division bands (one shared scale for all rows). Clicking a
- *     nation shows a division grid (Div 1-4 x seasons, number of its clubs
- *     in each) above its club list.
- *
- *  Pyramid v19 — 2026-09-27, 21:11 UTC — National Power Index
- *   - New in Analytics (under Range): the Pyramid by country. Highlights:
- *     nations, most Div 1 clubs, biggest riser and faller. Table: clubs,
- *     average finish in S1 and now, trajectory, Div 1 clubs now, current
- *     division footprint, and a season-by-season footprint (migration).
- *     Filter by nation size (Big 8+, Medium 3-7, Small 1-2 clubs; every
- *     country kept); sort by clubs, average now, rise, or Div 1 clubs.
- *     Click a nation for its clubs (S1 finish -> now). Baseline is the S1
- *     finish, never the pre-S1 seeding.
- *
- *  Pyramid v18 — 2026-09-27, 17:37 UTC — Movement grid fills the width
- *   - Squares grow to fill the room left after the labels and the club
- *     list (40-76px wide); height and text size grow with them. The list
- *     stays beside the grid when 40px squares still fit, else goes below.
- *
- *  Pyramid v17 — 2026-09-27, 17:28 UTC — Wider canvas
- *   - Page width comes from ui.js (PAGE_WIDTH, now 1800px; was 1280px).
- *   - Movement grid: the club list sits beside the grid only when all 20
- *     columns fit (measured), and is then as tall as the grid; otherwise
- *     it goes underneath. Fixes Div 4's columns being pushed off-screen.
- *
- *  Pyramid v16 — 2026-09-27, 15:43 UTC — Movement rebuilt
- *   Where you land
- *   - 20 zones of finishing PLACES (not outcomes), 5 per division: top
- *     places (champion, top 4 / automatic promotion), play-offs (4 places,
- *     PLAYOFF_PLACES), rest of the top half, bottom half, drop zone. Div 4
- *     (no drop zone) splits its bottom half in two. Built from the sheet's
- *     division boundaries and the league-rule settings.
- *   - Squares take the colour of the division clubs ended up in, stronger
- *     for more clubs. Division bands across the top, place ranges on both
- *     axes, short names down the side. Clicked square lists its clubs on
- *     the right (with promoted / relegated markers); stability by division
- *     moved under the grid.
- *   Staying power
- *   - Lifelines replace the curves: one bar per promotion (or relegation),
- *     each season a block in its division's colour showing the finish,
- *     ending in relegated / promoted again / back up / still there.
- *     Grouped by division with straight-back, 2+ seasons and still-there
- *     counts. Hover for the season-by-season story; click for the profile.
- *
- *  Pyramid v15 — 2026-09-27, 15:04 UTC — Analytics: Movement and Range
- *   - Movement (new): how clubs move season to season. Highlights: most
- *     stable and most fluid division, and bounce-back (after a rise, how
- *     often a club fell back; after a fall, how often it recovered).
- *     Where you land: zone-to-zone grid (13 zones from the league's rules;
- *     each row adds up to 100%; click a square for the clubs), plus
- *     stability by division. Staying power: survival lines after
- *     promotion (still there after N seasons) or relegation (back up
- *     after N seasons), per division, with straight-back / still-there
- *     counts.
- *   - Range (new): one row per club; a dot for every finish, a bar from
- *     best to worst, a ring for now, a tick for the average. Filter by
- *     current division; sort by range, average, current rank or distance
- *     from peak.
- *   - Promotion Survival cards removed (Staying power covers them).
- *
- *  Pyramid v14 — 2026-09-26, 16:58 UTC — Profiles stay on the tab
- *   - Opening a club profile from Analytics or Trophies no longer switches
- *     to Progression behind it; closing it returns you to the same tab.
- *     (The profile's "Highlight on Chart" button still goes there.)
- *
- *  Pyramid v13 — 2026-09-26, 16:46 UTC — Find a club
- *   - "Find a club" in the Pyramid header (every tab): type to see matching
- *     clubs with flags; click one to open its profile. The last line (or
- *     Enter) shows all the matches on the Progression chart instead.
- *     Matching is the same as the chart's search. Click outside or Esc
- *     closes it.
- *
- *  Pyramid v12 — 2026-09-26, 15:48 UTC — Standard search
- *   - Head to Head uses the shared dropdown-first picker (ui.js).
- *   - Standings search uses the shared filter search; search boxes use
- *     the Pyramid teal focus colour. Progression highlight stays a filter.
- *
- *  Pyramid v11 — 2026-09-26, 15:25 UTC — Roll of Honour, Head to Head refinements
- *   - Roll of Honour flipped: seasons down, trophies across. Bigger tiles:
- *     club colour on top, larger flag, name, and a corner tag with the
- *     club's division and finish that season (league code for clubs from
- *     outside the Pyramid). Outside clubs greyed, not italic.
- *   - Division markers use division colours; 🌕🥇🥈🥉 only mean titles won.
- *   - Head to Head: club picker with search and flags; finishes chart
- *     right under the headline, labels kept clear (higher finisher above
- *     its point, the other below); trophy strip under the chart (each
- *     club's trophies per season); records side by side below. Season by
- *     season table removed (the chart shows it).
- *
- *  Pyramid v10 — 2026-09-26, 05:38 UTC — Club viewer, Trophies, Head to Head
- *   Club viewer (redesigned, same data)
- *   - Performance tiles: Current, Average, Peak, Low, Net trajectory
- *     (from the S1 finish). "Tier 1" is now the division; "yrs" is now
- *     "seasons"; no fixed season counts in labels.
- *   - Trophy cabinet with the sheet's symbols: 🌕🥇🥈🥉 league titles,
- *     🏆 FA Cup and Carabao Cup, 🛡️ Community Shield and Super Cup,
- *     🔵🟠🟢 UCL/UEL/UECL. Stray coins removed.
- *   - Promotions/relegations from the ranks (Wrexham now shows 3); yo-yos
- *     added. Footer sentence and "Start Rank" removed.
- *   - Historical Finishes: fixed rows (rank, movement, division, labels)
- *     so they line up; no movement in S1; European label before P/R;
- *     green ▲ / red ▼.
- *   Trophies (rebuilt)
- *   - Highlights, then a Trophy Cabinet with two views: By Club (a count
- *     per trophy, filter League / Domestic / Continental) and Roll of
- *     Honour (who won what each season, from the Winners tab; division
- *     champions from the Pyramid). Winners from outside the Pyramid shown
- *     in italics.
- *   Head to Head (rebuilt)
- *   - Seasons finished above the other, current run, same-division
- *     seasons; records side by side (better side marked); season-by-season
- *     duel with the gap; two-line finishes chart; closest rivals by
- *     average finish. The club viewer's button compares with your club.
- *   Movement never starts from the pre-S1 "start rank" (alphabetical
- *   seeding): Risers & Fallers has no Season 1 view; the Progression focus
- *   panel shows the S1 finish; Standings shows the start rating only.
- *   Wording: "Peak" / "Low" everywhere; Mainstay column "Division".
- *   UCL tag icon is 🔵 (was ⭐).
- *
- *  Pyramid v9 — 2026-09-26, 04:30 UTC — Yo-Yo Clubs definition
- *   - Yo-Yo Clubs table uses the same definition as the Progression
- *     preset: promoted then relegated in successive seasons, or the
- *     reverse. Ranked by number of yo-yos (then total moves, then average
- *     finish). Clubs that only climbed or only fell are not listed.
- *     "P + R" column is now "Yo-yos".
- *
- *  Pyramid v8 — 2026-09-26, 04:25 UTC — Analytics tidy-up
- *   - European Ledger: cup-route badges keep the ring, lose the dot.
- *   - Div 1 Royalty, Mainstay Clubs, Yo-Yo Clubs, Favorite Rank, Biggest
- *     Risers & Fallers: drawn flags everywhere (bigger), no abbreviation
- *     after names, no header badges. Mainstay table: country code gone.
- *     Risers & Fallers: UCL/P/R tags gone.
- *   - Favorite Rank is now calculated (was a typed-in list; the top 10
- *     it produces today is the same). Rows open the club profile.
- *   - Yo-Yo Clubs counts promotions and relegations from the ranks (the
- *     sheet's tags missed Wrexham's 3 promotions and 3 blank relegations).
- *
- *  Pyramid v7 — 2026-09-26, 04:04 UTC — European Qualification: Positions refinements
- *   - Axis: Division 1 gets 70% of the line on a smooth curve (each place
- *     a little less room than the one above; no sudden jumps at 5/10/20).
- *     Divisions 2, 3 and 4 get 10% each. Rank 1 sits in from the edge.
- *   - Each division shaded very lightly in its own colour, and labelled.
- *   - Domestic cup routes get dotted rings: red for the FA Cup, lime for
- *     the Carabao Cup (also in the Ledger).
- *   - Explanatory note under the legend removed. Dots slightly larger.
- *
- *  Pyramid v6 — 2026-09-26, 03:46 UTC — Analytics: European Qualification rebuilt
- *   - One dashboard, three views of the same qualifications:
- *     Positions: a dot per qualification at the club's finish, stacked
- *       when clubs share a rank, one row per competition. The axis is
- *       stretched: ranks 1-5 get 35% of the line, 6-10 20%, 11-20 25%,
- *       Divisions 2-4 20%. Dots in club colours; cup routes ringed.
- *     Ledger: every club that has qualified, by season (UCL/UEL/UECL).
- *     Europe Tax: each qualification's finish vs the next season, with
- *       higher / same / lower bars per competition. "How far they got"
- *       column waits for European run data.
- *   - Routes (league place, UCL/UEL/UECL winner, FA Cup, Carabao Cup)
- *     worked out from the league's rules and the Winners tab. They match
- *     the sheet's tags for every qualification.
- *   - The separate Europe Tax cards are folded into the Europe Tax view.
- *
- *  Pyramid v5 — 2026-09-26, 02:11 UTC — Progression labels, Standings
- *   Progression
- *   - "View" label removed from the view switcher.
- *   - Season labels above the chart are plain text (S1, S2...), like the
- *     ones below it.
- *   - Compact: rank ticks every 5 places skip any within 2 of a division
- *     edge (no more 44/45, 68/70, 90/92 pairs).
- *   - Standard: left labels read name, flag, rank (rank next to the
- *     chart, in the same dark colour as the right side).
- *   - Expanded: no rank numbers beside the chart (every point shows it).
- *   Standings
- *   - Drawn flag, bigger; country code in brackets removed.
- *   - Season columns (S1, S2...) sort by that season's finish.
- *   - Actions column hidden while editing is off.
- *
- *  Pyramid v4 — 2026-09-26, 00:30 UTC — Progression label fixes
- *   - Expanded: more room above rank 1, so title crowns aren't cut off.
- *   - Standard and Expanded: name labels are sized to the longest club
- *     name (was a fixed width with dead space).
- *   - Left labels mirror the right: rank on the outside, then the name
- *     and flag against the chart, so every name sits next to its line.
- *
- *  Pyramid v3 — 2026-09-25, 21:53 UTC — Progression: Compact compare, Expanded extras
- *   Compact
- *   - Lines are grey; your club in colour. Click lines to pin up to 3
- *     clubs (MAX_PINNED) to compare: pinned clubs draw in colour with
- *     their abbreviation at both ends; a tray above the chart lists them
- *     (x to unpin, Clear). With clubs pinned, only they are in colour.
- *   Expanded
- *   - Division champions header removed.
- *   - Rows taller (34px), points and rank numbers bigger.
- *   - Crown on every point where a club won its division.
- *   - Automatic promotion zones (top 2 of Div 2 and 3, top 3 of Div 4)
- *     and relegation zones (bottom 3 / 3 / 4 of Div 1 / 2 / 3) shaded.
- *     Sizes in AUTO_PROMOTION_PLACES and RELEGATION_PLACES.
- *   - European labels read UCL / UEL / UECL. Markers bigger, and bigger
- *     again on the point you hover.
- *   - Focus panel adds best and worst season, average finish, yo-yo
- *     bounces and a trophy breakdown.
- *
- *  Pyramid v2 — 2026-09-25, 21:15 UTC — Progression chart: three views
- *   - Compact: the whole pyramid fits one screen. Thin lines, grey except
- *     your club, the highlighted club and any filter/preset results.
- *     Rank ticks on the left, no name labels.
- *   - Standard: full page width, the page scrolls (no inner window).
- *     Flags and names on both sides, club colours.
- *   - Expanded: taller rows, rank on every point, P/R and CL/EL/ECL
- *     markers, each season's division champions in its header. Clicking
- *     a club puts it in focus: others dim, and a side panel tells its
- *     season-by-season story.
- *   - Status bar and season headers stay on screen while scrolling (a
- *     sticky strip under the page header). Same size whether or not a
- *     club is highlighted.
- *   - Light hover card (like League and Cups) replaces Gemini's dark one.
- *   - Division titles centred in their rail boxes.
- *   - Legend footer removed.
- *   - The chart draws at the page's real width, so text stays one size.
- *
- *  Pyramid v1 — 2026-09-25, 20:41 UTC — Correctness pass + shared kit
- *   Correctness
- *   - Reads the real sheet rows (clubs on rows 6-97). App.js no longer
- *     shifts rows for Pyramid.
- *   - Seasons: however many the sheet's "COMPLETED SEASONS" cell says
- *     (was fixed at 8). Chart axes, tables, selectors and labels follow.
- *   - Division boundaries come from the sheet's "DIVISION n" rows (were
- *     typed in as 20/44/68).
- *   - Promotion / relegation worked out from the next season's rank. The
- *     sheet's tag holds one value, so a European place hid Wrexham's 3
- *     promotions, and 3 relegations after S7 have a blank tag (CLUB, VFB,
- *     SHA). The latest season still uses the tag.
- *   - Presets are rules: Div 1 Elite = Div 1 every season; Yo-Yo Clubs =
- *     promoted then relegated in successive seasons (or the reverse) at
- *     least once; Top Risers = climbed 15+ places; your club from a setting.
- *   - Typed-in numbers replaced by calculations: Europe Tax card,
- *     Promotion Survival, European "Historical avg" figures, qualification
- *     count, division ranges in the club profile, "8 seasons" labels.
- *   - Club colours: spaces around hex codes are trimmed.
- *   - Club editing switched off (ENABLE_EDITING).
- *   Look
- *   - Shared header and tabs (ui.js), in the Pyramid's teal. Gemini's
- *     purple accent is now teal; purple stays only where it means Div 1.
- *     Division colours unchanged.
- *   - Progression controls use the shared kit (division pills, presets
- *     with counts, view switch, search, Reset).
- *   - Status bar above the chart always keeps its space, so hovering a
- *     club no longer pushes the chart down. Light grey, so flags show.
- *   - Flags come from ui.js (one shared set).
- *   Not yet: the three Progression views (Pyramid v2).
- *
- *  Pyramid v0.1 — 2026-09-25, 16:30 UTC — Header sits below the sticky
- *   switcher.
- *  Pyramid v0 — Gemini's code as built in Google Sheets.
+ *  GSL CANVAS — Pyramid.js (Pyramid section)
+ *  Version:  Pyramid v31
+ *  Date:     2026-10-18, 02:05 UTC
+ *  Latest:   Canvas v51.22 code tidy: unused names removed; history in CHANGELOG.md.
+ *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
 
 import React, { useState, useMemo, useRef, useEffect, useContext } from 'react';
-import { PAGE_WIDTH, ClubSelect, SearchPicker, PageHeader, HighlightsBar, HighlightCard, Segmented, FilterPills, ControlLabel, ResetButton, SearchInput, SELECT_CLASS, SvgFlag, useTouchCard, flagArt, flagKey, ChromeContext, useScreen, screenNow, Sheet, HoverProvider, useHover, ACCENT_HEX } from './ui.js';
-import { Trophy, TrendingUp, TrendingDown, Layers, Search, Filter, Sparkles, Shield, Activity, Info, Eye, Edit2, Check, X, ChevronLeft, ChevronRight, ChevronDown, RotateCcw, Medal, Award, Crown, Flame, BarChart2, Users, ArrowUpRight, ArrowDownRight, Maximize2, Minimize2, Star, List, LayoutGrid, Globe, Calendar, Pin } from 'lucide-react';
+import { PAGE_WIDTH, ClubSelect, SearchPicker, PageHeader, HighlightsBar, HighlightCard, Segmented, FilterPills, ControlLabel, ResetButton, SearchInput, SvgFlag, useTouchCard, flagKey, ChromeContext, useScreen, screenNow, Sheet, HoverProvider, useHover, ACCENT_HEX } from './ui.js';
+import { Trophy, TrendingUp, TrendingDown, Layers, Filter, Sparkles, Shield, Activity, Eye, Edit2, X, ChevronLeft, ChevronRight, ChevronDown, Crown, Flame, BarChart2, Users, ArrowUpRight, ArrowDownRight, Maximize2, Minimize2, List, LayoutGrid, Globe, Calendar, Pin } from 'lucide-react';
 // Division metadata with official hierarchy and branding
 const DIVISIONS = {
     1: {
@@ -445,10 +91,6 @@ const COUNTRY_MAP = {
     '🇵🇱': { code: 'POL', name: 'Poland' },
     '🇭🇷': { code: 'CRO', name: 'Croatia' }
 };
-// Flags come from the shared kit (ui.js), so every section draws them the same.
-function renderCountryFlag(code, x, y, width = 14, height = 10) {
-    return <SvgFlag code={code} x={x} y={y} width={width} height={height}/>;
-}
 function cleanString(str) {
     if (!str)
         return '';
@@ -651,7 +293,6 @@ function App({ data, extra = {}, updateItem, deleteItem, insertItem, moveItem, f
     // Everything comes from the sheet; see parsePyramid() near the top.
     const pyramid = useMemo(() => parsePyramid(data), [data]);
     const teams = pyramid.teams;
-    const seasonNums = pyramid.seasonNums;
     // Winners tab (from App.js): cup winners, for European qualification routes
     const winners = useMemo(() => parseWinners(extra.Winners), [extra.Winners]);
     // Set default teams for H2H once loaded
@@ -1384,7 +1025,6 @@ function getContrastText(hex) {
 // ------------------------------------------------------------------------------------------------
 function StandingsTab({ teams, filteredTeams, divisionFilter, setDivisionFilter, searchQuery, setSearchQuery, onSelectTeam, onOpenEditModal }) {
     const seasonNums = seasonNumsOf(teams);
-    const lastSeason = seasonNums[seasonNums.length - 1] || 1;
     const [sortField, setSortField] = useState('curRank');
     const [sortAsc, setSortAsc] = useState(true);
     const handleSort = (field) => {
@@ -1480,7 +1120,6 @@ S{s} {sortField === `season:${s}` && (sortAsc ? '▲' : '▼')}
     </thead>
     <tbody className="divide-y divide-slate-100 font-sans">
         {sortedTeams.map(team => {
-            const divMeta = DIVISIONS[team.div];
             return (<tr key={team.id} className="hover:bg-slate-50/70 transition-colors group cursor-pointer font-sans" onClick={() => onSelectTeam(team)}>
             {/* Overall Rank */}
             <td className="py-2.5 px-3 text-center">

@@ -1,35 +1,14 @@
 /*
  * ════════════════════════════════════════════════════════════════════
- *  GSL CANVAS — CupsLab.js
- *  Version:  Cups Lab v2
- *  Date:     2026-10-03, 07:43 UTC
- *  Experiments for the Cups section. Shown as the last tab of Cups
- *  (tagged "Lab"), with its own crash protection: if an experiment
- *  breaks, only this tab goes blank. Switch it off with SHOW_LAB in
- *  Cups.js. Not part of the Google Sheets build.
- *  Graduating an experiment = moving its component into Cups.js.
- * ════════════════════════════════════════════════════════════════════
- *
- *  CHANGELOG (newest first)
- *
- *  Cups Lab v2 — 2026-10-03, 07:43 UTC — Canvas v50.04
- *   - 11px floor: the last 3 pieces of 10px text.
- *
- *  Cups Lab v1 — 2026-09-26, 00:39 UTC
- *   - Round Survival Funnel: per competition, how many runs reached
- *     each round and where they ended. One-match cups left out.
- *   - Cups Passport: tile map of every country faced, All / ESL / GSL.
- *     Click a country for its clubs.
- *   - Rivalry Rematch Grid: clubs met 2+ times, by competition or
- *     season, shaded by win %. Click a club to open it in Rivalries.
- *   - Margin Extremes Wall: 8 record cards (biggest win, heaviest loss,
- *     highest-scoring, biggest aggregate win, biggest comeback, tightest
- *     final win, signature scoreline, biggest upset suffered).
- *  Data: every match counts each leg separately, as in the rest of Cups.
+ *  GSL CANVAS — CupsLab.js (Cups Lab: experimental views, hidden)
+ *  Version:  Cups Lab v3
+ *  Date:     2026-10-18, 02:05 UTC
+ *  Latest:   Canvas v51.22 code tidy: an unused import removed; history in CHANGELOG.md.
+ *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
 import React, { useMemo, useState } from 'react';
-import { FlaskConical, Filter, Trophy, Globe, Grid3x3, Flame, Calendar, Swords, TrendingDown, Target } from 'lucide-react';
+import { FlaskConical, Filter, Trophy, Globe, Grid3x3, Flame, Swords, TrendingDown, Target } from 'lucide-react';
 import { HighlightsBar, HighlightCard, Segmented, FilterPills, ControlLabel, ResetButton, Flag, flagKey } from './ui.js';
 
 // ─── Shared helpers ──────────────────────────────────────────────────

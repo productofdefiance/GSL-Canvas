@@ -18,7 +18,7 @@ Claude Code cloud sessions already have Chromium (`PLAYWRIGHT_BROWSERS_PATH=/opt
 
 ```
 cd test
-npm run check        # syntax.js + compile.js + build.js + render.js snap: every page x tab at 390 and 1440
+npm run check        # syntax, compile, build, rules, lint, render (every page x tab at 390 and 1440), empty save
 npm run css          # Tailwind CSS for the browser, prefixed with public/index.html's <style>
 npm run bundle       # browser/app.bundle.js
 npm run overflow     # phone overflow check on every League tab (scrollWidth must equal 390)
@@ -31,9 +31,34 @@ cd browser && node shots6.js '[{"w":1440,"ov":{"App:sectionId":"league","League:
 compiles with. It fails on errors a plain syntax check misses, such as the same name imported twice. It also fails if
 `public/index.html` has `<html…>` text inside a comment, because react-scripts injects its script there.
 
-`render.js` prints any page with React errors or text under 11px, then a total. The v51.15 baseline:
-64 renders, 0 errors, 1,534 sub-11px hits (all in pages not yet converted, plus the logged 10px spine label).
-A build should not raise the error count or the sub-11px count on a page it touches.
+`render.js` prints any page with React errors or text under 11px, then a total, and (v51.22) compares the
+sub-11px count of every page and tab (both widths, extra views included) with `baseline.json`. It fails on a
+React error or a count that differs: a rise is a regression; after a drop, lower the baseline with
+`node render.js snap --update`. The v51.22 baseline: 64 renders, 0 errors, 1,524 hits (1,514 in Pyramid
+Progression, 10 in Home vs Away: the logged 10px spine label).
+
+`rules.js` (v51.22, `npm run rules`) checks the CLAUDE.md code rules over the syntax tree of every file in `src/`
+(comments never count): `window.innerWidth` / `innerHeight`, `(hover: none)`, a club's name or code as a string
+(the list comes from the club directory in sheetData.js, through `clubs.js`; codes are matched in capitals only),
+`useState('<club code>')`, typed-in counts (91 / 92, a loop or season-number cap to a fixed number, a
+`GAMES_PER_SEASON`-style table) and plain `overflow-x-auto`. Each break prints its file and line. Exceptions live
+in `rules-allow.json`, each with its kind and reason; an entry that matches nothing fails, and page debt (Cups,
+Pyramid, Squad) is a count that may only go down. `node rules.js --list` prints every match.
+
+`lint.js` (v51.22, `npm run lint`) runs ESLint (`eslint.config.js`: the react and react-hooks plugins, test-only
+dependencies) and compares each file's finding count with `lint-baseline.json`: a rise fails; after a drop,
+`node lint.js --update`. `--list` prints the findings. Hook dependency warnings are listed, never fixed
+blindly: adding a dependency changes when a calculation re-runs.
+
+`empty.js` (v51.22, `npm run empty`) renders every page and tab at 390 and 1440 against an empty workbook and a
+headers-only one (each tab's rows before its first row with a number). It fails on a React error, a section crash,
+or "NaN", "undefined", "null" or a club name in the visible text; allowed names are the `empty` list in
+`rules-allow.json`.
+
+`browser/pixel.js` (v51.22, `npm run pixel -- shoot <dir>` / `-- diff <dirA> <dirB>`) screenshots every page and
+tab at 390 and 1440, light and dark (120 shots, footer hidden), and compares two sets pixel by pixel. For a build
+that must not change the screen: shoot main's bundle first (`PX_BUNDLE`, `PX_CSS`), then the branch's, then diff.
+Two runs of the same build come out identical, so any difference is real.
 
 Output (`out/`, `snap*/`, `cssC.css`, `browser/app.bundle.js`, screenshots) is git-ignored.
 

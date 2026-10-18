@@ -23,6 +23,7 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 | src/index.js, src/sheetData.js, src/style.css | Entry point; the exported workbook data; leftover stylesheet |
 | test/ | Test kit: `test/setup.sh`, then `cd test && npm run check` (see test/README.md). Test-only dependencies live in test/package.json |
 | briefs/ | One build brief per build (`v51.xx.md`), mock images in `briefs/img/`; `TEMPLATE.md` is the format |
+| CHANGELOG.md | Every build's changes, newest first, grouped by canvas version (one entry per file) |
 | CLAUDE.md | This file |
 
 Any restructure is one deliberate step, agreed with the user, checked in StackBlitz (the user's preview), then recorded
@@ -36,7 +37,8 @@ Libraries: React, d3, lucide-react only. Ask before adding anything.
 - Before replacing a component, list everything it does; check each item after the build.
 - One branch and one pull request per build, titled with the canvas version (e.g. "Canvas v52.01: …").
 - Every build bumps the canvas version in App.js (`VERSION_TAG`, `PUBLISHED`) and each changed file's own
-  version, with a header and a changelog entry at the top of the file, newest first.
+  version. Each file keeps a short header (file name, version, date and time UTC, one line on its latest change,
+  "History: CHANGELOG.md"); the build's entries go at the top of CHANGELOG.md, under its canvas version.
 - The pull request description is the build message: what's in, what changed beyond the notes and why,
   checks run, known gaps.
 - Ask before changing any convention (file structure, delivery, naming).
@@ -88,15 +90,25 @@ Code receives one brief per build, the locked decisions only.
 - Any chip or switch row that scrolls sideways uses ui.js `ScrollRow` (its edge fades where more is hidden; set
   `surface` to the card or page behind it); no plain `overflow-x-auto` rows. Wide tables (ledgers) are exempt.
 - Flags are always drawn vectors (ui.js `Flag`, or `SvgFlag` inside charts), never emoji text, anywhere in the canvas.
-- Text floor 11px (SVG too). R10 match order: flag, club, result chip, score. R11: tables sort by headers.
+- Text floor 11px (SVG too); the small-text baseline may never rise. R10 match order: flag, club, result chip, score. R11: tables sort by headers.
   R12: "us" cards get a top accent strip, "them" cards a left strip.
 
 ## Checks before every pull request
 
-Run with the kit in test/ (commands in test/README.md). Syntax, a full render of every page and tab (phone 390 and desktop 1440), browser checks of the
-interactions touched (click, hover, touch), dark mode, no sideways overflow at phone width, and the touch tap test
-(`npm run tap`, details in test/README.md): every hover target tapped at 390 must open, switch, and close on a blank
-tap and on scroll.
+Run with the kit in test/ (commands in test/README.md). `npm run check` runs, and must pass:
+- Syntax and compile; the **rules check** (`rules.js`: `window.innerWidth` / `innerHeight`, `(hover: none)`, club names
+  or codes in code, `useState('<club code>')`, typed-in counts, plain `overflow-x-auto` rows); the **lint baseline**
+  (`lint.js`: ESLint findings per file may not rise; lower `lint-baseline.json` when they fall); a full render of every
+  page and tab (phone 390 and desktop 1440) with the **small-text baseline** (text under 11px per page and tab,
+  `baseline.json`, may not rise); and the **empty-save check** (`empty.js`: every page and tab on an empty and a
+  headers-only workbook, no React error, no "NaN", "undefined", "null" or club name on screen).
+- Exceptions to the rules check and the empty-save check go only through `test/rules-allow.json`, each with its file,
+  rule, kind and a reason. Kinds: where a rule is implemented, page debt (Cups, Pyramid, Squad: counts that only go
+  down), not a club (same letters), wide table, standards review. A new kind or entry is agreed with the user first.
+
+Then browser checks of the interactions touched (click, hover, touch), dark mode, no sideways overflow at phone width,
+and the touch tap test (`npm run tap`, details in test/README.md): every hover target tapped at 390 must open, switch,
+and close on a blank tap and on scroll.
 - Full sweep (every target) on the tabs the build changes: `npm run tap -- --full <tabs>`.
 - Full sweep on every tab whenever ui.js's hover or touch code changes: `npm run tap:full`.
 - A sample (first, middle and last target of each chart) on every other tab, every build, as the regression check:

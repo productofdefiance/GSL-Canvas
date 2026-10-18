@@ -1,284 +1,10 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — ui.js (shared building blocks for every section)
- *  Version:  UI v33
- *  Date:     2026-10-17, 23:30 UTC
- * ════════════════════════════════════════════════════════════════════
- *
- *  Everything here is shared by League, Cups and Pyramid, so the sections
- *  look and behave the same. Change it here and it changes everywhere.
- *
- *  ACCENTS ......... each section's signature colour (League indigo,
- *                    Cups gold). Used by the header, tabs and highlights.
- *  PageHeader ...... title + icon + tab bar (the top of every section)
- *  useGridColumns,
- *  drawerRowEnd .... open a card's drawer under its whole row
- *  HighlightsBar ... the dark strip of headline numbers
- *  HighlightCard ... one card in that strip
- *  Segmented, FilterPills, ControlLabel, ResetButton, SearchInput,
- *  SELECT_CLASS .... controls (moved here from League.js, unchanged)
- *  Flag ............ small drawn country flag (from a flag emoji)
- *  SegmentBar ...... a bar split into segments, with a hover card
- *  SectionInfo ..... a section's [i]: popover on desktop, bottom sheet on phones
- *
- *  CHANGELOG
- *  UI v33 — 2026-10-17, 23:30 UTC — Canvas v51.21
- *   - useKeepInView: keeps the selected item of a sideways-scrolling row fully
- *     in view (16px in from the edge it was hidden behind), scrolling only the
- *     row. Runs when its reset key changes, after web fonts arrive and when the
- *     row or its content resizes; stops once the user scrolls the row (touch,
- *     pen or wheel) until the key changes. Moved here from the Points season
- *     strip (v51.20) so Spider's quick picks share it.
- *   - ScrollRow: surface ('card' or 'page') gives the edge fade the colour of
- *     the surface behind the row in light and dark; boxRef hands over the
- *     scrolling box (useKeepInView); other props go onto it; the fades update
- *     when the row's content resizes. Existing callers unchanged.
- *   - TapStyle renders a hidden <style>: inside a space-y-* stack the plain one
- *     counted as an item and added a gap above the next (Home vs Away's top sat
- *     24px low from v51.19).
- *
- *  UI v32 — 2026-10-17, 22:00 UTC — Canvas v51.20
- *   - useTapAway: a tap inside any open card ([data-hv-card]) no longer
- *     closes it, so a docked card can hold a button (Matchday benchmarks'
- *     "See in ledger"). Taps on hover targets ([data-hv]) are left to them,
- *     as before.
- *   - SectionInfo: the open icon in dark mode uses the accent's lighter shade
- *     (ACCENT_HEX_LIGHT: indigo-400 for League) on a 15% tint; light mode as
- *     before.
- *
- *  UI v31 — 2026-10-17, 20:00 UTC — Canvas v51.19
- *   - SectionInfo (R14): a section's description in an [i] at the top right
- *     of its header. Lucide Info, 18px, slate-400, in a 44px tap area; the
- *     page accent on a 10% tint while open. Desktop: a 330px popover under
- *     the icon (closes on outside click, Esc or the icon). Phones: the
- *     bottom Sheet titled by the section (closes on ✕, swipe down, tap
- *     outside). One open at a time across the page. INFO_TEXT styles the
- *     rich text (bold lead, paragraphs, lists, bold labels).
- *   - Sheet: new fit option: on phones a bottom sheet as tall as its content
- *     (at most 85% of the screen) that closes on a downward swipe of any part
- *     marked data-sheet-grab. Existing callers (no fit) are unchanged.
- *   - TapStyle + TAP: the gsl-tap class gives a small control an invisible
- *     44 × 44px tap area on phones; the control's look doesn't change.
- *     Segmented takes tap to use it on its buttons; existing callers unchanged.
- *   - Hover cards on touch, one set of rules for every page (iPhone sends no
- *     pointermove for a plain tap, and no click for a tap on blank space):
- *     useHoverCard (a card that follows a target: opens on a tap, switches on
- *     another, closes on a second tap, a tap anywhere else or a scroll; a
- *     sideways slide scrubs where asked), useTapAway (close on a finished tap
- *     outside, pointerup, never touch-down or click; and on scroll),
- *     useOverlay (one overlay at a time: an opening card or [i] closes the
- *     rest) and useTouchCard (both, for a page's own docked card).
- *     HoverProvider and usePointerTrack close through useTapAway instead of a
- *     document click. The [i] popover and sheet sit above hover cards (z 80;
- *     Sheet takes z). Cards carry data-hv-card for the kit's tap test.
- *
- *  UI v30 — 2026-10-17, 07:45 UTC — Canvas v51.18
- *   - Fonts locked: page titles default to Outfit (LAB_CHOICES.title.def).
- *     SHOW_LAB_BAR = false: App doesn't render LabBar, and the locked set
- *     (every LAB_CHOICES def) goes on <html> on every load; a saved
- *     gsl-fonts choice is ignored. LabBar, LAB_CHOICES and the CSS are kept;
- *     true brings the Lab back as before.
- *   - signed(n, digits) and MINUS: the shared formatter for signed numbers
- *     ("+" positive, the minus sign U+2212 negative, no sign for zero).
- *
- *  UI v29 — 2026-10-17, 12:00 UTC — Canvas v51.17
- *   - useDark(): true while the open page is shown dark (the switch is on and
- *     the page is converted). App passes it in ChromeContext. Only for code
- *     that works with colour values (e.g. clash checks); classes and CSS
- *     variables already swap by themselves.
- *   - INK_HEX: the ink token as hex, { light: '#0f172a', dark: '#f1f5f9' }.
- *
- *  UI v28 — 2026-10-09, 09:00 UTC — Canvas v51.14
- *   - FilterPills: optional icon before the label (Opponents nation flags).
- *
- *  UI v27 — 2026-10-09, 05:00 UTC — Canvas v51.13
- *   - ownClubInfo(): the club you manage (name, abbreviation, flag, colour),
- *     read from the Pyramid sheet's ✦ marker. Used by the Spider Matrix.
- *
- *  UI v26 — 2026-10-08, 04:00 UTC — Canvas v51.11
- *   - useSort: the shared sortable-table hook (R11, every table sorts by its
- *     headers). LeagueTabs and League both use it.
- *
- *  UI v25 — 2026-10-06, 21:00 UTC — Canvas v51.06 (foundations)
- *   - Highlights bar style 2 ("Minimal + accents"): a white bar with the
- *     page accent as its top edge; cards light grey; numbers in ink; colour
- *     only in icons and the first byline. Old colour classes passed in by
- *     pages are translated (e.g. text-amber-300 → text-amber-700).
- *   - Page accents: Cups' "amber" becomes yellow-gold, Squad's "maroon"
- *     becomes violet (the key names stay, so pages need no edits).
- *   - New: SectionStats (light grey section stat cards, R8), ViewSwitch
- *     (Cards / List / Ledger), MainBar (a tab's scope band: title + control),
- *     HOME_HEX / AWAY_HEX (navy / sky), Segmented home / away tones.
- *   - Hover cards carry gsl-keep, so dark mode leaves them as they are.
- *
- *  UI v24 — 2026-10-05, 09:00 UTC — Canvas v51.05 (type system)
- *   - Four font roles, each with a lab switch: Text, Titles (page titles
- *     only: .gsl-title), Big numbers (.gsl-big: Outfit by default) and Small
- *     numbers (tabular-nums: Atkinson by default). TYPE.big is the only big
- *     number role; scores and table figures are small numbers.
- *   - Records show numbers only: WDLRecord renders 6 • 2 • 1 (coloured, or
- *     plain), RecordKey renders the "W • D • L" hint for a label. numberize()
- *     turns "245W - 52D - 31L" into a record and " - " into the score dash;
- *     HighlightCard uses it on values and bylines.
- *   - Units played down: removed (Unit and unitize are gone). Big-number
- *     spacing options −0.02 to +0.1em.
- *
- *  UI v23 — 2026-10-05, 05:00 UTC — Canvas v51.04
- *   - LabBar: the v51 lab controls move out of the Footer into their own bar
- *     above it, opened and closed with a button (kept per device). Numbers
- *     can now be Outfit, Lexend, Atkinson or League Spartan; big-number
- *     spacing 0 / +0.02 / +0.04 / +0.06em; Units: played down or normal.
- *   - Score dash: lighter weight only (300), no fade (Anish's pick). The
- *     colour option is gone.
- *   - Unit: plays down a number's unit (pts, W / D / L, %, $ and M / K, GP,
- *     MD...). unitize() does it for a whole value string; HighlightCard uses
- *     it on every page, and also turns " - " between numbers into the score
- *     dash.
- *   - WDLRecord letters are Units now (they follow the Units setting).
- *
- *  UI v22 — 2026-10-05, 03:00 UTC — Canvas v51.03
- *   - Score: a scoreline with an en dash that is spaced and played down
- *     (lab switch: lighter weight, lighter colour, or both).
- *   - WDLRecord: 7W • 0D • 1L with the letters a step lighter than the digits
- *     and the dots played down like the score dash.
- *   - Big numbers: letter spacing from a lab switch (0 or +0.01em) instead of
- *     −0.01em, which made Outfit's heavy digits touch.
- *   - The Footer lab control (LabSwitcher) now holds fonts, the dash and the
- *     big-number spacing. FontSwitcher stays as its old name.
- *
- *  UI v21 — 2026-10-05, 01:30 UTC — Canvas v51.02 (type roles pilot)
- *   - TYPE: the Contrast ("Matchday broadcast") type roles, one class string
- *     per job (page, section, card, eyebrow, body, name, meta, chip, button,
- *     tab, big, fig, figStrong, score, micro). withRole() swaps a class
- *     string's weight and letter spacing for a role's.
- *   - Shared pieces moved onto the roles (every page): Title Row title, Tab
- *     Bar (active tab 600), Highlights cards (capitalised 11px labels, big
- *     numbers 800 in the number font), shared hover card title, controls
- *     (Segmented, FilterPills, ControlLabel, ResetButton, selects) at 600.
- *
- *  UI v20 — 2026-10-04, 23:30 UTC — Canvas v51.01 (design tokens, step 1)
- *   - Shared data colours: MARGIN_TONES (win / draw / loss cells; was kept
- *     twice, in League and Cups), SEASON_COLORS + seasonColor() (no limit:
- *     seasons after S8 get their own colour instead of repeating S1),
- *     ACCENT_HEX (Pyramid teal and Squad maroon as hex, for charts).
- *   - Club colours from the sheet: registerClubSheets() + clubHex(). Reads
- *     the Pyramid tab's colour and code columns; short names (e.g. ROMA)
- *     work too. Replaces League's typed-in list of 92.
- *   - FontSwitcher: the v51 lab control in the Footer (text font, number
- *     font). Choice is kept per device. Fonts and colour scales themselves
- *     live in public/index.html.
- *
- *  UI v19 — 2026-10-04, 02:54 UTC — Canvas v50.14
- *   - Shared card: a card can bring its own layout (content.body), width
- *     (content.width) and height (content.height); tall cards stay on
- *     screen with a mouse.
- *
- *  UI v18 — 2026-10-04, 02:34 UTC — Canvas v50.13
- *   - Shared card: a card can ask for the light style itself (content.light).
- *
- *  UI v17 — 2026-10-03, 20:40 UTC — Canvas v50.08
- *   - HoverProvider light: a white card (Pyramid's style); dark stays the default.
- *
- *  UI v16 — 2026-10-03, 15:45 UTC — Canvas v50.06
- *   - useScreen now uses media queries (like the CSS breakpoints). It used
- *     the window's width, which grows when a phone pinch-zooms or a page
- *     overflows, and that flipped phone layouts to desktop. screenNow()
- *     exported for one-off checks.
- *   - BREAKPOINTS (screen sizes) renamed SCREEN_BREAKPOINTS: it clashed with
- *     the grid helper's own BREAKPOINTS in this file.
- *
- *  UI v15 — 2026-10-03, 15:19 UTC — Canvas v50.05
- *   - SegmentBar scrubs: the whole bar follows the pointer (mouse as
- *     before; touch: tap or slide, card docked at the bottom).
- *   - useLegendToggle: legends hidden on phones, shown from tablet up; a
- *     "Show / Hide legend" button flips them on any screen.
- *
- *  UI v14 — 2026-10-03, 07:16 UTC — Canvas v50.03
- *   - usePointerTrack: charts that follow the pointer along x. Mouse as
- *     before; touch: tap or slide sideways (up-and-down still scrolls);
- *     a tap elsewhere or a scroll clears it.
- *
- *  UI v13 — 2026-10-03, 06:41 UTC — Canvas v50.01
- *   - Hover card on touch: closes at the END of a tap outside any hover
- *     target (closing on touch-down made iPhone drop the tap, so a second
- *     column never opened); tapping another target switches the card.
- *     A tap that opens a card no longer clicks through to a row or the
- *     element's own action; cards can carry an action button
- *     (content.action = { label, run }), e.g. "Open profile ›".
- *   - useScrub: press and slide sideways along a chart; the docked card
- *     follows the finger; up-and-down swipes still scroll.
- *   - Sheet: full screen and sliding up on phones, centred from tablet up.
- *   - HighlightCard phoneWide: full width on phones (one row elsewhere).
- *
- *  UI v12 — 2026-10-03, 05:34 UTC — Mobile foundation (Canvas v50)
- *   - New shared pieces: useScreen (phone / tablet / desktop), useWidth
- *     (measure a box), ChromeContext (header folded or not), ScrollRow
- *     (sideways row with faded edges; active item scrolls into view),
- *     FitText (headline values shrink to fit before wrapping).
- *   - Hover card moved here from Squad (HoverProvider / useHover). Mouse:
- *     follows the pointer, as before. Touch: a clean tap opens it docked at
- *     the bottom of the screen; tapping elsewhere, tapping the same thing
- *     again or scrolling closes it; a swipe never opens it.
- *   - PageHeader: Title Row folds away when the header is folded; the Tab
- *     Bar then sticks at the top. Tab Bar scrolls with a faded edge. The
- *     header publishes --gsl-sticky (where pinned content should start).
- *   - FilterPills scroll with a faded edge; the active pill scrolls into view.
- *   - HighlightCard: values shrink to fit narrow cards; bylines wrap as
- *     whole pieces instead of breaking mid-phrase.
- *   - 11px floor: the last 10px text in ui.js (pill badges, picker meta).
- *
- *  UI v11 — 2026-09-28, 02:04 UTC
- *   - 13 more drawn flags (Morocco, Iceland, Ghana, Ivory Coast, Bosnia,
- *     Mali, Egypt, Gambia, Iran, Gabon, Albania, Algeria, Montenegro): 60 in
- *     total, covering every country in the workbook.
- *  UI v10 — 2026-09-28, 00:22 UTC
- *   - New accent: maroon (Squad), across headers, pills, search and cards.
- *  UI v9 — 2026-09-27, 17:28 UTC — Wider canvas
- *   - PAGE_WIDTH: one setting for how wide every section gets (1800px).
- *  UI v8 — 2026-09-26, 16:37 UTC
- *   - PageHeader takes optional actions (right of the title row).
- *   - SearchPicker: optional "show all matches" line (onSubmit), Enter to
- *     use it, Esc to close; "+N more" when the list is cut.
- *   - ClubSelect and SearchPicker close when you click or tap outside them
- *     (so opening another dropdown closes the first) and on Esc. Items can
- *     carry their own search text.
- *  UI v7 — 2026-09-26, 15:47 UTC
- *   - Search standardised into three types: SearchInput (filter; now takes
- *     an accent for its focus colour), ClubSelect (dropdown first, search
- *     inside) and SearchPicker (search first, dropdown of matches). Club
- *     lists show drawn flags.
- *  UI v6 — 2026-09-26, 15:37 UTC
- *   - Flag takes a size (width in px). FlagList / splitFlags show several
- *     flags from a list or a string of flag emoji. Symbols that aren't
- *     country flags (🪩, 🏴‍☠️) show as they are.
- *   - 9 more drawn flags (Brazil, Chile, Japan, Mexico, Qatar, Serbia,
- *     Uruguay, Ecuador, Slovenia): 47 in total.
- *  UI v5 — 2026-09-25, 20:34 UTC
- *   - New accent: teal (Pyramid), for PageHeader, HighlightsBar,
- *     FilterPills and ControlLabel.
- *   - SvgFlag and flagArt: the same drawn flags, for use inside SVG charts.
- *  UI v4 — 2026-09-25, 17:43 UTC
- *   - Flag: 38 small drawn flags (Gemini's 22 from Pyramid + 16 more:
- *     every country in the workbook). Works on Windows, where flag emoji don't show.
- *   - SegmentBar moved here from Cups, so League uses it too. Hover card
- *     lists show one line per match (flag, name, season, score), only
- *     when 8 or fewer; above that, just the count.
- *  UI v3 — 2026-09-25, 16:34 UTC
- *   - ControlLabel takes an accent, so its icon matches the section
- *     (League indigo, Cups gold). Default stays indigo.
- *   - PageHeader sits just below the GSL section switcher (which now stays
- *     on screen), instead of at the very top.
- *  UI v2 — 2026-09-25, 04:01 UTC
- *   - Tabs: no more browser outline box after clicking a tab (keyboard
- *     users still get a soft ring).
- *   - FilterPills take an accent (League indigo, Cups gold).
- *   - Segmented has 'gold' and 'silver' tones (cup champions / finalists).
- *   - HighlightsBar takes a column count (3, 4, 5 or 6 cards).
- *   - useGridColumns + drawerRowEnd: lets a card's drawer open below its
- *     whole row, so the other cards in that row stay where they are.
- *  UI v1 — 2026-09-25, 02:49 UTC — first version: controls moved out of League.js;
- *   PageHeader, HighlightsBar and HighlightCard added (copied from
- *   League's header and Seasons highlights, with an accent option).
+ *  Version:  UI v34
+ *  Date:     2026-10-18, 02:05 UTC
+ *  Latest:   Canvas v51.22 code tidy: viewport() and seasonGames() added.
+ *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
 
@@ -429,6 +155,25 @@ export function clubHex(abbr) {
   if (!abbr) return null;
   if (!CLUB_MAP) CLUB_MAP = buildClubMap();
   return CLUB_MAP[String(abbr).trim().toUpperCase()] || null;
+}
+// Games in a full league season, by division (UI v34): every club plays the
+// others home and away, so 2 × (clubs − 1). Clubs per division come from the
+// Pyramid sheet: a "DIVISION n" label in column A starts each block, and each
+// row below it with an abbreviation (col 30) is one club. Null when the sheet
+// doesn't list the division.
+export function seasonGames(division) {
+  const m = String(division || '').match(/(\d+)/);
+  if (!m) return null;
+  const rows = (CLUB_SHEETS && CLUB_SHEETS.Pyramid) || [];
+  let cur = null, n = 0;
+  for (const r of rows) {
+    const row = r && r.row;
+    if (!row) continue;
+    const label = typeof row[0] === 'string' ? row[0].trim().toUpperCase() : '';
+    if (/^DIVISION\s*\d+/.test(label)) cur = label.match(/(\d+)/)[1];
+    if (cur === m[1] && typeof row[30] === 'string' && row[30].trim()) n++;
+  }
+  return n > 1 ? 2 * (n - 1) : null;
 }
 
 // ─── TYPE ROLES (UI v21, Canvas v51.02) ──────────────────────────────
@@ -621,8 +366,16 @@ const MQ_PHONE = '(max-width: 639.98px)', MQ_TABLET = '(max-width: 1023.98px)';
 export const screenNow = () => {
   if (typeof window === 'undefined') return 'desktop';
   if (window.matchMedia) return window.matchMedia(MQ_PHONE).matches ? 'phone' : window.matchMedia(MQ_TABLET).matches ? 'tablet' : 'desktop';
-  return window.innerWidth ? screenOf(window.innerWidth) : 'desktop';
+  return viewport(0).w ? screenOf(viewport(0).w) : 'desktop';
 };
+// The window's size in pixels (UI v34), for placing fixed cards inside the
+// screen. The one place the canvas reads window.innerWidth / innerHeight
+// (the kit's rules check allows it here only). Screen size for layout comes
+// from useScreen() or Tailwind prefixes, never from this.
+export function viewport(fallbackW = 1440, fallbackH = 900) {
+  if (typeof window === 'undefined') return { w: fallbackW, h: fallbackH };
+  return { w: window.innerWidth, h: window.innerHeight };
+}
 export function useScreen() {
   const [scr, setScr] = useState(screenNow);
   useEffect(() => {
@@ -903,7 +656,7 @@ export function HoverProvider({ children, light = false }) {
   // UI v19: a card can bring its own layout (content.body), width (content.width) and height (content.height)
   const W = (h && h.c && h.c.width) || 300;
   const rich = !!(h && h.c && h.c.body);
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1600, vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+  const { w: vw, h: vh } = viewport(1600, 900);
   const lightNow = light || !!(h && h.c && h.c.light);
   const body = h && h.c && (rich ? h.c.body : <>
     {h.c.title && <div className={`${TYPE.card} mb-1`}>{h.c.title}</div>}
@@ -1418,16 +1171,17 @@ export function ScopeStepper({ options = [], value, onChange }) {
 }
 
 // ─── CARD GRIDS WITH DRAWERS ─────────────────────────────────────────
-// How many columns a grid shows at the current window width. Pass the
+// How many columns a grid shows at the current screen width. Pass the
 // same numbers as the grid's Tailwind classes, e.g. for
 // "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" use { base: 1, sm: 2, lg: 3 }.
+// UI v34: measured with media queries, exactly like the Tailwind prefixes.
 const BREAKPOINTS = { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 };
 export function useGridColumns(spec) {
   const calc = () => {
-    const w = typeof window !== 'undefined' && window.innerWidth ? window.innerWidth : 1280;
+    const at = (px) => (typeof window !== 'undefined' && window.matchMedia ? window.matchMedia(`(min-width: ${px}px)`).matches : px <= 1280);
     let cols = spec.base || 1;
     ['sm', 'md', 'lg', 'xl', '2xl'].forEach((bp) => {
-      if (spec[bp] && w >= BREAKPOINTS[bp]) cols = spec[bp];
+      if (spec[bp] && at(BREAKPOINTS[bp])) cols = spec[bp];
     });
     return cols;
   };
@@ -2184,7 +1938,7 @@ export function SegmentBar({ segments, total, context, chip, unit = 'matches', a
           style={track.touch ? { position: 'fixed', pointerEvents: 'none' } : {
             position: 'fixed',
             pointerEvents: 'none',
-            left: `${Math.max(140, Math.min((typeof window !== 'undefined' ? window.innerWidth : 1000) - 140, hover.x))}px`,
+            left: `${Math.max(140, Math.min(viewport(1000).w - 140, hover.x))}px`,
             top: `${hover.y < 180 ? hover.y + 16 : hover.y - 12}px`,
             transform: hover.y < 180 ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
           }}
