@@ -1,335 +1,10 @@
 /*
  * ════════════════════════════════════════════════════════════════════
- *  GSL CANVAS — League.js (was App.js)
- *  Version:  League v36
- *  Date:     2026-10-17, 07:45 UTC
- * ════════════════════════════════════════════════════════════════════
- *
- *  CHANGELOG (newest first)
- *
- *  League v36 — 2026-10-17, 07:45 UTC — Canvas v51.18
- *   - Signed numbers (Seasons, Matchdays, Opponents: goal differences, points
- *     vs last season) use ui.js's shared signed(); the local copy is removed.
- *     Zero now shows no sign ("0 vs S3", "0 GD" instead of "+0").
- *
- *  League v35 — 2026-10-09, 11:00 UTC — Canvas v51.15
- *   - Campaigns ledger: on wide screens the column groups spread across the
- *     full width (space goes between groups; columns inside a group stay
- *     together), with roomier groups from 1536px.
- *
- *  League v34 — 2026-10-09, 09:00 UTC — Canvas v51.14 (Anish's League review)
- *   - Campaigns ledger: Home / Away labels are part of their header groups,
- *     so they always line up with their columns.
- *   - Matchdays list: two columns on very wide screens (1536px+).
- *   - Opponents: Highlights bar (Clubs faced, Most played, Best record,
- *     Toughest opponent, Never beaten by); nation chips carry flags.
- *
- *  League v33 — 2026-10-09, 05:00 UTC — Canvas v51.13 (Spider Matrix)
- *   - Spider Matrix now comes from LeagueTabs.js (SpiderTab). The club you
- *     manage is read from the sheet (name marked ✦, with its flag and colour)
- *     and passed in as ownClub.
- *   - Removed tab code no longer used since v51.08–v51.13: the old Spider
- *     Matrix, Matchday Benchmarks, Momentum Pulse, Points Race chart, Venue
- *     cards and Venue Divergence Tracker, and their helpers.
- *
- *  League v32 — 2026-10-09, 02:00 UTC — Canvas v51.12 (Home vs Away)
- *   - Home vs Away now comes from LeagueTabs.js (HomeAwayTab), built from the
- *     locked design. The old tab code is removed.
- *
- *  League v31 — 2026-10-08, 04:00 UTC — Canvas v51.11 (R11: every table sorts)
- *   - Sortable by their headers: the Matchdays list, the Campaigns ledger
- *     (the unstarted season stays last), the Opponents ledger (the control
- *     bar's sort stands until a header is clicked) and the Venue Ledger.
- *     Phone ledgers have no headers; they follow the desktop order.
- *
- *  League v30 — 2026-10-07, 18:00 UTC — Canvas v51.08 (Form & Margins + Points)
- *   - Form & Margins and Points now come from the new module LeagueTabs.js
- *     (designed in the v51 Palette Lab). The old tab code is removed.
- *
- *  League v29 — 2026-10-07, 01:30 UTC — Canvas v51.07 (Seasons and Opponents)
- *   - Seasons: Campaigns has a Cards / Ledger switch (remembered per device).
- *     · Cards: a header strip in the division colour ("S1 · 2024–25", "DIV 4");
- *       finish with a trophy for champions; points with the title margin;
- *       record and goals with GD; home / away split in the blue pair; a chip
- *       only when it adds information (Invincible). Unstarted seasons are a
- *       dashed card.
- *     · Ledger: season, division, finish, points, margin · GP, record, PPG,
- *       win % · goals, GD, clean sheets, failed to score · Home and Away
- *       blocks (GP, points, record, GD), tinted · status. Phones get a short
- *       ledger (season, finish, points over record, goals over GD).
- *     · Highlights bar: repeated bylines removed (R6): PPG shows total points
- *       instead of "Points Per Game"; Clean Sheets drops the games count.
- *   - Opponents: Cards / Ledger switch; sorted by average rank by default
- *     (clubs with no rank last).
- *     · Card: club colour edge, bigger flag and name (no code or country),
- *       average rank top right, the record as the hero with a results bar,
- *       goals with GD, points won, last 5 (most recent first).
- *     · Ledger: club with average rank in grey · GP, record, win % · goals,
- *       GD, clean sheets · points (25/30), PPG · current unbeaten run · last 5
- *       as score chips, biggest win (season, venue). Faint zebra rows; phones
- *       get a short ledger.
- *     · Goals, clean sheets, last 5, unbeaten run and biggest win are worked
- *       out from every league meeting.
- *
- *  League v28 — 2026-10-06, 21:00 UTC — Canvas v51.06 (foundations + Matchdays)
- *   - Matchdays redesigned (v51 design rounds 1–6):
- *     · Main bar in League indigo: "Season 8 · 2031–32" over "Division 1 · 1st"
- *       with a trophy for champions; arrows and a season row that keeps the
- *       chosen season in view (right-aligned on desktop, under the title on
- *       phones). Replaces the season card and the dark summary band.
- *     · Highlights bar (style 2): Record (full width on phones), Finish (chip
- *       only when it adds information; "Sealed MD 34" as text; movement or
- *       a division debut when there's no title), Points (+ clear of 2nd, vs
- *       last season in the same division), Goals (+GD), PPG (rank among
- *       your seasons).
- *     · One control row: result and venue filters, Cards / List switch
- *       (remembered per device), search, reset.
- *     · Cards: the opponent's club colour as the left edge, bigger flag and
- *       name, W / D / L chip beside a neutral score, GD in its result colour
- *       (a draw is a plain grey 0), running points.
- *     · List: one line per match (matchday, venue, colour mark, opponent,
- *       chip, score, GD, total); phones stack matchday over venue and GD
- *       under the total.
- *   - Points: Matchday Benchmarks headlines with section stat cards (R8)
- *     instead of a Highlights bar (R5).
- *   - Home and away use the blue pair: navy (home) and sky (away) on the
- *     Home vs Away tab, the venue filter and the Spider Matrix.
- *
- *  League v27 — 2026-10-05, 09:00 UTC — Canvas v51.05 (type system, whole page)
- *   - Every tab moves onto the v51 type system (Contrast profile): weights
- *     400 / 500 / 600 / 800 (black becomes 800, bold becomes 600, small text
- *     never above 600); capitalised labels at 11px, 600, 0.1em; section
- *     titles 22px; big numbers in the big-number font (.gsl-big) with the
- *     lab spacing; table, chart and supporting numbers in the small-number
- *     font (tabular-nums).
- *   - Records show numbers only (6 • 2 • 1, coloured win / draw / loss);
- *     the Highlights record is plain with a "W • D • L" hint in its label.
- *     Records inside sentences keep their letters.
- *   - Points tab: units no longer played down (the lab option is gone).
- *
- *  League v26 — 2026-10-05, 05:00 UTC — Canvas v51.04
- *   - Points tab (pilot): units played down (lab setting) on the Points Race
- *     card's "pts", the Win % and clean-sheet % in Matchday Benchmarks.
- *
- *  League v25 — 2026-10-05, 03:00 UTC — Canvas v51.03
- *   - Points tab (pilot): scorelines use the shared Score (spaced, played-down
- *     dash): Matchday Benchmarks' Goals column, results in an opened
- *     matchday, and the goals in the matchday card. W / D / L records use the
- *     shared WDLRecord (table and card).
- *
- *  League v24 — 2026-10-05, 01:30 UTC — Canvas v51.02 (type roles pilot)
- *   - Points tab is the v51 pilot: every title, label, chip, number and
- *     table on it uses the Contrast type roles (ui.js TYPE). Capitalised
- *     labels: 11px, 600, 0.1em spacing. Titles in title case ("Win Rate By
- *     Matchday"). Numbers that stand alone use the number font.
- *   - Points Race Select All / Clear All: built from the seasons in the data
- *     (was a typed-in 20).
- *   - Title case: "Wins By Margin", "Draws By Score", "Losses By Margin".
- *
- *  League v23 — 2026-10-04, 23:30 UTC — Canvas v51.01 (design tokens, step 1)
- *   - Club colours come from the sheet (ui.js clubHex); the typed-in list of
- *     92 clubs is gone. Checked: all 90 matching codes had the same colour;
- *     ROMA and BODO now match the sheet's short names.
- *   - Season colours from ui.js (seasonColor): seasons after S8 get their own
- *     colour instead of repeating S1's.
- *   - Margin matrix tones from ui.js (MARGIN_TONES), shared with Cups.
- *
- *  League v22 — 2026-10-04, 02:54 UTC — Canvas v50.14
- *   - Home vs Away form card: its earlier design back (VenueFormCard)
- *     inside the shared card; docked on touch, 320px floating with a mouse.
- *     The old floating card's code is removed.
- *
- *  League v21 — 2026-10-04, 02:34 UTC — Canvas v50.13 (tablet pass)
- *   - Home vs Away split bar: the shared card (white), docked on every touch
- *     device; its own card guessed touch from the hover setting, which iPad
- *     Safari (desktop mode) reports wrongly, and floated, squeezed and left
- *     blank space on phones and iPad.
- *   - Outcomes bar: each segment shows its full label only when it fits,
- *     otherwise the percentage alone (any screen).
- *   - Plain labels everywhere: no nicknames for win margins; draws read
- *     "1-1 Draws", "2-2 Draws", "0-0 Draws", "3+ Draws"; "Highest-Scoring
- *     Draw"; Spider "Wins by 3+ goals".
- *   - Streak ledgers: PPG on one line. "Cross-Season" badges removed.
- *
- *  League v20 — 2026-10-03, 15:45 UTC — Canvas v50.06 (audit fixes)
- *   - A1 Home vs Away split bars: on touch screens the card docks at the
- *     bottom; a tap elsewhere closes it.
- *   - A2 Venue Swing: one column per season (no built-in 8); phones scroll
- *     sideways past 8 seasons.
- *   - A4 Spider: a tap toggles an axis highlight.
- *
- *  League v19 — 2026-10-03, 15:19 UTC — Canvas v50.05
- *   - Points Race: benchmark label at the left, "100 points".
- *   - Matchday Benchmarks: win rate strip scrubs (touch: tap or slide);
- *     Goals and Clean Sheets stay on one line; MD drawer on phones puts
- *     the scoreline right after the club name.
- *   - Stacked Visualizer: Show / Hide legend (hidden on phones); bars
- *     scrub; header on phones in two lines (Season · year · division /
- *     record · points / matches), one line from tablet up.
- *   - Streaks: start / end text printed code; now shows the values.
- *   - Home vs Away: venue chips' values shrink to fit; bylines as two short
- *     lines on phones. Venue Swing: chips one per row on phones; bar height
- *     capped so labels clear the season pill.
- *
- *  League v18 — 2026-10-03, 07:16 UTC — Canvas v50.03 (mobile phase 3a)
- *   - Points race and Momentum: measure their own box (not the window),
- *     no 300px plot floor (they spilled past the card on phones), ticks
- *     every 10 matchdays on narrow screens under a "Matchday" title.
- *     Touch: tap or slide along the chart; the card docks at the bottom of
- *     the screen; a tap elsewhere or a scroll closes it.
- *   - Browser tooltips that carried information now open the hover card on
- *     tap: Home vs Away bars (and the two that printed variable names
- *     instead of values are fixed), matchday dots, average rating, Spider
- *     edges. League sits inside ui.js's HoverProvider.
- *   - Spider Matrix: labels sized against the drawn width (11px or more).
- *   - Outcomes bar: percentage only on phones; full label from tablet up.
- *   - Biggest Wins / Defeats score boxes stay on one line.
- *   - Matchday table: "MD 1" stays on one line.
- *   - Score and season editors: full screen on phones.
- *   - 11px floor: 105 pieces of 9–10px text raised to 11px.
- *
- *  League v17 — 2026-10-03, 06:41 UTC — Canvas v50.01
- *   - Seasons highlights: Record first on every screen; full width on phones.
- *
- *  League v16 — 2026-09-27, 17:28 UTC — Wider canvas
- *   - Page width comes from ui.js (PAGE_WIDTH, now 1800px; was 1280px).
- *
- *  League v15 — 2026-09-26, 15:48 UTC — Standard search
- *   - Spider tab club choices (opponent, Club 1, Club 2) use the shared
- *     dropdown-first picker: flags, and a search box inside.
- *
- *  League v14 — 2026-09-26, 15:40 UTC — Drawn flags
- *   - Every flag emoji is now a drawn flag (ui.js Flag), sized to match
- *     the old emoji. Non-flag symbols (🪩, 🏴‍☠️) show as they are.
- *   - Dropdown options show club names only (browser dropdowns can't draw
- *     flags); labels no longer have flags glued into the text.
- *
- *  League v13 — 2026-09-25, 18:21 UTC — Hover cards
- *   - Matchday Benchmarks: hovering a cell in the win-rate strip shows a
- *     card (record, win %, points per game, goal difference, games).
- *   - Momentum Pulse, Overlay: the hover card lists each season as S1,
- *     S2..., its 5-game average, and that matchday's result (flag, club,
- *     score coloured by result).
- *
- *  League v12 — 2026-09-25, 17:47 UTC — Hover cards, two new dashboards
- *   Form & Margins
- *   - Outcomes: hover cards (count and share), same as Cups.
- *   - Margin Distribution, Stacked Visualizer: new shared hover cards,
- *     listing the matches (flag, club, matchday, score) when a segment
- *     has 8 or fewer. Match-by-match counts checked against the sheet's
- *     margin columns: identical in all 8 seasons.
- *   - New: Momentum Pulse (below Margin Distribution). Single season:
- *     a bar per match (goal difference, coloured by result) and a
- *     5-game average line, dashed until 5 games are in. Overlay: the
- *     average lines only, one per season. Hover for details.
- *   Points
- *   - New: Matchday Benchmarks (bottom of the tab). All / Div 1 / Lower
- *     divisions; highlights (best and worst matchday with ties shown,
- *     perfect matchdays, matchdays and games each); win-rate strip;
- *     sortable table. Click a matchday to see its results, one per season.
- *
- *  League v11 — 2026-09-25, 16:34 UTC — Icon
- *   - Form & Margins tab uses the pulse icon (same as Cups).
- *
- *  League v10 — 2026-09-25, 02:51 UTC — Uses the shared ui.js (no visual change)
- *   - Header, tab bar and Seasons highlights now come from ui.js
- *     (PageHeader, HighlightsBar, HighlightCard), so Cups and Pyramid can
- *     share them. Shared controls moved from this file to ui.js.
- *   - Checked: every League tab renders exactly as before.
- *
- *  League v9 (unchanged) — 2026-09-24, 22:52 UTC — moved into the combined project
- *   - File renamed from App.js to League.js. It now gets its data from
- *     App.js. Its own corner tag is switched off (App.js shows one tag
- *     for the whole project). No other changes.
- *
- *  Claude v9 — 2026-09-24, 19:11 UTC — Style guide and small cleanup
- *   - Added a style guide (below this header). No visual change.
- *   - Opponents: removed the spreadsheet cell reference "(IT7:PS7)" from
- *     the "Avg Rating" sort option and the card hover text.
- *   - Added a code note that club #92 (the user's own club) is left out
- *     on purpose.
- *
- *  Claude v8 — 2026-09-24, 18:56 UTC — Shorter section titles
- *   - Seasons: "Campaigns".  Points: "Points Race".
- *   - Form & Margins: "Wins by Margin", "Draws by Score", "Losses by
- *     Margin" (game total is now a coloured bubble on the right),
- *     "Margin Distribution", "Goal Fests", "Dropped Points Analysis".
- *   - Home vs Away: "Split", "Venue Ledger", "Venue Swing".
- *   - Spider Matrix: "Highs & Lows".
- *   - Titles not on the approved list were left as they were.
- *
- *  Claude v7 — 2026-09-24, 18:32 UTC — Cleanup, division filter, live stats
- *   - Header: removed the seasons / titles / matches / GD summary line.
- *   - Matchdays: removed the points / record / clean sheets subhead.
- *   - Points: new Division filter (All / Div 1 / Div 2 ...). Season pills
- *     and the chart only show seasons in that division; the x-axis fits
- *     the season length (MD 38 for Div 1). Subhead removed.
- *   - Streaks: Record Win Streak and Record Unbeaten Run shown as two
- *     tiles above the selectors (always career-wide).
- *   - Highs & Lows: every number is now calculated from the match data
- *     (biggest win / defeat / draw, goal fest, routs, losses, draws,
- *     average goals, clean-sheet ratio) and updates as results come in.
- *
- *  Claude v6 — 2026-09-24, 17:58 UTC — Content architecture
- *   - Tabs reordered and renamed: Seasons, Matchdays, Opponents, Points,
- *     Form & Margins, Home vs Away, Spider Matrix. Tab list now lives in
- *     one place (TABS, near the top) instead of seven copies.
- *   - Form & Margins:
- *       Outcomes: renamed; subhead removed; "320 Played" moved to sit with
- *       Won / Drawn / Lost.
- *       Margin Distribution: Stacked Visualizer now first (and default);
- *       "All 8 Campaigns" label removed; colour names removed from the
- *       legend; in the matrix the biggest tier in each group (wins, draws,
- *       losses) is highlighted in every season row and in Career Totals.
- *       Highs & Lows: renamed; "Matches Analyzed" label removed.
- *       Streaks: renamed; the two record badges beside the title removed.
- *
- *  Claude v5 — 2026-09-24, 17:35 UTC — Version tag
- *   - Small version label in the bottom-right corner of the canvas so you
- *     can tell which version is running. Hide it with SHOW_VERSION_TAG.
- *
- *  Claude v4 — 2026-09-24, 17:22 UTC — Record by PPG, metric switches
- *   - "Record season" is now judged by points per game everywhere (Spider
- *     preset and the Points Race record card), so 38- and 46-game seasons
- *     compare fairly.
- *   - Home vs Away: reverted to three separate Points/Wins/Goals switches,
- *     one per section, now in the standard switch style.
- *
- *  Claude v3 — 2026-09-24, 17:01 UTC — Cleanup & standardization
- *   - Home vs Away: removed the "Main" toggle and the hidden "Alt" view
- *     behind it (~540 lines of unreachable code). One Points/Wins/Goals
- *     switch now drives every chart on the tab (was three separate ones).
- *   - Standard controls used everywhere: view switches, season/nation
- *     filter pills, Reset buttons, search boxes and dropdowns now share
- *     one look and behaviour (see SHARED CONTROLS near the top).
- *   - Reset rule: rows with an "All" option have no separate reset link;
- *     panels with several filters (Fixtures, Clubs, Dropped Points,
- *     Spider Matrix) have one Reset button, always in the same place,
- *     greyed out when there is nothing to reset.
- *   - Season layer toggles (Points Race, Spider overlay) both use
- *     Select All / Clear All. Spider overlay no longer lists unplayed
- *     seasons 9–15.
- *   - Club nation filter is built from the data (previously a fixed list
- *     that hid Scotland, Greece, etc.).
- *   - Spider Reset now always restores the default comparison for the
- *     current view (was a mixed clear/restore toggle).
- *   - Removed unused code: an unused side-table parser and two memos
- *     that only fed the removed Alt view.
- *
- *  Claude v2 — 2026-09-24 — Speed
- *   - Hover tooltips move on their own instead of redrawing the whole tab
- *     on every mouse movement. Points Race and Spider hover state kept
- *     inside those charts.
- *
- *  Claude v1 — 2026-09-24 — Correctness
- *   - Titles counted from the sheet's position column, finished seasons
- *     only (Div 1 = 38 games, others = 46). In-progress season shown as
- *     "In Progress".
- *   - Removed fixed season numbers (Invincible, current season, presets,
- *     chart highlight). No jump back to latest season after data changes.
- *   - Fixed broken hover text on dropped-point matches.
- *   - Edit buttons hidden behind ENABLE_EDITING (off) until writes are
- *     verified safe on a copy of the sheet.
+ *  GSL CANVAS — League.js (League page shell: Seasons, Matchdays, Opponents)
+ *  Version:  League v37
+ *  Date:     2026-10-18, 02:05 UTC
+ *  Latest:   Canvas v51.22 code tidy: leftovers removed; counts come from the sheet.
+ *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
 
@@ -407,83 +82,44 @@ import {
   HighlightCard,
   Segmented,
   FilterPills,
-  ControlLabel,
   ResetButton,
   SearchInput,
   SELECT_CLASS,
-  METRIC_OPTIONS,
-  SegmentBar,
   Flag,
-  ClubSelect,
   PAGE_WIDTH,
   HoverProvider,
-  useHover,
-  usePointerTrack,
-  useWidth,
-  Sheet,
-  useLegendToggle,
-  FitText,
-  MARGIN_TONES,
-  seasonColor,
   clubHex,
   TYPE,
   Score,
   WDLRecord,
   RecordKey,
-  numberize,
-  WDL_TONES,
   MainBar,
   ScopeStepper,
   useSort,
   ownClubInfo,
   ViewSwitch,
   useStored,
-  SectionStats,
-  HOME_HEX,
-  AWAY_HEX,
   signed,
+  seasonGames,
 } from './ui.js';
 import { FormMarginsTab, PointsTab, HomeAwayTab, SpiderTab } from './LeagueTabs.js';
-import * as d3 from 'd3';
 import {
   Trophy,
-  Medal,
-  Award,
   TrendingUp,
   Calendar,
   Shield,
-  ShieldAlert,
   Target,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   Search,
   ArrowUpDown,
   Layers,
-  PieChart,
-  CheckCircle2,
-  XCircle,
-  MinusCircle,
-  Edit3,
-  Save,
   X,
-  Sparkles,
-  Flame,
   Zap,
   Users,
-  BarChart3,
   Activity,
-  ArrowUpRight,
-  ArrowDownRight,
-  Hash,
   Home,
-  Plane,
-  RotateCcw,
   LayoutGrid,
   List,
-  ArrowUp,
-  ArrowDown,
-  Globe,
   Star,
 } from 'lucide-react';
 
@@ -513,43 +149,12 @@ const COUNTRY_NAMES = {
 
 // Season colours: ui.js seasonColor() (v23).
 
-
 // Club colours: from the sheet, through ui.js clubHex() (v23).
 
-
 // ─── GSL LEAGUE SETTINGS ─────────────────────────────────────────────
-// Games in a full season, by division. A season only counts as finished
-// (and can only count as a title) once it reaches this many games played.
-const GAMES_PER_SEASON = { 'DIV 1': 38 };
-const DEFAULT_GAMES_PER_SEASON = 46; // Div 2, 3 and 4
-
 // Column in the season row that holds the final (or current) league position.
 const POSITION_COL = 4;
-
-// EDITING SWITCH: set to true to turn the edit buttons back on.
-// Off for now because saving rewrites the whole sheet row, which may replace
-// formulas with fixed numbers. Only turn on after testing on a COPY of the sheet.
-const ENABLE_EDITING = false;
-
-// VERSION TAG: a small label in the bottom-right corner of the canvas so you
-// can always tell which version you're looking at. Set to false to hide it.
-// Keep APP_VERSION in step with the header comment at the top of this file.
-const SHOW_VERSION_TAG = false; // the version tag now lives in App.js
-const APP_VERSION = 'Claude v9 • 24 Sep 2026, 19:11 UTC';
 // ─────────────────────────────────────────────────────────────────────
-
-// Moves a floating tooltip with the cursor by editing its position directly.
-// Previously every mouse movement updated React state, which redrew the whole
-// tab dozens of times per second. Now only entering/leaving a bar redraws.
-function moveFloatingTooltip(ref, e, minLeft, rightGap, flipY, gapBelow, gapAbove) {
-  const el = ref.current;
-  if (!el) return;
-  const x = Math.max(minLeft, Math.min(window.innerWidth - rightGap, e.clientX));
-  const below = e.clientY < flipY;
-  el.style.left = `${x}px`;
-  el.style.top = `${below ? e.clientY + gapBelow : e.clientY - gapAbove}px`;
-  el.style.transform = below ? 'translate(-50%, 0)' : 'translate(-50%, -100%)';
-}
 
 // Shared controls (Segmented, FilterPills, ...) now live in ui.js.
 
@@ -565,97 +170,12 @@ const TABS = [
   { id: 'spider', label: 'Spider Matrix', icon: Target },
 ];
 
-// Stacked Visualizer tiers, in bar order (same colours as before v12).
-const LEAGUE_TIERS = [
-  { key: 'won4', label: '4+ goal wins', cls: 'bg-emerald-800 text-white' },
-  { key: 'won3', label: '3 goal wins', cls: 'bg-emerald-700 text-white' },
-  { key: 'won2', label: '2 goal wins', cls: 'bg-emerald-600 text-white' },
-  { key: 'won1', label: '1 goal wins', cls: 'bg-emerald-500 text-white' },
-  { key: 'd00', label: '0-0 draws', cls: 'bg-slate-400 text-white' },
-  { key: 'd11', label: '1-1 draws', cls: 'bg-amber-500 text-white' },
-  { key: 'd22', label: '2-2 draws', cls: 'bg-amber-600 text-white' },
-  { key: 'd3p', label: '3-3+ draws', cls: 'bg-amber-700 text-white' },
-  { key: 'l1', label: '1 goal losses', cls: 'bg-rose-500 text-white' },
-  { key: 'l2', label: '2 goal losses', cls: 'bg-rose-600 text-white' },
-  { key: 'l3', label: '3 goal losses', cls: 'bg-rose-700 text-white' },
-  { key: 'l4', label: '4+ goal losses', cls: 'bg-rose-800 text-white' },
-];
-function leagueTierKey(f) {
-  const d = f.teamScore - f.oppScore;
-  if (f.res === 'W') return d >= 4 ? 'won4' : d === 3 ? 'won3' : d === 2 ? 'won2' : 'won1';
-  if (f.res === 'D') return f.teamScore >= 3 ? 'd3p' : f.teamScore === 2 ? 'd22' : f.teamScore === 1 ? 'd11' : 'd00';
-  const x = -d;
-  return x >= 4 ? 'l4' : x === 3 ? 'l3' : x === 2 ? 'l2' : 'l1';
-}
-// One season's stacked bar. Counts come from the sheet's margin columns;
-// the hover card lists the matches (8 or fewer) from the match data.
-function LeagueTierBar({ season: s, items }) {
-  return (
-    <SegmentBar
-      accent="indigo"
-      total={s.gp}
-      unit="matches"
-      chip={`S${s.num}`}
-      context={`Season ${s.num} (${s.year}) • ${s.division}`}
-      barClass="w-full h-6 rounded-lg bg-slate-200 overflow-hidden flex gap-0.5"
-      segClass="h-full flex items-center justify-center text-[11px] font-semibold tabular-nums"
-      segments={LEAGUE_TIERS.map((t) => ({
-        key: t.key,
-        n: s[t.key] || 0,
-        label: t.label,
-        cls: t.cls,
-        swatch: t.cls.split(' ')[0],
-        items: items ? items[t.key] : null,
-        inner: () => s[t.key] || '',
-      }))}
-    />
-  );
-}
-
-// One cell of the margin matrix. The biggest number in each group (wins,
-// draws, losses) gets the highlight; ties all get it; zeros show as "-".
-// MARGIN_TONES: from ui.js (v23).
-
-
-function MarginCell({ value, max, tone, edge = false, footer = false }) {
-  const t = MARGIN_TONES[tone];
-  const isTop = value > 0 && value === max;
-  const cell = footer
-    ? `py-3 px-2 text-center font-extrabold ${t.foot}`
-    : `py-2.5 px-2 text-center font-semibold ${t.row}`;
-  const border = edge ? (footer ? t.footEdge : t.edge) : '';
-  const pill = footer ? t.footPill : t.pill;
-  return (
-    <td className={`${cell} ${border}`}>
-      {value > 0 || footer ? (
-        isTop ? (
-          <span className={`px-1.5 py-0.5 rounded font-extrabold ${pill}`}>
-            {value}
-          </span>
-        ) : (
-          value
-        )
-      ) : (
-        <span className="text-slate-400">-</span>
-      )}
-    </td>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────
 
 // Points per game. The only fair way to compare seasons of different lengths
 // (46 games in Div 2-4, 38 in Div 1), so every "record season" uses it.
 function seasonPpg(s) {
   return s && s.gp > 0 ? s.pts / s.gp : 0;
-}
-
-function expectedGamesFor(division) {
-  const key = String(division || '')
-    .toUpperCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-  return GAMES_PER_SEASON[key] || DEFAULT_GAMES_PER_SEASON;
 }
 
 function ordinal(n) {
@@ -701,33 +221,6 @@ function safeNum(val, fallback = 0) {
   return fallback;
 }
 
-// Helper: Safely parse string values and eliminate formula errors
-function cleanText(val, fallback = '') {
-  if (val === null || val === undefined) return fallback;
-  const str = String(val).trim();
-  if (str.startsWith('#') || str.toUpperCase() === 'N/A') return fallback;
-  return str;
-}
-
-// Helper: Format clearance display showing winning MD, clearance points, or both
-function formatClearance(s) {
-  if (!s) return '-';
-  if (s.winningMd && s.clearancePts !== null && s.clearancePts !== undefined) {
-    return `${s.winningMd} (+${s.clearancePts} pts)`;
-  }
-  if (s.winningMd) {
-    return s.winningMd;
-  }
-  if (s.clearancePts !== null && s.clearancePts !== undefined) {
-    return `+${s.clearancePts} pts`;
-  }
-  if (s.clearence && s.clearence !== '-' && s.clearence !== '-') {
-    const num = parseFloat(String(s.clearence).replace(/[^0-9.-]/g, ''));
-    return !isNaN(num) ? `+${num} pts` : s.clearence;
-  }
-  return '-';
-}
-
 // ─── v51.06: MATCHDAYS PIECES ───────────────────────────────────────
 // "2031 - 32" → "2031–32"; "DIV 1" → "Division 1"
 function yearLabel(y) { return String(y || '').replace(/\s*-\s*/, '–'); }
@@ -754,10 +247,10 @@ function MatchGd({ gd, suffix = '' }) {
   return <span className={`tabular-nums ${cls}`}>{signed(gd)}{suffix}</span>;
 }
 // One matchday as a card (Cards view)
-function MatchdayCard({ f, onEdit }) {
+function MatchdayCard({ f }) {
   const oppColor = getClubColor(f.oppAbbr);
   return (
-    <div onClick={onEdit} className={`relative bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden ${onEdit ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}>
+    <div className="relative bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <div className="gsl-edge absolute inset-y-0 left-0 w-1.5" style={{ background: oppColor }} />
       <div className="p-4 pl-5 flex flex-col gap-3">
         <div className={`flex items-center justify-between ${TYPE.eyebrow} text-slate-500`}>
@@ -787,10 +280,10 @@ function MatchdayCard({ f, onEdit }) {
   );
 }
 // One matchday as a row (List view). Phones stack matchday over venue.
-function MatchdayRow({ f, onEdit }) {
+function MatchdayRow({ f }) {
   const oppColor = getClubColor(f.oppAbbr);
   return (
-    <div onClick={onEdit} className={`flex items-center gap-3 px-3 sm:px-4 py-2.5 bg-white border-b border-slate-100 last:border-b-0 ${onEdit ? 'cursor-pointer hover:bg-slate-50' : ''}`}>
+    <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5 bg-white border-b border-slate-100 last:border-b-0">
       <div className="w-11 sm:w-auto sm:flex sm:items-center sm:gap-3 shrink-0 leading-tight">
         <span className="block sm:w-14 text-[11px] font-semibold text-slate-500 tabular-nums">MD {f.md}</span>
         <span className="block sm:w-12 text-[11px] font-medium text-slate-400 sm:text-slate-500">{f.venue === 'H' ? 'Home' : 'Away'}</span>
@@ -1108,20 +601,7 @@ function OpponentsLedgerPhone({ clubs, extras, onOpen }) {
   );
 }
 
-// League v21.1: the Home vs Away form card (its v20 design), shown inside the shared card
-function App({
-  data = [],
-  updateItem,
-  deleteItem,
-  insertItem,
-  moveItem,
-  followLink,
-}) {
-  // Hover card (ui.js): mouse hover or a tap on touch screens
-  const hv = useHover();
-  const [outBox, outW] = useWidth(800); // v20.1: Outcomes labels fit their segment
-  // Stacked Visualizer legend: hidden on phones, shown from tablet up (v50.05)
-  const [marginLegendOpen, MarginLegendToggle] = useLegendToggle();
+function App({ data = [] }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'homeaway', 'fixtures', 'race', 'clubs', 'analytics'
   const [selectedSeasonNum, setSelectedSeasonNum] = useState(1);
   const [fixtureView, setFixtureView] = useStored('gsl-league-matchdays-view', 'cards');
@@ -1135,67 +615,6 @@ function App({
   const [clubSortBy, setClubSortBy] = useState('avg');
   const [clubSortOrder, setClubSortOrder] = useState('asc');
   const [selectedClub, setSelectedClub] = useState(null);
-  const [editingMatch, setEditingMatch] = useState(null);
-  const [editingSeason, setEditingSeason] = useState(null);
-  const [raceDivisionFilter, setRaceDivisionFilter] = useState('all'); // 'all' or e.g. 'DIV 1'
-  const [visibleChartSeasons, setVisibleChartSeasons] = useState(() => {
-    const initial = {};
-    for (let i = 1; i <= 15; i++) initial[i] = true;
-    return initial;
-  });
-
-  // Form & Margins: Dropped Points Analysis Filters & State
-  const [droppedSeasonFilter, setDroppedSeasonFilter] = useState('all'); // 'all', '1', '2', '3', '4', '5', '6', '7', '8'
-  const [droppedTypeFilter, setDroppedTypeFilter] = useState('all'); // 'all', 'D', 'L'
-  const [droppedSearch, setDroppedSearch] = useState('');
-  const [droppedViewMode, setDroppedViewMode] = useState('teams'); // 'teams', 'seasons'
-  const [expandedTeamAbbr, setExpandedTeamAbbr] = useState(null);
-
-  // Form & Margins: Streaks Dashboard Filters & State
-  const [streakCategory, setStreakCategory] = useState('win'); // 'win' or 'unbeaten'
-  const [streakScope, setStreakScope] = useState('career'); // 'career' or 'season'
-  const [streakSeasonFilter, setStreakSeasonFilter] = useState('all'); // 'all' or '1'..'8'
-  const [streakMinLength, setStreakMinLength] = useState('all'); // 'all', '5+', '10+', '15+'
-  const [expandedStreakId, setExpandedStreakId] = useState(null);
-
-  // Form & Margins: Season Margins & Outliers State
-  const [marginSeasonFilter, setMarginSeasonFilter] = useState('all'); // 'all' or '1'..'8'
-  const [marginBreakdownView, setMarginBreakdownView] = useState('bars'); // 'bars' or 'matrix'
-  const [outlierCategoryFilter, setOutlierCategoryFilter] = useState('all'); // 'all', 'wins', 'defeats', 'draws', 'extremes'
-
-  // Home vs Away Tab State
-  const [homeAwaySeasonFilter, setHomeAwaySeasonFilter] = useState('all'); // 'all' or '1'..'8'
-  const [homeAwayBarMetric, setHomeAwayBarMetric] = useState('pts'); // 'pts', 'wins', 'goals'
-  const [homeAwayHoverTooltip, setHomeAwayHoverTooltip] = useState(null);
-  // A1 (v50.06): touch screens (no hover) dock the Home / Away card at the bottom; a tap elsewhere closes it
-  const noHover = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: none)').matches;
-  useEffect(() => {
-    if (!homeAwayHoverTooltip || !noHover || typeof document === 'undefined') return undefined;
-    const out = (e) => { if (e.target && e.target.closest && e.target.closest('[data-ha-bar]')) return; setHomeAwayHoverTooltip(null); };
-    document.addEventListener('click', out, true);
-    return () => document.removeEventListener('click', out, true);
-  }, [homeAwayHoverTooltip, noHover]);
-  const homeAwayTooltipRef = useRef(null);
-  const [ledgerMetric, setLedgerMetric] = useState('pts'); // 'pts', 'wins', 'goals'
-  const [divergenceMetric, setDivergenceMetric] = useState('pts'); // 'pts', 'wins', 'goals'
-  const [divergenceHoveredSeason, setDivergenceHoveredSeason] = useState(null);
-
-  // Spider Matrix Tab State
-  const [spiderMode, setSpiderMode] = useState('seasons'); // 'seasons', 'homeaway', 'clubVsCareer', 'clubVsClub', 'multiSeason'
-  const [spiderSeasonA, setSpiderSeasonA] = useState('career'); // 'career' or '1'..'8'
-  const [spiderSeasonB, setSpiderSeasonB] = useState('4'); // 'career' or '1'..'8'
-  const [spiderHomeAwaySeason, setSpiderHomeAwaySeason] = useState('all'); // 'all' or '1'..'8'
-  const [spiderClubA, setSpiderClubA] = useState('RMA');
-  const [spiderClubB, setSpiderClubB] = useState('BAR');
-  const [spiderClubCareerTarget, setSpiderClubCareerTarget] = useState('PSG');
-  const [spiderClubPerspective, setSpiderClubPerspective] =
-    useState('usVsClub'); // 'usVsClub' (default) or 'clubVsUs'
-  const [spiderMultiSeasons, setSpiderMultiSeasons] = useState(() => {
-    const initial = { career: true };
-    for (let i = 1; i <= 15; i++) initial[i] = false;
-    initial[4] = true;
-    return initial;
-  });
 
   // Fast row lookup map
   const rowsByIndex = useMemo(() => {
@@ -1210,12 +629,12 @@ function App({
     return map;
   }, [data]);
 
-  // Dynamic Ingestion of exactly 91 European Opponent Clubs (Competitive Analysis table, IT7:PS7 avg rating)
   // The club you manage (name, flag, colour), from the Pyramid sheet's ✦ marker
   const ownClub = useMemo(() => ownClubInfo(), [rowsByIndex]);
 
   const clubs = useMemo(() => {
     const clubList = [];
+    const ownAbbr = ownClub && ownClub.abbr ? ownClub.abbr : null;
 
     const row1 = rowsByIndex.get(2) || []; // IDs
     const row2 = rowsByIndex.get(3) || []; // Names
@@ -1236,15 +655,12 @@ function App({
         nameRaw &&
         typeof nameRaw === 'string' &&
         nameRaw.trim() &&
-        nameRaw.trim().toUpperCase() !== 'TEAM'
+        nameRaw.trim().toUpperCase() !== 'TEAM' &&
+        !nameRaw.trim().startsWith('#') // a sheet error (#N/A) is an empty slot, not a club
       ) {
         const clubName = nameRaw.trim();
         const numId =
           typeof row1[c] === 'number' ? row1[c] : clubList.length + 1;
-
-        // Limit strictly to the 91 opponent clubs. Club #92 is the user's own
-        // club, so it is left out on purpose.
-        if (numId > 91) continue;
 
         const flag = (
           row3[c] && typeof row3[c] === 'string'
@@ -1259,6 +675,8 @@ function App({
             ? rawAbbr
             : clubName.slice(0, 3)
         ).trim();
+        // Opponents only: the club you manage (the Pyramid sheet's ✦) is left out.
+        if (ownAbbr && abbr.toUpperCase() === ownAbbr) continue;
 
         // Avg rating from row index 6 (IT7:PS7 in sheet)
         const avg =
@@ -1305,11 +723,10 @@ function App({
           winPct,
         });
 
-        if (clubList.length >= 91) break;
       }
     }
     return clubList;
-  }, [rowsByIndex]);
+  }, [rowsByIndex, ownClub]);
 
   // Fast Abbreviation -> Club mapping
   const clubByAbbr = useMemo(() => {
@@ -1326,6 +743,11 @@ function App({
   const seasons = useMemo(() => {
     const seasonList = [];
     if (!Array.isArray(data)) return seasonList;
+    // Matchday columns: four per matchday, from MATCHDAY (col 32) up to the
+    // next heading in the sheet's first row, so the count comes from the sheet.
+    const head = rowsByIndex.get(1) || [];
+    let mdEnd = head.length;
+    for (let c = 33; c < head.length; c++) if (head[c] != null && head[c] !== '') { mdEnd = c; break; }
 
     data.forEach((item) => {
       const r = item.row;
@@ -1335,7 +757,7 @@ function App({
       const isYearFormat =
         typeof yearStr === 'string' && /\d{4}\s*-\s*\d{2}/.test(yearStr);
 
-      if (sNum && sNum >= 1 && sNum <= 20 && isYearFormat) {
+      if (sNum && sNum >= 1 && isYearFormat) {
         const seasonIndex = item.index_;
         const scoreRow = rowsByIndex.get(seasonIndex + 1) || [];
         const gdRow = rowsByIndex.get(seasonIndex + 2) || [];
@@ -1431,7 +853,7 @@ function App({
         let runningPts = 0;
         const cumPtsArray = [];
 
-        for (let col = 32; col <= 212; col += 4) {
+        for (let col = 32; col + 3 < mdEnd; col += 4) {
           const mdNum = Math.floor((col - 32) / 4) + 1;
           const venue = r[col];
           const oppAbbr = r[col + 1];
@@ -1497,8 +919,10 @@ function App({
         const division = (r[2] || 'DIV').trim();
         const positionRaw = safeNum(r[POSITION_COL], 0);
         const position = positionRaw > 0 ? positionRaw : null;
-        const expectedGames = expectedGamesFor(division);
-        const isComplete = gp > 0 && gp >= expectedGames;
+        // A season is finished once every game is played: 2 × (clubs − 1),
+        // from the Pyramid sheet (ui.js seasonGames). Unknown division: not finished.
+        const expectedGames = seasonGames(division);
+        const isComplete = gp > 0 && expectedGames != null && gp >= expectedGames;
         const isInProgress = gp > 0 && !isComplete;
         const isChampion = isComplete && position === 1;
         const isInvincible = isComplete && l === 0;
@@ -1587,341 +1011,6 @@ function App({
     }
   }, [seasons]);
 
-  // Season-by-Season Dropped Points & Games Drawn/Lost Data (League!HJ:HK & League!IE:IO breakdown)
-  const seasonDroppedData = useMemo(() => {
-    return seasons
-      .filter((s) => s.pts > 0)
-      .map((s) => {
-        const drawnMatches = s.fixtures
-          .filter((f) => f.hasPlayed && f.res === 'D')
-          .map((f) => ({
-            ...f,
-            seasonNum: s.num,
-            seasonYear: s.year,
-            division: s.division,
-            ptsDropped: 2,
-          }));
-
-        const lostMatches = s.fixtures
-          .filter((f) => f.hasPlayed && f.res === 'L')
-          .map((f) => ({
-            ...f,
-            seasonNum: s.num,
-            seasonYear: s.year,
-            division: s.division,
-            ptsDropped: 3,
-          }));
-
-        const ptsDroppedTotal = s.d * 2 + s.l * 3;
-        const maxPossiblePts = s.gp * 3;
-
-        // Group by opponent team for this specific season
-        const teamMap = new Map();
-        [...drawnMatches, ...lostMatches].forEach((m) => {
-          const key = String(m.oppAbbr || 'TBD').toUpperCase();
-          if (!teamMap.has(key)) {
-            const clubMeta = clubByAbbr.get(key);
-            teamMap.set(key, {
-              abbr: m.oppAbbr || 'TBD',
-              name: clubMeta ? clubMeta.name : m.oppName,
-              flag: clubMeta ? clubMeta.flag : m.oppFlag,
-              country: clubMeta ? clubMeta.country : 'Europe',
-              avg: clubMeta ? clubMeta.avg : 0,
-              p: 0,
-              w: 0,
-              d: 0,
-              l: 0,
-              gf: 0,
-              ga: 0,
-              gd: 0,
-              ptsGained: 0,
-              ptsDropped: 0,
-              drawnMatches: [],
-              lostMatches: [],
-              matches: [],
-            });
-          }
-        });
-
-        // Populate full head-to-head record against these clubs in this season
-        s.fixtures.forEach((f) => {
-          if (!f.hasPlayed) return;
-          const key = String(f.oppAbbr || 'TBD').toUpperCase();
-          if (teamMap.has(key)) {
-            const t = teamMap.get(key);
-            t.p += 1;
-            const matchPtsDropped = f.res === 'D' ? 2 : f.res === 'L' ? 3 : 0;
-            if (f.res === 'W') {
-              t.w += 1;
-              t.ptsGained += 3;
-            } else if (f.res === 'D') {
-              t.d += 1;
-              t.ptsGained += 1;
-              t.ptsDropped += 2;
-              t.drawnMatches.push(f);
-            } else if (f.res === 'L') {
-              t.l += 1;
-              t.ptsDropped += 3;
-              t.lostMatches.push(f);
-            }
-            t.gf += f.teamScore;
-            t.ga += f.oppScore;
-            t.gd = t.gf - t.ga;
-            t.matches.push({
-              ...f,
-              seasonNum: s.num,
-              seasonYear: s.year,
-              ptsDropped: matchPtsDropped,
-            });
-          }
-        });
-
-        const bogeyTeams = Array.from(teamMap.values()).sort(
-          (a, b) => b.ptsDropped - a.ptsDropped || a.gd - b.gd
-        );
-
-        // Clean League!HJ:HK strings
-        const rawDrawn = cleanText(s.performance.gamesDrawnList);
-        const rawLost = cleanText(s.performance.gamesLostList);
-        const cleanDrawnStr =
-          rawDrawn === '-' || rawDrawn === '-' ? '' : rawDrawn;
-        const cleanLostStr = rawLost === '-' || rawLost === '-' ? '' : rawLost;
-
-        return {
-          num: s.num,
-          seasonNum: s.num,
-          seasonYear: s.year,
-          division: s.division,
-          pts: s.pts,
-          gp: s.gp,
-          w: s.w,
-          d: s.d,
-          l: s.l,
-          gf: s.gf,
-          ga: s.ga,
-          gd: s.gd,
-          isComplete: s.isComplete,
-          ptsDroppedTotal,
-          maxPossiblePts,
-          cleanDrawnStr,
-          cleanLostStr,
-          drawnMatches,
-          lostMatches,
-          allDroppedMatches: [...drawnMatches, ...lostMatches],
-          bogeyTeams,
-        };
-      });
-  }, [seasons, clubByAbbr]);
-
-  // Comprehensive Career Dropped Points Breakdown by Opponent (Cross-referencing League!IE:IO)
-  const careerDroppedTeams = useMemo(() => {
-    const map = new Map();
-
-    seasonDroppedData.forEach((s) => {
-      s.allDroppedMatches.forEach((m) => {
-        const key = String(m.oppAbbr || 'TBD').toUpperCase();
-        if (!map.has(key)) {
-          const clubMeta = clubByAbbr.get(key);
-          map.set(key, {
-            abbr: m.oppAbbr || 'TBD',
-            name: clubMeta ? clubMeta.name : m.oppName,
-            flag: clubMeta ? clubMeta.flag : m.oppFlag,
-            country: clubMeta ? clubMeta.country : 'Europe',
-            avg: clubMeta ? clubMeta.avg : 0,
-            rank: clubMeta ? clubMeta.rank : 99,
-            p: 0,
-            w: 0,
-            d: 0,
-            l: 0,
-            gf: 0,
-            ga: 0,
-            gd: 0,
-            ptsGained: 0,
-            ptsDropped: 0,
-            seasonsInvolved: new Set(),
-            matches: [],
-            drawnMatches: [],
-            lostMatches: [],
-            bySeason: {},
-          });
-        }
-        const team = map.get(key);
-        team.seasonsInvolved.add(s.seasonNum);
-        if (m.res === 'D') team.drawnMatches.push(m);
-        else if (m.res === 'L') team.lostMatches.push(m);
-      });
-    });
-
-    // Populate overall career stats against clubs where points were dropped
-    seasons.forEach((s) => {
-      if (s.pts === 0) return;
-      s.fixtures.forEach((f) => {
-        if (!f.hasPlayed) return;
-        const key = String(f.oppAbbr || 'TBD').toUpperCase();
-        if (map.has(key)) {
-          const team = map.get(key);
-          team.p += 1;
-          const matchPtsDropped = f.res === 'D' ? 2 : f.res === 'L' ? 3 : 0;
-          if (f.res === 'W') {
-            team.w += 1;
-            team.ptsGained += 3;
-          } else if (f.res === 'D') {
-            team.d += 1;
-            team.ptsGained += 1;
-            team.ptsDropped += 2;
-          } else if (f.res === 'L') {
-            team.l += 1;
-            team.ptsDropped += 3;
-          }
-          team.gf += f.teamScore;
-          team.ga += f.oppScore;
-          team.gd = team.gf - team.ga;
-
-          const matchObj = {
-            ...f,
-            seasonNum: s.num,
-            seasonYear: s.year,
-            division: s.division,
-            ptsDropped: matchPtsDropped,
-          };
-          team.matches.push(matchObj);
-
-          if (!team.bySeason[s.num]) {
-            team.bySeason[s.num] = {
-              seasonNum: s.num,
-              seasonYear: s.year,
-              division: s.division,
-              p: 0,
-              w: 0,
-              d: 0,
-              l: 0,
-              gf: 0,
-              ga: 0,
-              gd: 0,
-              ptsDropped: 0,
-              ptsGained: 0,
-              matches: [],
-            };
-          }
-          const bs = team.bySeason[s.num];
-          bs.p += 1;
-          if (f.res === 'W') {
-            bs.w += 1;
-            bs.ptsGained += 3;
-          } else if (f.res === 'D') {
-            bs.d += 1;
-            bs.ptsGained += 1;
-            bs.ptsDropped += 2;
-          } else if (f.res === 'L') {
-            bs.l += 1;
-            bs.ptsDropped += 3;
-          }
-          bs.gf += f.teamScore;
-          bs.ga += f.oppScore;
-          bs.gd = bs.gf - bs.ga;
-          bs.matches.push(matchObj);
-        }
-      });
-    });
-
-    const list = Array.from(map.values()).map((t) => ({
-      ...t,
-      seasonsInvolved: Array.from(t.seasonsInvolved).sort((a, b) => a - b),
-    }));
-
-    return list.sort((a, b) => {
-      if (b.ptsDropped !== a.ptsDropped) return b.ptsDropped - a.ptsDropped;
-      if (b.l !== a.l) return b.l - a.l;
-      return a.gd - b.gd;
-    });
-  }, [seasonDroppedData, seasons, clubByAbbr]);
-
-  // Filtered Dropped Points View based on active season, outcome type, and search query
-  const displayedDroppedTeams = useMemo(() => {
-    let list = [];
-
-    if (droppedSeasonFilter === 'all') {
-      list = [...careerDroppedTeams];
-    } else {
-      const sNum = Number(droppedSeasonFilter);
-      const sData = seasonDroppedData.find((s) => s.seasonNum === sNum);
-      if (sData) {
-        list = sData.bogeyTeams.map((t) => ({
-          ...t,
-          seasonsInvolved: [sNum],
-          bySeason: { [sNum]: t },
-        }));
-      }
-    }
-
-    if (droppedTypeFilter === 'D') {
-      list = list.filter((t) => t.d > 0);
-    } else if (droppedTypeFilter === 'L') {
-      list = list.filter((t) => t.l > 0);
-    }
-
-    if (droppedSearch.trim()) {
-      const q = droppedSearch.toLowerCase();
-      list = list.filter(
-        (t) =>
-          t.name.toLowerCase().includes(q) || t.abbr.toLowerCase().includes(q)
-      );
-    }
-
-    return list;
-  }, [
-    careerDroppedTeams,
-    seasonDroppedData,
-    droppedSeasonFilter,
-    droppedTypeFilter,
-    droppedSearch,
-  ]);
-
-  // Aggregate stats for Dropped Points Header KPIs
-  const droppedSummaryKPIs = useMemo(() => {
-    if (droppedSeasonFilter === 'all') {
-      const totalDropped = seasonDroppedData.reduce(
-        (acc, s) => acc + s.ptsDroppedTotal,
-        0
-      );
-      const totalDraws = seasonDroppedData.reduce((acc, s) => acc + s.d, 0);
-      const totalLosses = seasonDroppedData.reduce((acc, s) => acc + s.l, 0);
-      const topBogey = careerDroppedTeams[0] || null;
-      return {
-        totalDropped,
-        totalDraws,
-        totalLosses,
-        ptsFromDraws: totalDraws * 2,
-        ptsFromLosses: totalLosses * 3,
-        topBogey,
-        teamsCount: careerDroppedTeams.length,
-      };
-    } else {
-      const sNum = Number(droppedSeasonFilter);
-      const sData = seasonDroppedData.find((s) => s.seasonNum === sNum);
-      if (!sData)
-        return {
-          totalDropped: 0,
-          totalDraws: 0,
-          totalLosses: 0,
-          ptsFromDraws: 0,
-          ptsFromLosses: 0,
-          topBogey: null,
-          teamsCount: 0,
-        };
-      const topBogey = sData.bogeyTeams[0] || null;
-      return {
-        totalDropped: sData.ptsDroppedTotal,
-        totalDraws: sData.d,
-        totalLosses: sData.l,
-        ptsFromDraws: sData.d * 2,
-        ptsFromLosses: sData.l * 3,
-        topBogey,
-        teamsCount: sData.bogeyTeams.length,
-      };
-    }
-  }, [seasonDroppedData, careerDroppedTeams, droppedSeasonFilter]);
-
   // Dynamically Computed Career Summary Metrics (Clean Sheets = 149, Failed to Score = 26)
   const careerTotals = useMemo(() => {
     const completedSeasons = seasons.filter((s) => s.pts > 0);
@@ -2004,1019 +1093,6 @@ function App({
     };
   }, [seasons]);
 
-  // Dynamically Computed Campaign Milestones
-  const milestoneInsights = useMemo(() => {
-    const completed = seasons.filter((s) => s.pts > 0);
-    if (!completed.length) return null;
-
-    const finished = seasons.filter((s) => s.isComplete);
-    const recordSeason = [...finished].sort(
-      (a, b) => seasonPpg(b) - seasonPpg(a)
-    )[0];
-    const invincible = finished.find((s) => s.isInvincible);
-    const mdClinched = completed.filter(
-      (s) =>
-        s.winningMd ||
-        (s.clearence && String(s.clearence).toLowerCase().includes('md'))
-    );
-
-    return {
-      recordSeason,
-      invincible,
-      mdClinched,
-    };
-  }, [seasons]);
-
-  // Dynamically Computed Career Home & Away Totals (Zero hardcoded numbers)
-  const homeTotals = useMemo(() => {
-    const completedSeasons = seasons.filter((s) => s.pts > 0);
-    const gp = completedSeasons.reduce((acc, s) => acc + s.home.gp, 0);
-    const pts = completedSeasons.reduce((acc, s) => acc + s.home.pts, 0);
-    const w = completedSeasons.reduce((acc, s) => acc + s.home.w, 0);
-    const d = completedSeasons.reduce((acc, s) => acc + s.home.d, 0);
-    const l = completedSeasons.reduce((acc, s) => acc + s.home.l, 0);
-    const gf = completedSeasons.reduce((acc, s) => acc + s.home.gf, 0);
-    const ga = completedSeasons.reduce((acc, s) => acc + s.home.ga, 0);
-    const gd = gf - ga;
-    const winRate = gp > 0 ? (w / gp) * 100 : 0;
-    return { gp, pts, w, d, l, gf, ga, gd, winRate };
-  }, [seasons]);
-
-  const awayTotals = useMemo(() => {
-    const completedSeasons = seasons.filter((s) => s.pts > 0);
-    const gp = completedSeasons.reduce((acc, s) => acc + s.away.gp, 0);
-    const pts = completedSeasons.reduce((acc, s) => acc + s.away.pts, 0);
-    const w = completedSeasons.reduce((acc, s) => acc + s.away.w, 0);
-    const d = completedSeasons.reduce((acc, s) => acc + s.away.d, 0);
-    const l = completedSeasons.reduce((acc, s) => acc + s.away.l, 0);
-    const gf = completedSeasons.reduce((acc, s) => acc + s.away.gf, 0);
-    const ga = completedSeasons.reduce((acc, s) => acc + s.away.ga, 0);
-    const gd = gf - ga;
-    const winRate = gp > 0 ? (w / gp) * 100 : 0;
-    return { gp, pts, w, d, l, gf, ga, gd, winRate };
-  }, [seasons]);
-
-  // Matches behind each margin tier, per season (for the Stacked Visualizer
-  // hover cards). Counts match the sheet's margin columns (checked in v12).
-  const marginItemsBySeason = useMemo(() => {
-    const map = new Map();
-    seasons.forEach((s) => {
-      const t = {};
-      LEAGUE_TIERS.forEach((k) => { t[k.key] = []; });
-      (s.fixtures || []).filter((f) => f.hasPlayed).forEach((f) => {
-        const key = leagueTierKey(f);
-        if (t[key]) t[key].push({ flag: f.oppFlag, name: f.oppName, score: `${f.teamScore}–${f.oppScore}`, tag: `MD${f.md}` });
-      });
-      map.set(s.num, t);
-    });
-    return map;
-  }, [seasons]);
-
-  // Dynamically Computed Form & Margin Breakdowns from raw data
-  const marginTotals = useMemo(() => {
-    const completedSeasons = seasons.filter((s) => s.pts > 0);
-
-    const won1 = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.wonBy1,
-      0
-    );
-    const won2 = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.wonBy2,
-      0
-    );
-    const won3 = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.wonBy3,
-      0
-    );
-    const won4Plus = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.wonBy4Plus,
-      0
-    );
-    const totalWins = won1 + won2 + won3 + won4Plus || careerTotals.totalW;
-
-    const drawn00 = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.drawn00,
-      0
-    );
-    const drawn11 = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.drawn11,
-      0
-    );
-    const drawn22 = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.drawn22,
-      0
-    );
-    const drawn3Plus = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.drawn3Plus,
-      0
-    );
-    const totalDraws =
-      drawn00 + drawn11 + drawn22 + drawn3Plus || careerTotals.totalD;
-
-    const lost1 = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.lostBy1,
-      0
-    );
-    const lost2 = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.lostBy2,
-      0
-    );
-    const lost3 = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.lostBy3,
-      0
-    );
-    const lost4Plus = completedSeasons.reduce(
-      (acc, s) => acc + s.performance.lostBy4Plus,
-      0
-    );
-    const totalLosses =
-      lost1 + lost2 + lost3 + lost4Plus || careerTotals.totalL;
-
-    return {
-      wins: {
-        total: totalWins,
-        by1: won1,
-        by1Pct: totalWins > 0 ? (won1 / totalWins) * 100 : 0,
-        by2: won2,
-        by2Pct: totalWins > 0 ? (won2 / totalWins) * 100 : 0,
-        by3: won3,
-        by3Pct: totalWins > 0 ? (won3 / totalWins) * 100 : 0,
-        by4Plus: won4Plus,
-        by4PlusPct: totalWins > 0 ? (won4Plus / totalWins) * 100 : 0,
-      },
-      draws: {
-        total: totalDraws,
-        d00: drawn00,
-        d00Pct: totalDraws > 0 ? (drawn00 / totalDraws) * 100 : 0,
-        d11: drawn11,
-        d11Pct: totalDraws > 0 ? (drawn11 / totalDraws) * 100 : 0,
-        d22: drawn22,
-        d22Pct: totalDraws > 0 ? (drawn22 / totalDraws) * 100 : 0,
-        d3Plus: drawn3Plus,
-        d3PlusPct: totalDraws > 0 ? (drawn3Plus / totalDraws) * 100 : 0,
-      },
-      losses: {
-        total: totalLosses,
-        by1: lost1,
-        by1Pct: totalLosses > 0 ? (lost1 / totalLosses) * 100 : 0,
-        by2: lost2,
-        by2Pct: totalLosses > 0 ? (lost2 / totalLosses) * 100 : 0,
-        by3: lost3,
-        by3Pct: totalLosses > 0 ? (lost3 / totalLosses) * 100 : 0,
-        by4Plus: lost4Plus,
-        by4PlusPct: totalLosses > 0 ? (lost4Plus / totalLosses) * 100 : 0,
-      },
-    };
-  }, [seasons, careerTotals]);
-
-  // Chronological Match Stream Across All Completed Campaigns (for Career Streaks)
-  const allChronologicalMatches = useMemo(() => {
-    const list = [];
-    const completedSeasons = seasons.filter((s) => s.pts > 0);
-    completedSeasons.forEach((s) => {
-      s.fixtures.forEach((f) => {
-        if (f.hasPlayed) {
-          list.push({
-            seasonNum: s.num,
-            seasonYear: s.year,
-            division: s.division,
-            md: f.md,
-            oppAbbr: f.oppAbbr,
-            oppName: f.oppName,
-            oppFlag: f.oppFlag,
-            venue: f.venue,
-            res: f.res,
-            teamScore: f.teamScore,
-            oppScore: f.oppScore,
-            goalDiff: f.goalDiff,
-            isCleanSheet: f.oppScore === 0,
-            cumPts: f.cumPts,
-          });
-        }
-      });
-    });
-    return list;
-  }, [seasons]);
-
-  // Home vs Away active dataset (either career totals or selected single season)
-  const activeHomeAway = useMemo(() => {
-    if (homeAwaySeasonFilter === 'all') {
-      const h = homeTotals;
-      const a = awayTotals;
-      const totalPts = h.pts + a.pts;
-      const totalGP = h.gp + a.gp;
-      const totalW = h.w + a.w;
-      const totalGF = h.gf + a.gf;
-      const hCs = allChronologicalMatches.filter(
-        (m) => m.venue === 'H' && m.oppScore === 0
-      ).length;
-      const aCs = allChronologicalMatches.filter(
-        (m) => m.venue === 'A' && m.oppScore === 0
-      ).length;
-      const hFts = allChronologicalMatches.filter(
-        (m) => m.venue === 'H' && m.teamScore === 0
-      ).length;
-      const aFts = allChronologicalMatches.filter(
-        (m) => m.venue === 'A' && m.teamScore === 0
-      ).length;
-
-      return {
-        label: `All ${careerTotals.seasonsPlayed} Seasons Combined`,
-        seasonYear: 'All-Time Career',
-        division: 'Divisions 1 - 4',
-        seasonNum: null,
-        home: {
-          ...h,
-          ppg: h.gp > 0 ? h.pts / h.gp : 0,
-          gfPerGame: h.gp > 0 ? h.gf / h.gp : 0,
-          gaPerGame: h.gp > 0 ? h.ga / h.gp : 0,
-          cleanSheets: hCs,
-          failedToScore: hFts,
-          cleanSheetPct: h.gp > 0 ? (hCs / h.gp) * 100 : 0,
-        },
-        away: {
-          ...a,
-          ppg: a.gp > 0 ? a.pts / a.gp : 0,
-          gfPerGame: a.gp > 0 ? a.gf / a.gp : 0,
-          gaPerGame: a.gp > 0 ? a.ga / a.gp : 0,
-          cleanSheets: aCs,
-          failedToScore: aFts,
-          cleanSheetPct: a.gp > 0 ? (aCs / a.gp) * 100 : 0,
-        },
-        totalPts,
-        totalGP,
-        totalW,
-        totalGF,
-        homePtsPct: totalPts > 0 ? (h.pts / totalPts) * 100 : 50,
-        awayPtsPct: totalPts > 0 ? (a.pts / totalPts) * 100 : 50,
-        homeWinsPct: totalW > 0 ? (h.w / totalW) * 100 : 50,
-        awayWinsPct: totalW > 0 ? (a.w / totalW) * 100 : 50,
-        homeGoalsPct: totalGF > 0 ? (h.gf / totalGF) * 100 : 50,
-        awayGoalsPct: totalGF > 0 ? (a.gf / totalGF) * 100 : 50,
-      };
-    } else {
-      const sNum = Number(homeAwaySeasonFilter);
-      const s = seasons.find((x) => x.num === sNum);
-      if (!s) return null;
-
-      const h = s.home;
-      const a = s.away;
-      const hWinRate = h.gp > 0 ? (h.w / h.gp) * 100 : 0;
-      const aWinRate = a.gp > 0 ? (a.w / a.gp) * 100 : 0;
-      const totalPts = h.pts + a.pts;
-      const totalGP = h.gp + a.gp;
-      const totalW = h.w + a.w;
-      const totalGF = h.gf + a.gf;
-
-      const hMatches = s.fixtures.filter((m) => m.hasPlayed && m.venue === 'H');
-      const aMatches = s.fixtures.filter((m) => m.hasPlayed && m.venue === 'A');
-      const hCs = hMatches.filter((m) => m.oppScore === 0).length;
-      const aCs = aMatches.filter((m) => m.oppScore === 0).length;
-      const hFts = hMatches.filter((m) => m.teamScore === 0).length;
-      const aFts = aMatches.filter((m) => m.teamScore === 0).length;
-
-      return {
-        label: `Season ${s.num}`,
-        seasonYear: s.year,
-        division: s.division,
-        seasonNum: s.num,
-        home: {
-          ...h,
-          winRate: hWinRate,
-          ppg: h.gp > 0 ? h.pts / h.gp : 0,
-          gfPerGame: h.gp > 0 ? h.gf / h.gp : 0,
-          gaPerGame: h.gp > 0 ? h.ga / h.gp : 0,
-          cleanSheets: hCs,
-          failedToScore: hFts,
-          cleanSheetPct: h.gp > 0 ? (hCs / h.gp) * 100 : 0,
-        },
-        away: {
-          ...a,
-          winRate: aWinRate,
-          ppg: a.gp > 0 ? a.pts / a.gp : 0,
-          gfPerGame: a.gp > 0 ? a.gf / a.gp : 0,
-          gaPerGame: a.gp > 0 ? a.ga / a.gp : 0,
-          cleanSheets: aCs,
-          failedToScore: aFts,
-          cleanSheetPct: a.gp > 0 ? (aCs / a.gp) * 100 : 0,
-        },
-        totalPts,
-        totalGP,
-        totalW,
-        totalGF,
-        homePtsPct: totalPts > 0 ? (h.pts / totalPts) * 100 : 50,
-        awayPtsPct: totalPts > 0 ? (a.pts / totalPts) * 100 : 50,
-        homeWinsPct: totalW > 0 ? (h.w / totalW) * 100 : 50,
-        awayWinsPct: totalW > 0 ? (a.w / totalW) * 100 : 50,
-        homeGoalsPct: totalGF > 0 ? (h.gf / totalGF) * 100 : 50,
-        awayGoalsPct: totalGF > 0 ? (a.gf / totalGF) * 100 : 50,
-      };
-    }
-  }, [
-    homeAwaySeasonFilter,
-    homeTotals,
-    awayTotals,
-    allChronologicalMatches,
-    seasons,
-  ]);
-
-  // Season-by-Season Home vs Away Ledger list
-  const seasonHomeAwayList = useMemo(() => {
-    return seasons
-      .filter((s) => s.pts > 0)
-      .map((s) => {
-        const h = s.home;
-        const a = s.away;
-        const hWinRate = h.gp > 0 ? (h.w / h.gp) * 100 : 0;
-        const aWinRate = a.gp > 0 ? (a.w / a.gp) * 100 : 0;
-        const sPts = s.pts;
-        const homePtsPct = sPts > 0 ? (h.pts / sPts) * 100 : 50;
-        const awayPtsPct = sPts > 0 ? (a.pts / sPts) * 100 : 50;
-
-        return {
-          num: s.num,
-          year: s.year,
-          division: s.division,
-          pts: s.pts,
-          gp: s.gp,
-          w: s.w,
-          gf: s.gf,
-          home: { ...h, winRate: hWinRate, pct: homePtsPct },
-          away: { ...a, winRate: aWinRate, pct: awayPtsPct },
-          clearence: s.clearence,
-          winningMd: s.winningMd,
-        };
-      });
-  }, [seasons]);
-  // R11: the Venue Ledger sorts by its headers
-  const [venueRows, venueHead] = useSort(seasonHomeAwayList, null, 'desc', {
-    num: (s) => s.num, div: (s) => String(s.division), hpts: (s) => s.home.pts, hw: (s) => s.home.w, hwin: (s) => (s.home.gp ? s.home.w / s.home.gp : 0), hgd: (s) => s.home.gd,
-    ratio: (s) => (s.pts ? s.home.pts / s.pts : 0), apts: (s) => s.away.pts, aw: (s) => s.away.w, awin: (s) => (s.away.gp ? s.away.w / s.away.gp : 0), agd: (s) => s.away.gd,
-  });
-
-  // Season-by-Season Venue Swing & Divergence Data (Dynamic for Points, Wins, Goals)
-  const venueDivergenceList = useMemo(() => {
-    let runningCumGap = 0;
-    return seasonHomeAwayList.map((s) => {
-      let homeVal = s.home.pts;
-      let awayVal = s.away.pts;
-      let totalVal = s.pts;
-      let unit = 'p';
-
-      if (divergenceMetric === 'wins') {
-        homeVal = s.home.w;
-        awayVal = s.away.w;
-        totalVal = s.w;
-        unit = 'W';
-      } else if (divergenceMetric === 'goals') {
-        homeVal = s.home.gf;
-        awayVal = s.away.gf;
-        totalVal = s.gf;
-        unit = 'G';
-      }
-
-      const delta = homeVal - awayVal; // positive = home advantage, negative = away advantage
-      runningCumGap += delta;
-      const isHomeDominant = delta > 0;
-      const isAwayDominant = delta < 0;
-      const isNeutral = delta === 0;
-      const threshold =
-        divergenceMetric === 'pts' ? 4 : divergenceMetric === 'wins' ? 2 : 5;
-
-      return {
-        num: s.num,
-        year: s.year,
-        division: s.division,
-        pts: s.pts,
-        homePts: s.home.pts,
-        awayPts: s.away.pts,
-        homeVal,
-        awayVal,
-        totalVal,
-        unit,
-        homeWinRate: s.home.winRate,
-        awayWinRate: s.away.winRate,
-        homeGd: s.home.gd,
-        awayGd: s.away.gd,
-        delta,
-        cumGap: runningCumGap,
-        isHomeDominant,
-        isAwayDominant,
-        isNeutral,
-        divergenceType:
-          delta >= threshold
-            ? 'Home'
-            : delta <= -threshold
-            ? 'Road Warrior'
-            : 'Balanced Venue',
-      };
-    });
-  }, [seasonHomeAwayList, divergenceMetric]);
-
-  const maxDivergenceDelta = useMemo(() => {
-    const allAbs = venueDivergenceList.map((s) => Math.abs(s.delta));
-    const highest = Math.max(...allAbs, 1);
-    return Math.max(
-      highest,
-      divergenceMetric === 'pts' ? 8 : divergenceMetric === 'wins' ? 4 : 12
-    );
-  }, [venueDivergenceList, divergenceMetric]);
-
-  // Season-by-Season Margin Distribution (Career Timeline)
-  const seasonMargins = useMemo(() => {
-    return seasons
-      .filter((s) => s.pts > 0)
-      .map((s) => {
-        const p = s.performance;
-        const won4 = p.wonBy4Plus || 0;
-        const won3 = p.wonBy3 || 0;
-        const won2 = p.wonBy2 || 0;
-        const won1 = p.wonBy1 || 0;
-
-        const d00 = p.drawn00 || 0;
-        const d11 = p.drawn11 || 0;
-        const d22 = p.drawn22 || 0;
-        const d3p = p.drawn3Plus || 0;
-
-        const l1 = p.lostBy1 || 0;
-        const l2 = p.lostBy2 || 0;
-        const l3 = p.lostBy3 || 0;
-        const l4 = p.lostBy4Plus || 0;
-
-        const dominantWinPct = s.w > 0 ? ((won4 + won3 + won2) / s.w) * 100 : 0;
-        const blowoutPct = s.gp > 0 ? ((won4 + won3) / s.gp) * 100 : 0;
-
-        return {
-          num: s.num,
-          seasonNum: s.num,
-          year: s.year,
-          division: s.division,
-          gp: s.gp,
-          w: s.w,
-          d: s.d,
-          l: s.l,
-          pts: s.pts,
-          gf: s.gf,
-          ga: s.ga,
-          gd: s.gd,
-          won4,
-          won3,
-          won2,
-          won1,
-          d00,
-          d11,
-          d22,
-          d3p,
-          l1,
-          l2,
-          l3,
-          l4,
-          dominantWinPct,
-          blowoutPct,
-        };
-      });
-  }, [seasons]);
-
-  // Highs & Lows / Outliers & Extremes Dashboard Metrics
-  const outliersAndExtremes = useMemo(() => {
-    if (!allChronologicalMatches || allChronologicalMatches.length === 0)
-      return null;
-
-    // 1. Biggest Wins (by goal difference, then by team goals)
-    const winMatches = allChronologicalMatches.filter((m) => m.res === 'W');
-    const sortedWinsByGD = [...winMatches].sort(
-      (a, b) => b.goalDiff - a.goalDiff || b.teamScore - a.teamScore
-    );
-    const topWins = sortedWinsByGD.slice(0, 4);
-
-    // Most goals scored in a match
-    const sortedByGoalsScored = [...allChronologicalMatches].sort(
-      (a, b) => b.teamScore - a.teamScore || b.goalDiff - a.goalDiff
-    );
-    const topGoalsScored = sortedByGoalsScored.slice(0, 4);
-
-    // 2. Biggest Defeats (by most negative goal difference, then opponent score)
-    const defeatMatches = allChronologicalMatches.filter((m) => m.res === 'L');
-    const sortedDefeats = [...defeatMatches].sort(
-      (a, b) => a.goalDiff - b.goalDiff || b.oppScore - a.oppScore
-    );
-    const topDefeats = sortedDefeats.slice(0, 4);
-
-    // 3. Highest Scoring Draws
-    const drawMatches = allChronologicalMatches.filter((m) => m.res === 'D');
-    const sortedDraws = [...drawMatches].sort(
-      (a, b) =>
-        b.teamScore + b.oppScore - (a.teamScore + a.oppScore) ||
-        b.teamScore - a.teamScore
-    );
-    const topDraws = sortedDraws.slice(0, 4);
-
-    // 4. Most Common Scorelines across all {totalGames} games
-    const scorelineCounts = new Map();
-    allChronologicalMatches.forEach((m) => {
-      const key = `${m.teamScore} - ${m.oppScore}`;
-      if (!scorelineCounts.has(key)) {
-        scorelineCounts.set(key, {
-          scoreline: key,
-          res: m.res,
-          count: 0,
-          matches: [],
-        });
-      }
-      const entry = scorelineCounts.get(key);
-      entry.count += 1;
-      entry.matches.push(m);
-    });
-    const commonScorelines = Array.from(scorelineCounts.values()).sort(
-      (a, b) => b.count - a.count
-    );
-    const topScorelines = commonScorelines.slice(0, 5);
-
-    // 5. Highest Scoring Matches (Total match goals scored by both teams)
-    const sortedByTotalGoals = [...allChronologicalMatches].sort(
-      (a, b) => b.teamScore + b.oppScore - (a.teamScore + a.oppScore)
-    );
-    const highestScoringMatches = sortedByTotalGoals.slice(0, 4);
-
-    // 6. Clean Sheets vs Failed to Score
-    const cleanSheetsMatches = allChronologicalMatches.filter(
-      (m) => m.oppScore === 0
-    );
-    const failedToScoreMatches = allChronologicalMatches.filter(
-      (m) => m.teamScore === 0
-    );
-    const bttsMatches = allChronologicalMatches.filter(
-      (m) => m.teamScore > 0 && m.oppScore > 0
-    );
-    const scorelessDraws = allChronologicalMatches.filter(
-      (m) => m.teamScore === 0 && m.oppScore === 0
-    );
-    const cleanSheetWins = allChronologicalMatches.filter(
-      (m) => m.res === 'W' && m.oppScore === 0
-    );
-
-    const csHome = cleanSheetsMatches.filter((m) => m.venue === 'H').length;
-    const csAway = cleanSheetsMatches.filter((m) => m.venue === 'A').length;
-    const ftsHome = failedToScoreMatches.filter((m) => m.venue === 'H').length;
-    const ftsAway = failedToScoreMatches.filter((m) => m.venue === 'A').length;
-
-    const totalGames = allChronologicalMatches.length;
-    const totalGoals = allChronologicalMatches.reduce(
-      (sum, m) => sum + (m.teamScore || 0) + (m.oppScore || 0),
-      0
-    );
-    const topDraw = topDraws[0] || null;
-    const topDrawTies = topDraw
-      ? drawMatches.filter(
-          (m) =>
-            m.teamScore === topDraw.teamScore && m.oppScore === topDraw.oppScore
-        )
-      : [];
-
-    return {
-      routsCount: winMatches.filter((m) => m.goalDiff >= 4).length,
-      lossesCount: defeatMatches.length,
-      drawsCount: drawMatches.length,
-      avgGoalsPerMatch: totalGames > 0 ? totalGoals / totalGames : 0,
-      topDrawTies,
-      topWins,
-      topGoalsScored,
-      topDefeats,
-      topDraws,
-      topScorelines,
-      highestScoringMatches,
-      cleanSheetsTotal: cleanSheetsMatches.length,
-      cleanSheetsPct:
-        totalGames > 0 ? (cleanSheetsMatches.length / totalGames) * 100 : 0,
-      cleanSheetWinsTotal: cleanSheetWins.length,
-      failedToScoreTotal: failedToScoreMatches.length,
-      failedToScorePct:
-        totalGames > 0 ? (failedToScoreMatches.length / totalGames) * 100 : 0,
-      bttsCount: bttsMatches.length,
-      bttsPct: totalGames > 0 ? (bttsMatches.length / totalGames) * 100 : 0,
-      scorelessDrawsCount: scorelessDraws.length,
-      csHome,
-      csAway,
-      ftsHome,
-      ftsAway,
-      csToFtsRatio:
-        failedToScoreMatches.length > 0
-          ? cleanSheetsMatches.length / failedToScoreMatches.length
-          : cleanSheetsMatches.length,
-      scoringGamesCount: totalGames - failedToScoreMatches.length,
-      scoringGamesPct:
-        totalGames > 0
-          ? ((totalGames - failedToScoreMatches.length) / totalGames) * 100
-          : 0,
-    };
-  }, [allChronologicalMatches]);
-
-  // Dynamic Streak Extraction Algorithm (Handles both Win Streaks & Unbeaten Streaks)
-  const extractStreaksFromList = (
-    matchList,
-    type = 'win',
-    scopeLabel = 'Career'
-  ) => {
-    const streaks = [];
-    let currentStreak = [];
-
-    for (let i = 0; i < matchList.length; i++) {
-      const m = matchList[i];
-      const qualifies =
-        type === 'win' ? m.res === 'W' : m.res === 'W' || m.res === 'D';
-
-      if (qualifies) {
-        currentStreak.push(m);
-      } else {
-        if (currentStreak.length >= 2) {
-          const wCount = currentStreak.filter((x) => x.res === 'W').length;
-          const dCount = currentStreak.filter((x) => x.res === 'D').length;
-          const gf = currentStreak.reduce(
-            (sum, x) => sum + (x.teamScore || 0),
-            0
-          );
-          const ga = currentStreak.reduce(
-            (sum, x) => sum + (x.oppScore || 0),
-            0
-          );
-          const cs = currentStreak.filter((x) => x.isCleanSheet).length;
-          const pts = wCount * 3 + dCount;
-
-          streaks.push({
-            id: `${type}-${scopeLabel}-${currentStreak[0].seasonNum}-${currentStreak[0].md}-${currentStreak.length}-${i}`,
-            type,
-            scopeLabel,
-            length: currentStreak.length,
-            w: wCount,
-            d: dCount,
-            points: pts,
-            ppg: pts / currentStreak.length,
-            gf,
-            ga,
-            gd: gf - ga,
-            cleanSheets: cs,
-            cleanSheetPct: (cs / currentStreak.length) * 100,
-            start: currentStreak[0],
-            end: currentStreak[currentStreak.length - 1],
-            endedBy: {
-              oppAbbr: m.oppAbbr,
-              oppName: m.oppName,
-              oppFlag: m.oppFlag,
-              venue: m.venue,
-              res: m.res,
-              teamScore: m.teamScore,
-              oppScore: m.oppScore,
-              seasonNum: m.seasonNum,
-              seasonYear: m.seasonYear,
-              md: m.md,
-            },
-            isActive: false,
-            crossSeason:
-              currentStreak[0].seasonNum !==
-              currentStreak[currentStreak.length - 1].seasonNum,
-            matches: [...currentStreak],
-          });
-        }
-        currentStreak = [];
-      }
-    }
-
-    // Ongoing streak at latest played matchday
-    if (currentStreak.length >= 1) {
-      const wCount = currentStreak.filter((x) => x.res === 'W').length;
-      const dCount = currentStreak.filter((x) => x.res === 'D').length;
-      const gf = currentStreak.reduce((sum, x) => sum + (x.teamScore || 0), 0);
-      const ga = currentStreak.reduce((sum, x) => sum + (x.oppScore || 0), 0);
-      const cs = currentStreak.filter((x) => x.isCleanSheet).length;
-      const pts = wCount * 3 + dCount;
-
-      streaks.push({
-        id: `${type}-${scopeLabel}-active-${currentStreak[0].seasonNum}-${currentStreak[0].md}-${currentStreak.length}`,
-        type,
-        scopeLabel,
-        length: currentStreak.length,
-        w: wCount,
-        d: dCount,
-        points: pts,
-        ppg: pts / currentStreak.length,
-        gf,
-        ga,
-        gd: gf - ga,
-        cleanSheets: cs,
-        cleanSheetPct: (cs / currentStreak.length) * 100,
-        start: currentStreak[0],
-        end: currentStreak[currentStreak.length - 1],
-        endedBy: null,
-        isActive: true,
-        crossSeason:
-          currentStreak[0].seasonNum !==
-          currentStreak[currentStreak.length - 1].seasonNum,
-        matches: [...currentStreak],
-      });
-    }
-
-    return streaks;
-  };
-
-  // Career All-Time Streaks
-  const careerWinStreaks = useMemo(() => {
-    return extractStreaksFromList(
-      allChronologicalMatches,
-      'win',
-      'Career'
-    ).sort((a, b) => b.length - a.length || b.points - a.points);
-  }, [allChronologicalMatches]);
-
-  const careerUnbeatenStreaks = useMemo(() => {
-    return extractStreaksFromList(
-      allChronologicalMatches,
-      'unbeaten',
-      'Career'
-    ).sort((a, b) => b.length - a.length || b.points - a.points);
-  }, [allChronologicalMatches]);
-
-  // Current Active Streaks (evaluated looking backward from latest played career match)
-  const activeWinStreak = useMemo(() => {
-    const matches = [];
-    for (let i = allChronologicalMatches.length - 1; i >= 0; i--) {
-      const m = allChronologicalMatches[i];
-      if (m.res === 'W') {
-        matches.unshift(m);
-      } else {
-        break;
-      }
-    }
-    if (matches.length === 0) {
-      const lastMatch =
-        allChronologicalMatches[allChronologicalMatches.length - 1] || null;
-      return {
-        length: 0,
-        isActive: false,
-        points: 0,
-        ppg: 0,
-        gf: 0,
-        ga: 0,
-        gd: 0,
-        cleanSheets: 0,
-        cleanSheetPct: 0,
-        start: null,
-        end: null,
-        endedBy: lastMatch
-          ? {
-              oppAbbr: lastMatch.oppAbbr,
-              oppName: lastMatch.oppName,
-              oppFlag: lastMatch.oppFlag,
-              venue: lastMatch.venue,
-              res: lastMatch.res,
-              teamScore: lastMatch.teamScore,
-              oppScore: lastMatch.oppScore,
-              seasonNum: lastMatch.seasonNum,
-              seasonYear: lastMatch.seasonYear,
-              md: lastMatch.md,
-            }
-          : null,
-        matches: [],
-      };
-    }
-    const gf = matches.reduce((sum, x) => sum + (x.teamScore || 0), 0);
-    const ga = matches.reduce((sum, x) => sum + (x.oppScore || 0), 0);
-    const cs = matches.filter((x) => x.isCleanSheet).length;
-    return {
-      length: matches.length,
-      w: matches.length,
-      d: 0,
-      points: matches.length * 3,
-      ppg: 3.0,
-      gf,
-      ga,
-      gd: gf - ga,
-      cleanSheets: cs,
-      cleanSheetPct: (cs / matches.length) * 100,
-      start: matches[0],
-      end: matches[matches.length - 1],
-      endedBy: null,
-      isActive: true,
-      crossSeason:
-        matches[0].seasonNum !== matches[matches.length - 1].seasonNum,
-      matches,
-    };
-  }, [allChronologicalMatches]);
-
-  const activeUnbeatenStreak = useMemo(() => {
-    const matches = [];
-    for (let i = allChronologicalMatches.length - 1; i >= 0; i--) {
-      const m = allChronologicalMatches[i];
-      if (m.res === 'W' || m.res === 'D') {
-        matches.unshift(m);
-      } else {
-        break;
-      }
-    }
-    if (matches.length === 0) {
-      const lastMatch =
-        allChronologicalMatches[allChronologicalMatches.length - 1] || null;
-      return {
-        length: 0,
-        isActive: false,
-        points: 0,
-        ppg: 0,
-        gf: 0,
-        ga: 0,
-        gd: 0,
-        cleanSheets: 0,
-        cleanSheetPct: 0,
-        start: null,
-        end: null,
-        endedBy: lastMatch
-          ? {
-              oppAbbr: lastMatch.oppAbbr,
-              oppName: lastMatch.oppName,
-              oppFlag: lastMatch.oppFlag,
-              venue: lastMatch.venue,
-              res: lastMatch.res,
-              teamScore: lastMatch.teamScore,
-              oppScore: lastMatch.oppScore,
-              seasonNum: lastMatch.seasonNum,
-              seasonYear: lastMatch.seasonYear,
-              md: lastMatch.md,
-            }
-          : null,
-        matches: [],
-      };
-    }
-    const w = matches.filter((x) => x.res === 'W').length;
-    const d = matches.filter((x) => x.res === 'D').length;
-    const pts = w * 3 + d;
-    const gf = matches.reduce((sum, x) => sum + (x.teamScore || 0), 0);
-    const ga = matches.reduce((sum, x) => sum + (x.oppScore || 0), 0);
-    const cs = matches.filter((x) => x.isCleanSheet).length;
-    return {
-      length: matches.length,
-      w,
-      d,
-      points: pts,
-      ppg: pts / matches.length,
-      gf,
-      ga,
-      gd: gf - ga,
-      cleanSheets: cs,
-      cleanSheetPct: (cs / matches.length) * 100,
-      start: matches[0],
-      end: matches[matches.length - 1],
-      endedBy: null,
-      isActive: true,
-      crossSeason:
-        matches[0].seasonNum !== matches[matches.length - 1].seasonNum,
-      matches,
-    };
-  }, [allChronologicalMatches]);
-
-  // Season-Specific Streaks Data (Campaign Isolated)
-  const seasonStreaksData = useMemo(() => {
-    const map = new Map();
-    seasons
-      .filter((s) => s.pts > 0)
-      .forEach((s) => {
-        const sMatches = s.fixtures
-          .filter((f) => f.hasPlayed)
-          .map((f) => ({
-            seasonNum: s.num,
-            seasonYear: s.year,
-            division: s.division,
-            md: f.md,
-            oppAbbr: f.oppAbbr,
-            oppName: f.oppName,
-            oppFlag: f.oppFlag,
-            venue: f.venue,
-            res: f.res,
-            teamScore: f.teamScore,
-            oppScore: f.oppScore,
-            goalDiff: f.goalDiff,
-            isCleanSheet: f.oppScore === 0,
-            cumPts: f.cumPts,
-          }));
-
-        const winStreaks = extractStreaksFromList(
-          sMatches,
-          'win',
-          `Season ${s.num}`
-        ).sort((a, b) => b.length - a.length || b.points - a.points);
-        const unbeatenStreaks = extractStreaksFromList(
-          sMatches,
-          'unbeaten',
-          `Season ${s.num}`
-        ).sort((a, b) => b.length - a.length || b.points - a.points);
-
-        map.set(s.num, {
-          seasonNum: s.num,
-          seasonYear: s.year,
-          division: s.division,
-          winStreaks,
-          unbeatenStreaks,
-          bestWinStreak: winStreaks[0] || null,
-          bestUnbeatenStreak: unbeatenStreaks[0] || null,
-        });
-      });
-    return map;
-  }, [seasons]);
-
-  // Displayed Streaks based on Scope, Category, Season Filter, and Min Length Filter
-  const displayedStreaks = useMemo(() => {
-    let list = [];
-
-    if (streakScope === 'career') {
-      list =
-        streakCategory === 'win'
-          ? [...careerWinStreaks]
-          : [...careerUnbeatenStreaks];
-    } else {
-      if (streakSeasonFilter === 'all') {
-        seasonStreaksData.forEach((sData) => {
-          const sStreaks =
-            streakCategory === 'win' ? sData.winStreaks : sData.unbeatenStreaks;
-          list.push(...sStreaks);
-        });
-      } else {
-        const sNum = Number(streakSeasonFilter);
-        const sData = seasonStreaksData.get(sNum);
-        if (sData) {
-          list =
-            streakCategory === 'win'
-              ? [...sData.winStreaks]
-              : [...sData.unbeatenStreaks];
-        }
-      }
-    }
-
-    if (streakMinLength === '5+') {
-      list = list.filter((st) => st.length >= 5);
-    } else if (streakMinLength === '10+') {
-      list = list.filter((st) => st.length >= 10);
-    } else if (streakMinLength === '15+') {
-      list = list.filter((st) => st.length >= 15);
-    }
-
-    return list
-      .sort((a, b) => b.length - a.length || b.points - a.points)
-      .slice(0, 10);
-  }, [
-    streakScope,
-    streakCategory,
-    streakSeasonFilter,
-    streakMinLength,
-    careerWinStreaks,
-    careerUnbeatenStreaks,
-    seasonStreaksData,
-  ]);
-
-  // Top Record Streak in the active view
-  const currentRecordStreak = useMemo(() => {
-    if (streakScope === 'career') {
-      return streakCategory === 'win'
-        ? careerWinStreaks[0]
-        : careerUnbeatenStreaks[0];
-    } else {
-      if (streakSeasonFilter !== 'all') {
-        const sData = seasonStreaksData.get(Number(streakSeasonFilter));
-        return sData
-          ? streakCategory === 'win'
-            ? sData.bestWinStreak
-            : sData.bestUnbeatenStreak
-          : null;
-      }
-      // In Season scope with all seasons combined, find the #1 single-season streak across all individual campaigns
-      let best = null;
-      seasonStreaksData.forEach((sData) => {
-        const candidate =
-          streakCategory === 'win'
-            ? sData.bestWinStreak
-            : sData.bestUnbeatenStreak;
-        if (candidate) {
-          if (
-            !best ||
-            candidate.length > best.length ||
-            (candidate.length === best.length && candidate.points > best.points)
-          ) {
-            best = candidate;
-          }
-        }
-      });
-      return best;
-    }
-  }, [
-    streakScope,
-    streakCategory,
-    streakSeasonFilter,
-    careerWinStreaks,
-    careerUnbeatenStreaks,
-    seasonStreaksData,
-  ]);
-
-  // Active Streak corresponding to selected category
-  const activeStreak = useMemo(() => {
-    return streakCategory === 'win' ? activeWinStreak : activeUnbeatenStreak;
-  }, [streakCategory, activeWinStreak, activeUnbeatenStreak]);
-
   // Active Selected Season
   const currentSeason = useMemo(() => {
     return (
@@ -3057,7 +1133,7 @@ function App({
     opp: (f) => String(f.oppName), score: (f) => (f.hasPlayed ? f.teamScore * 100 - f.oppScore : -1e6), gd: (f) => (f.hasPlayed ? f.goalDiff : -1e6), total: (f) => f.cumPts ?? -1,
   });
 
-  // Filtered & Sorted Clubs Matrix (All 92 European Clubs)
+  // Filtered & sorted opponents
   // v51.07: Campaigns shows every season played plus the next one only
   const campaignSeasons = useMemo(() => {
     const played = seasons.filter((s) => s.gp > 0);
@@ -3155,173 +1231,8 @@ function App({
     return matches.sort((a, b) => a.seasonNum - b.seasonNum || a.md - b.md);
   }, [selectedClub, seasons]);
 
-  // Save updated match score
-  const handleSaveMatchScore = (newResult, newTeamScore, newOppScore) => {
-    if (!ENABLE_EDITING || !editingMatch || !currentSeason) return;
-
-    const { colIndex } = editingMatch;
-    const { scoreRowIndex, gdRowIndex } = currentSeason;
-
-    const oldScoreRow = rowsByIndex.get(scoreRowIndex) || [];
-    const oldGdRow = rowsByIndex.get(gdRowIndex) || [];
-
-    const newScoreRow = [...oldScoreRow];
-    const newGdRow = [...oldGdRow];
-
-    newScoreRow[colIndex] = newResult;
-    newScoreRow[colIndex + 1] = newTeamScore;
-    newScoreRow[colIndex + 3] = newOppScore;
-
-    const newGd = newTeamScore - newOppScore;
-    newGdRow[colIndex + 1] = newGd;
-
-    if (typeof updateItem === 'function') {
-      updateItem(scoreRowIndex, newScoreRow);
-      updateItem(gdRowIndex, newGdRow);
-    }
-
-    setEditingMatch(null);
-  };
-
-  // Save season overview update
-  const handleSaveSeason = (updatedSeason) => {
-    if (!ENABLE_EDITING || !editingSeason) return;
-    const { seasonIndex } = editingSeason;
-    const oldRow = rowsByIndex.get(seasonIndex) || [];
-    const newRow = [...oldRow];
-
-    newRow[5] = parseFloat(updatedSeason.pts) || 0;
-    newRow[6] = updatedSeason.clearence;
-    newRow[2] = updatedSeason.division;
-
-    if (typeof updateItem === 'function') {
-      updateItem(seasonIndex, newRow);
-    }
-
-    setEditingSeason(null);
-  };
-
-  // Toggle chart line
-  const toggleChartSeason = (sNum) => {
-    setVisibleChartSeasons((prev) => ({
-      ...prev,
-      [sNum]: !prev[sNum],
-    }));
-  };
-
-  // Helper for rendering championship division badges (Loss of emoji and redundant '(1st place)', keeping '(Invincible)' for S4)
-  const getBadgeDetails = (s) => {
-    if (s.isInProgress) {
-      return {
-        label: s.position
-          ? `In Progress • ${ordinal(s.position)}`
-          : 'In Progress',
-        badgeClass: 'bg-white text-slate-700 border-slate-300',
-        icon: Activity,
-        iconClass: 'text-slate-500',
-      };
-    }
-    if (!s.isComplete) return null;
-    if (!s.isChampion) {
-      return {
-        label: s.position ? `Finished ${ordinal(s.position)}` : 'Finished',
-        badgeClass: 'bg-slate-50 text-slate-700 border-slate-300',
-        icon: Medal,
-        iconClass: 'text-slate-500',
-      };
-    }
-
-    const div = (s.division || '').toUpperCase();
-    const label = s.isInvincible ? 'Champions (Invincible)' : 'Champions';
-    if (div.includes('DIV 4')) {
-      return {
-        label,
-        badgeClass: 'bg-amber-50 text-amber-950 border-amber-300',
-        icon: Trophy,
-        iconClass: 'text-amber-600',
-      };
-    }
-    if (div.includes('DIV 3')) {
-      return {
-        label,
-        badgeClass: 'bg-slate-100 text-slate-900 border-slate-300',
-        icon: Trophy,
-        iconClass: 'text-slate-600',
-      };
-    }
-    if (div.includes('DIV 2')) {
-      return {
-        label,
-        badgeClass: 'bg-yellow-50 text-yellow-900 border-yellow-300',
-        icon: Trophy,
-        iconClass: 'text-yellow-600',
-      };
-    }
-    return {
-      label,
-      badgeClass: 'bg-indigo-50 text-indigo-900 border-indigo-200',
-      icon: Trophy,
-      iconClass: 'text-indigo-600',
-    };
-  };
-
-  // Points tab: division filter
-  const normDiv = (d) =>
-    String(d || '')
-      .toUpperCase()
-      .replace(/\s+/g, ' ')
-      .trim();
-  const raceDivisionOptions = Array.from(
-    seasons
-      .filter((s) => s.pts > 0)
-      .reduce((m, s) => {
-        const key = normDiv(s.division);
-        m.set(key, (m.get(key) || 0) + 1);
-        return m;
-      }, new Map())
-  )
-    .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
-    .map(([div, n]) => ({
-      value: div,
-      label: div.replace('DIV', 'Div'),
-      badge: `${n}`,
-      title: `${n} season${n === 1 ? '' : 's'}`,
-    }));
-  const raceSeasons = seasons.filter(
-    (s) =>
-      s.pts > 0 &&
-      (raceDivisionFilter === 'all' || normDiv(s.division) === raceDivisionFilter)
-  );
-
-  // Biggest tier in each group of the career totals row (for the matrix highlight)
-  const careerMax = {
-    win: Math.max(
-      marginTotals.wins.by4Plus,
-      marginTotals.wins.by3,
-      marginTotals.wins.by2,
-      marginTotals.wins.by1
-    ),
-    draw: Math.max(
-      marginTotals.draws.d00,
-      marginTotals.draws.d11,
-      marginTotals.draws.d22,
-      marginTotals.draws.d3Plus
-    ),
-    loss: Math.max(
-      marginTotals.losses.by1,
-      marginTotals.losses.by2,
-      marginTotals.losses.by3,
-      marginTotals.losses.by4Plus
-    ),
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      {SHOW_VERSION_TAG && (
-        <div className="fixed bottom-2 right-2 z-40 pointer-events-none px-2 py-0.5 rounded-md bg-slate-900/70 text-white text-[11px] font-semibold tracking-wide">
-          {APP_VERSION}
-        </div>
-      )}
       {/* Header Bar */}
       <PageHeader
         accent="indigo"
@@ -3379,7 +1290,7 @@ function App({
                 valueClassName="text-2xl sm:text-3xl font-extrabold text-white gsl-big tabular-nums tracking-[var(--big-track)]"
                 left={`+${careerTotals.totalGD} GD`}
                 leftClassName="text-indigo-300 font-semibold"
-                right={`${(careerTotals.totalGF / careerTotals.totalGP).toFixed(2)} G/M`}
+                right={`${careerTotals.totalGP ? (careerTotals.totalGF / careerTotals.totalGP).toFixed(2) : '—'} G/M`}
                 rightClassName="text-slate-300 font-normal"
               />
               <HighlightCard
@@ -3392,7 +1303,6 @@ function App({
                 leftClassName="text-teal-300 font-semibold"
               />
             </HighlightsBar>
-
 
             {/* v51.07: Campaigns: Cards (division-header season cards) or Ledger */}
             <div>
@@ -3592,7 +1502,7 @@ function App({
                   <div key={k} className="self-start bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
                     <MatchdayListHead head={fixtureHead} />
                     {part.map((f) => (
-                      <MatchdayRow key={f.md} f={f} onEdit={ENABLE_EDITING ? () => setEditingMatch(f) : undefined} />
+                      <MatchdayRow key={f.md} f={f} />
                     ))}
                   </div>
                 ))}
@@ -3600,7 +1510,7 @@ function App({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
                 {filteredFixtures.map((f) => (
-                  <MatchdayCard key={f.md} f={f} onEdit={ENABLE_EDITING ? () => setEditingMatch(f) : undefined} />
+                  <MatchdayCard key={f.md} f={f} />
                 ))}
               </div>
             ))}
@@ -3625,7 +1535,7 @@ function App({
           <PointsTab seasons={seasons} accent="indigo" />
         )}
 
-        {/* TAB 4: EUROPEAN CLUB MATRIX (ALL 92 EUROPEAN CLUBS) */}
+        {/* TAB: OPPONENTS */}
         {activeTab === 'clubs' && (
           <div className="space-y-6">
             {/* Highlights bar (R5): who you've faced, most, best and worst, never beaten by */}
@@ -3770,204 +1680,6 @@ function App({
         )}
       </main>
 
-      {/* MODAL 1: MATCH SCORE & RESULT EDITOR */}
-      {editingMatch && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white w-full h-[100dvh] sm:h-auto overflow-y-auto sm:rounded-2xl sm:max-w-md p-6 shadow-2xl border border-slate-100 relative">
-            <button
-              onClick={() => setEditingMatch(null)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center space-x-2 text-indigo-600 font-semibold text-[11px] uppercase mb-1 tracking-[0.1em]">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>
-                Season {currentSeason?.num} • Matchday {editingMatch.md}
-              </span>
-            </div>
-
-            <h3 className="text-lg sm:text-[22px] leading-tight font-extrabold tracking-[-0.005em] text-slate-900">
-              Edit Match Result
-            </h3>
-            <p className="text-xs text-slate-600 mt-0.5">
-              vs {editingMatch.oppName} ({editingMatch.oppAbbr}) •{' '}
-              {editingMatch.venue === 'H' ? 'Home' : 'Away'}
-            </p>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.target;
-                const tScore = parseInt(form.teamScore.value, 10);
-                const oScore = parseInt(form.oppScore.value, 10);
-                let res = 'W';
-                if (tScore < oScore) res = 'L';
-                else if (tScore === oScore) res = 'D';
-
-                handleSaveMatchScore(res, tScore, oScore);
-              }}
-              className="mt-5 space-y-4"
-            >
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-800 mb-1">
-                    Our Score
-                  </label>
-                  <input
-                    type="number"
-                    name="teamScore"
-                    min="0"
-                    max="20"
-                    defaultValue={
-                      editingMatch.teamScore !== null
-                        ? editingMatch.teamScore
-                        : 2
-                    }
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-900"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-800 mb-1">
-                    Opponent Score
-                  </label>
-                  <input
-                    type="number"
-                    name="oppScore"
-                    min="0"
-                    max="20"
-                    defaultValue={
-                      editingMatch.oppScore !== null ? editingMatch.oppScore : 0
-                    }
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-900"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700">
-                <span className="font-semibold text-slate-900">
-                  Spreadsheet Sync:
-                </span>{' '}
-                Saves scores & recalculates goal difference directly into the
-                shared spreadsheet rows.
-              </div>
-
-              <div className="flex items-center justify-end space-x-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingMatch(null)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 flex items-center space-x-1.5 shadow-sm"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Update Match</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 2: SEASON OVERVIEW EDITOR */}
-      {editingSeason && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white w-full h-[100dvh] sm:h-auto overflow-y-auto sm:rounded-2xl sm:max-w-md p-6 shadow-2xl border border-slate-100 relative">
-            <button
-              onClick={() => setEditingSeason(null)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="text-lg sm:text-[22px] leading-tight font-extrabold tracking-[-0.005em] text-slate-900">
-              Edit Season {editingSeason.num} Overview
-            </h3>
-            <p className="text-xs text-slate-600 mt-0.5">
-              Campaign {editingSeason.year} • Row Index #
-              {editingSeason.seasonIndex}
-            </p>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.target;
-                handleSaveSeason({
-                  pts: form.pts.value,
-                  clearence: form.clearence.value,
-                  division: form.division.value,
-                });
-              }}
-              className="mt-5 space-y-4"
-            >
-              <div>
-                <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  Division Name
-                </label>
-                <input
-                  type="text"
-                  name="division"
-                  defaultValue={editingSeason.division}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold text-slate-900"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-800 mb-1">
-                    Total Points
-                  </label>
-                  <input
-                    type="number"
-                    name="pts"
-                    defaultValue={editingSeason.pts}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-extrabold text-slate-900"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-800 mb-1">
-                    Clearance Margin
-                  </label>
-                  <input
-                    type="text"
-                    name="clearence"
-                    defaultValue={editingSeason.clearence}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold text-slate-900"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end space-x-2 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setEditingSeason(null)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 flex items-center space-x-1.5 shadow-sm"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save Changes</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* DRAWER: HEAD-TO-HEAD HISTORY WITH AN OPPONENT */}
       {selectedClub && (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs">
@@ -4099,7 +1811,6 @@ function App({
               {h2hMatches.map((m, i) => {
                 const isWin = m.res === 'W';
                 const isDraw = m.res === 'D';
-                const isLoss = m.res === 'L';
 
                 return (
                   <div
@@ -4159,21 +1870,6 @@ function App({
   );
 }
 
-// Subcomponent: Season-by-Season Venue Swing & Divergence Tracker with Dynamic Points, Wins, Goals Toggle
-const MD_SCOPES = [
-  { value: 'all', label: 'All Seasons' },
-  { value: 'div1', label: 'Div 1' },
-  { value: 'lower', label: 'Lower Divisions' },
-];
-const MD_SORTS = [
-  { value: 'md', label: 'Matchday' },
-  { value: 'ppg', label: 'Points per game' },
-  { value: 'winPct', label: 'Win %' },
-  { value: 'gd', label: 'Goal difference' },
-  { value: 'cs', label: 'Clean sheets' },
-];
-// Win-rate colour bands (strip and table)
-const PULSE_WINDOW = 5;
 export default function LeagueSection(props) {
   return <HoverProvider><App {...props} /></HoverProvider>;
 }

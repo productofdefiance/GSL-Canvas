@@ -46,13 +46,16 @@ toggles, filters, columns, drawers, sorting, empty states.
 
 ## 6. Checks before the pull request
 
-- Test kit: syntax, full render (every page × tab at 390 and 1440), CSS, browser bundle.
+- Test kit: `npm run check` (syntax, compile, rules, lint baseline, full render with the per-page small-text
+  baseline, empty save), CSS, browser bundle; the pixel comparison when nothing on screen should change.
 - Named interaction checks, e.g. "drag across the Points race at 390: the card docks at the bottom and stays after lifting".
 - Dark mode on every tab touched; no sideways overflow at 390 (`ow.js`).
 
 ## 7. Updates in the repo
 
-- Each changed file: version bump, header date, changelog entry at the top (newest first).
+- Each changed file: version bump and its short header (file name, version, date and time UTC, one line on the
+  latest change, "History: CHANGELOG.md").
+- CHANGELOG.md: this build's entry at the top (under the canvas version, one entry per file, newest first).
 - App.js: `VERSION_TAG` and `PUBLISHED`.
 - CLAUDE.md: only if a rule or convention changed in this build.
 

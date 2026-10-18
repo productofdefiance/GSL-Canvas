@@ -1,433 +1,15 @@
 /*
  * ════════════════════════════════════════════════════════════════════
- *  GSL CANVAS — Squad.js
- *  Version:  Squad v32
- *  Date:     2026-10-17, 20:00 UTC
- *  Reads the "Squad" tab (passed in by App.js).
- * ════════════════════════════════════════════════════════════════════
- *
- *  CHANGELOG (newest first)
- *
- *  Squad v32 — 2026-10-17, 20:00 UTC — Canvas v51.19 (touch hover cards)
- *   - Growth by age: the touch scrub ends through ui.js's useTouchCard: a
- *     finished tap anywhere else (iPhone sends no click for blank space), a
- *     scroll, or another card or [i] opening. It used to wait for a click.
- *
- *  Squad v31 — 2026-10-06, 21:00 UTC — Canvas v51.06
- *   - Accent: maroon becomes violet (#7c3aed), the same for every club (v51 palette).
- *
- *  Squad v30 — 2026-10-04, 23:30 UTC — Canvas v51.01 (design tokens, step 1)
- *   - SQUAD_ACCENT now comes from ui.js (ACCENT_HEX.maroon). Same colour.
- *
- *  Squad v29 — 2026-10-04, 01:30 UTC — Canvas v50.12
- *   - Phones: 4-2-3-1 (CDMs side by side) and 4-4-2 (STs side by side)
- *     layouts; all seven formations clear of overlaps on a 390px phone.
- *   - Depth Chart: alt positions removed on every screen.
- *   - Potential: the bar's cell is at least 180px on phones.
- *   - Heatmap: season headers as numbers; season squares as wide as Now.
- *   - Squad By Season (phones, Value): numbers only, "$ M" in the title;
- *     columns may shrink so the page never widens.
- *   - Growth By Age: Team filter at the top; Clear leaves no players
- *     selected; search in Pick players.
- *
- *  Squad v28 — 2026-10-04, 00:20 UTC — Canvas v50.11
- *   - Phones only: hand-set pitch layouts for 3-5-2, 4-2-2-2, 4-2-4 and
- *     5-2-3 (PHONE_LAYOUTS): pairs side by side, three-wide lines, defenders
- *     stepped as Anish set out; wide players at least 16% from the edge.
- *     Tablet and desktop unchanged. Other formations keep the automatic
- *     stagger.
- *
- *  Squad v27 — 2026-10-03, 21:40 UTC — Canvas v50.10
- *   - Pitch (phones): chips are the bench chip (same size and content, flag
- *     and initial); crowded lines stagger so no chip covers another.
- *   - Touch bar: name + OVR, then all positions, on the left; icons on the
- *     right: Bench (a drawn bench; greyed when full), Remove, Cancel
- *     (subdued). Pitch players get all three; bench players Remove + Cancel.
- *   - Depth Chart (phones): header reads "90.8 OVR · 22.8 yrs".
- *   - Growth By Age (option A): touch screens tap to scrub (nearest point;
- *     a bar above shows player, age, season and OVR, with view / pin / stop
- *     icons); Pick players list grouped by position. Mouse unchanged.
- *   - Squad By Season (was Squad OVR By Season): OVR / Age / Value / Number;
- *     bar height = the number shown (OVR from 50, Age from 15, Value and
- *     Number from 0); Legacy column first. Desktop: pins below the page
- *     header (its top half was hidden).
- *   - Sale Fee chart (phones): title on its own line, control on one row.
- *   - Former Players and Contracts ledgers: header pins under the Tab Bar.
- *
- *  Squad v26 — 2026-10-03, 06:53 UTC — Canvas v50.02 (fix)
- *   - Phones: pill rows (Contracts Team, Transfers Season, Former Players
- *     Left in, Roster Team, Development Season, Depth Chart Status) no
- *     longer widen the page. Their control groups may now shrink, so the
- *     pills scroll sideways inside the group instead.
- *
- *  Squad v25 — 2026-10-03, 06:41 UTC — Canvas v50.01 (mobile phase 2)
- *   Squad tab
- *   - Tap-to-swap on every screen: tap a player to select him, tap another
- *     player to swap or an empty spot to move him; a bar at the bottom of
- *     the screen offers To bench (or "Bench full") / Remove, and Cancel.
- *     Taps only select (no profile from this tab); mouse drag still works.
- *   - Phones: compact pitch cards (position, OVR, foot, surname), bench 3
- *     across, pool as one-line rows (position · OVR · flag · name · team ·
- *     role) in a shorter scroll box.
- *   Roster: table header stays under the page header; Pos / Player pinned
- *     on tablet and desktop only.
- *   Depth Chart (phones): narrow columns; alt positions under the name.
- *   Development: Growth By Age has no minimum width on phones and no end
- *     labels there (the tray names the lines); the Average label joins the
- *     overlap nudging. Heatmap and Growth By Age cards carry "Open profile"
- *     / "Show in colour" buttons on touch.
- *   Contracts: boards put position · age under the name on phones;
- *     expiry rows scroll sideways inside each year on phones; Fair Wage
- *     draws at real size, scrubs by OVR on touch, "Open profile" on cards.
- *   Transfers: Income & Spending on phones as sideways bars, one row per
- *     season, net at the end; Signed From / Sold To stack count and fee.
- *   Former Players: How They Left keeps How, Players (bar) and Share only;
- *     Sale Fee scatter at real size, scrub by its x axis, "Open profile".
- *   Profile: opens as a Sheet (full screen on phones); positions below the
- *     name and a smaller OVR box on phones; chart has no minimum width,
- *     hides bar labels when bars are narrow, start label above its dot;
- *     Vs Other strip scrubs on touch.
- *
- *  Squad v24 — 2026-10-03, 05:34 UTC — Canvas v50 (mobile foundation)
- *   - Hover card now comes from ui.js (same look on desktop; tap support
- *     on touch screens). Growth By Age and the profile chart measure their
- *     box with ui.js's useWidth.
- *
- *  Squad v23 — 2026-10-03, 03:42 UTC — Canvas v49.5 (edits, player profile)
- *   - Transfers moved under Contracts: In (Joined, From, Fee) on the left,
- *     Out (Left, To, Fee, P/L) on the right; players still here read
- *     "Still at the club · Contract to 2036". Joined is back in Transfers.
- *   - Injury History placeholder under Interactions (space held).
- *   - Squad order back to one line ("1st of 7").
- *   - Vs other players: one dot per OVR; its hover lists everyone at that
- *     OVR, name and OVR on one line (former marked). His own dot keeps
- *     the fuller card.
- *
- *  Squad v22 — 2026-10-03, 03:21 UTC — Canvas v49.4 (edits, player profile)
- *   - Highlights: plain white / grey bubbles (the dark bar stays on the
- *     main tabs). Team bubble has no byline (squad order lives in Squad).
- *   - Squad section: positions, Joined, Tenure, playstyles and the full
- *     squad order at his position (him highlighted). Joined and tenure
- *     moved here from Transfers.
- *   - Development: per-season change numbers above the Growth bar.
- *     "Vs other CBs" (his position) replaces Ahead of the Curve: current
- *     players at their OVR now, former at their last OVR here (faded);
- *     the average is current players only; hidden under 2 current peers.
- *   - Interactions above Transfers; value for money removed from the
- *     profile's Contracts section.
- *
- *  Squad v21 — 2026-10-03, 02:43 UTC — Canvas v49.3 (edits)
- *   Overall
- *   - Zero reads "$0 M"; zeros in table columns are light grey.
- *   - Axis ticks drop decimals when every tick is whole ($0 / $50 / $100 M).
- *   - Section titles: every word capitalised.
- *   - Per appearance and per goal + assist in $ M ($ K = weekly wages only).
- *   - Hover cards use the dark-card scale C (vivid) for good.
- *   - "Start of the save" is "Legacy" everywhere.
- *   Development
- *   - Heatmap back to one column, a little more space after Age, and a
- *     "Squad OVR By Season" chart beside it (everyone at the club each
- *     season by OVR band; average OVR on top; Now = today's squad).
- *   Contracts
- *   - Contract expiry schedule: year blocks wrap onto rows so names fit.
- *   Transfers
- *   - Income & Spending hover: net next to the season, at title size;
- *     summer / winter / biggest deals lighter than the totals.
- *   Former Players
- *   - Ledger: To is blank for players not renewed or retired.
- *   - How They Left: a compact table (players with share bar, share, fees,
- *     average age when they left, average seasons); lighter colours.
- *   - Departures By Season: lighter colours; bars use the full card height.
- *   Player profile
- *   - Header: position chip beside the name; OVR box only.
- *   - Highlights bar: Age (joined at), Foot, Team (rank at position), Role,
- *     Potential (above / to go).
- *   - Chart: drawn at real size; value inside each bar, % change between
- *     bars, no red outline; OVR above its point; ▲▼ smaller and lighter;
- *     potential label at the left; start point labelled "Joined 82".
- *   - Sections: Squad (positions, rank at position, playstyles) | Stats
- *     (career and last season) | Development (growth, potential, Ahead of
- *     the Curve), then Contracts across two columns | Transfers +
- *     Interactions. Squad rank line and "Value since joining" removed.
- *   Labs
- *   - Hover-colour experiment removed; the tab stays, empty.
- *
- *  Squad v20 — 2026-10-02, 23:45 UTC — Canvas v49.2 (edits)
- *   Money format (everywhere in Squad)
- *   - Always "$X M"; size sets the decimals: under $1 M 3, $1–10 M 2,
- *     $10–999 M 1, $1,000 M+ none (sign ignored). Weekly wages stay in $ K
- *     with the same bands; annual and total wages in $ M.
- *   - Sets read together (axes, bar labels, boards, hover splits, cost →
- *     sale pairs, highlight strips) take the largest number's decimals.
- *   - Table columns keep each number's decimals, padded with fixed-width
- *     spaces so decimal points line up.
- *   - Zero guard: a non-zero number never shows as $0.
- *   - Money axes use round ticks (fair-wage chart, sale-fee scatter,
- *     profile chart).
- *   Hover cards
- *   - OVR and potential in a dark-background OVR scale; gains green,
- *     losses red. Four scales (A sheet, B tints, C vivid, D soft); B is the
- *     default; Labs switches all Squad hover cards for the session.
- *   - Card 300px wide; labels never wrap.
- *   Squad tab
- *   - Bylines: "Best player: Name OVR" and "Youngest player: Name, age".
- *   - Lineup summary sits next to the Squad header; drag hint removed.
- *   - Tiles: 4th and 5th positions on a second line; past 5, "…".
- *   Depth Chart
- *   - Header numbers sit over the OVR and Age columns (no "Avg" words).
- *   - More space between main and alt positions; flag + name moved right
- *     (foot column unchanged).
- *   - Loan icon rule: where ❶ ❷ ❸ are icons, loan is the → icon.
- *   Development
- *   - Growth hover: goalkeepers show clean sheets in place of goals.
- *   - Biggest value rise byline: "$17.0 M → $261.0 M".
- *   - "OVR heatmap" is "Heatmap": current age column; groups in two
- *     side-by-side columns (one when seasons outgrow the width).
- *   - Growth by age rebuilt: real pixel size, grey lines, 5 in colour with
- *     name + OVR end labels (top OVR by default, click to pick), average
- *     line, faint former players, tray with unpin / Clear.
- *   Contracts
- *   - Fair-wage hover: role on the name line; "Year signed" (year joined
- *     for now).
- *   Transfers
- *   - Income & Spending hover: summer and winter on their own lines. A
- *     season after the last full one reads "S8 (so far)".
- *   Club tags
- *   - League code as plain grey text (no box).
- *   Labs (new tab)
- *   - Dark-card scale swatches with contrast numbers, a dummy chart, and
- *     "Use in all hover cards".
- *
- *  Squad v19 — 2026-10-02, 04:20 UTC — Canvas v49.1 (edits + design pass)
- *   - Design pass: one hover card for every chart and bar (replaces the
- *     browser tooltip); nothing under 11px; role as coloured text and the
- *     development tag as plain text in dense tables (chips stay on tiles,
- *     boards and the profile).
- *   - Position order everywhere: GK, LB, CB, RB, CDM, LM, CM, RM, CAM, LW,
- *     RW, ST.
- *   - Squad tab: "Lineup cohesion" with "# in alt position · # out of
- *     position"; no SUB tag on bench tiles; tiles 20% wider; 5-2-3 uses LB
- *     and RB.
- *   - Roster: averages row leaves Apps blank; position filter GK / DEF /
- *     MID / ATT.
- *   - Depth Chart: header bar per position (average OVR, average age,
- *     players); roomier columns, foot / OVR / age closer to the name.
- *   - Development: Growth gets the Potential sorts and Show filter, a
- *     Seasons column and Best season; season hover cards (season + years,
- *     age, change, stats); Potential gets a Growth column and more room
- *     before the tag.
- *   - Contracts: one-line leaderboard rows with OVR in its own column;
- *     hover cards on fair wage, wage bill and value at risk (taller);
- *     "Contract expiry schedule" with wider columns, year dividers and a
- *     cumulative Years left filter.
- *   - Transfers: hover card on Income & Spending; profit boards show cost →
- *     sale under the profit; one season filter for both ledgers.
- *   - Former Players: Role column removed; How they left, Departures by
- *     season and Sale fee scatter (vs OVR / value / age at sale).
- *
- *  Squad v18 — 2026-10-02, 01:41 UTC — Canvas v49, part 2 of 2
- *   - Development rebuilt: Growth (segmented bar, one segment per season,
- *     green / red / grey; season selector), Potential (bar: growth, room,
- *     beyond potential; signed remaining; sorts and filters), Value growth,
- *     OVR heatmap (by position or team), Growth by age (position and route
- *     filters, former players toggle), Teams (comparison table + squad
- *     strength, static for now). The age curve is gone.
- *   - Contracts (new tab): top valuations and top total costs; fair-wage
- *     scatter; wage bill breakdown (team, position); value at risk by
- *     contract end; the expiry schedule (moved from Transfers); a contracts
- *     database with cost vs OVR, vs value (colour key vs the squad median),
- *     per appearance (+ index), per goal + assist / clean sheet, and a
- *     value-for-money score.
- *   - Transfers (was "Transfers & Money"): Transfer Income & Spending
- *     (hover: summer / winter split, biggest deals); four top-5
- *     leaderboards; top clubs (by players or fees); Transfers In and Out
- *     side by side (season + window, figures at the time, club, type, fee;
- *     type / sell-on / terms await New Squad); sorts and name search.
- *   - Former Players rebuilt on the Roster's layout: how and when he left,
- *     both transfers, career stats, P/L; sticky header.
- *   - Player profile rebuilt: centred pop-up with a header (OVR, potential,
- *     remaining), one combined chart (OVR line, potential, value bars, age
- *     per season) and a snapshot from each tab.
- *
- *  Squad v17 — 2026-10-02, 01:01 UTC — Canvas v49, part 1 of 2
- *   - Data from GSL_R3_Offline_v7; club directory from the "GSL Clubs" tab
- *     (Pyramid as fallback): flag, short name in capitals, league code.
- *   - Everywhere: money as "$4,055.0 M", weekly wages "$55.0 K" (header
- *     says /wk); "❶ First / ❷ Second / ❸ Reserves"; "Available /
- *     Everyone"; role colours (IMP blue, ROT grey + black, SPO grey + dark
- *     grey, PRO light grey); source icons 🎓 academy, 🖊️ free agent,
- *     📜 start of the save.
- *   - Squad tab: settings survive switching tabs; bench (7 / 9 switch,
- *     auto-filled from the same pool, drag in / out / between); team sheets
- *     (save the lineup with a name, load, delete; up to 5; session only;
- *     a 9-sub sheet flips the switch to 9); Lineup Cohesion replaces "Out
- *     of position"; GK / DEF / MID / ATT filter on the tiles.
- *   - Roster: Career stats by default; age filter; source breakdown (academy
- *     / bought / free / start of the save, with value now); sticky header
- *     and first columns; averages row; contract warning (1 year or less);
- *     potential in OVR colours; club or source in "From".
- *   - Depth Chart: order team → OVR → role → age (older first); columns
- *     position (+alt), flag + name, foot, OVR, age, role, team.
- *
- *  Squad v16 — 2026-09-28, 16:08 UTC — Interactions (test version)
- *   - New Interactions tab (phone-first): every current player (position,
- *     flag, name, team), a green row and a red row of 🪷 🤝 📣 🤬 👏; tap
- *     to light one up, tap again to turn it off; no maximum, no locking;
- *     "last updated" date stamped on change; team filter and search.
- *   - Roster's Pos / Neg columns show the lit emoji (green / red), with
- *     the date on hover.
- *   - Test version: kept for the session only; saving to the sheet comes
- *     with the next Sheets build.
- *
- *  Squad v15 — 2026-09-28, 15:34 UTC — Roster groups, OVR colours
- *   - OVR (not "rating") everywhere, coloured with the sheet's scale: red
- *     40s, orange 50s, yellow 60s, dark green 70s, green 80s, bright green
- *     90-94, blue 95+.
- *   - Roster: group header row (Details, Attributes, Contract, Stats,
- *     Interactions, Transfer, Tenure) with short column labels; columns
- *     spread across the full width. Details: Pos, Player, Ft, Sq (status
- *     icon). Contract: Role, Value, Wage, Yrs rem. Interactions: Pos / Neg
- *     (placeholders until the Interactions page exists). Transfer (in):
- *     season + year, from (flag, short name, league for Pyramid clubs;
- *     academy / free agent / start of the save), fee ($0.0 M for academy
- *     and free agents). Tenure: Yrs, OVR ±, Value ±.
- *   - Reads the Pyramid tab too, for the clubs players came from.
- *
- *  Squad v14 — 2026-09-28, 14:13 UTC — Roster redesign
- *   - Columns grouped (who | now | style | money | stats | tenure) with
- *     faint dividers; columns fit their content, spare width sits before
- *     the money group; more room between main and alternative positions.
- *   - Status: icon + word (❶ First, ❷ Second, ❸ Reserves, → On loan,
- *     ← Loaned in).
- *   - Rating, +/- and Potential narrower and closer; development type sits
- *     beside the potential. With no potential in the sheet, a growth type
- *     implies its top end (PTBS 94, AEP 89, SGP 84), shown in grey
- *     italics; this also feeds Development's "Room to grow".
- *   - Playstyles as ◆ marks.
- *   - Value always one decimal with a space ("$130.0 M") so it lines up.
- *   - New tenure group: seasons at the club, rating since joining (the
- *     sheet's Tenure +/-), value since joining (from value at signing, or
- *     at the end of his first season when that isn't recorded); sortable.
- *
- *  Squad v13 — 2026-09-28, 03:39 UTC — Squad tab controls
- *   - Position-colour key removed; more space between the control groups.
- *
- *  Squad v12 — 2026-09-28, 03:29 UTC — Blank lineup, age filter, one pool
- *   - Lineup: new "Blank" (every position empty; drag players in).
- *   - Age: All / U23 / U21 / U19 (under N = younger than N).
- *   - Players: "Available" / "Everyone" (was Not on loan / Include on loan).
- *   - Lineup, Age and Players now set one pool used by both the pitch and
- *     the tiles (the tiles' own team filter is gone). Changing any of them
- *     starts the lineup fresh.
- *
- *  Squad v11 — 2026-09-28, 03:19 UTC — Foot on the pitch, on-loan option
- *   - Foot shown as L / R on tiles, and on pitch cards (top-right, in
- *     place of the team number).
- *   - "Players: Not on loan / Include on loan" (off by default, like the
- *     Depth Chart): when on, loan players appear as tiles (with an On loan
- *     filter), can be dragged onto the pitch and can be picked for the
- *     Best XI. Switching starts the lineup fresh.
- *
- *  Squad v10 — 2026-09-28, 03:06 UTC — Smarter lineups, tiles with foot
- *   - Lineups are chosen as a whole (best total fit, Hungarian method)
- *     instead of one slot at a time: main position > alternative > close
- *     fit; a player from the wrong area is heavily penalised; keepers and
- *     outfield players never swap (the slot stays empty instead).
- *   - Tiles: all positions top-left (main first, the one he's playing
- *     underlined), rating middle, team right; flag + name; foot, age and
- *     role along the bottom. No hover text on the short roles.
- *
- *  Squad v9 — 2026-09-28, 02:58 UTC — Short squad roles
- *   - Squad roles have 3-letter forms (CRU, IMP, ROT, SPO, PRO) for tight
- *     spaces; the sidebar tiles use them (full name on hover).
- *
- *  Squad v8 — 2026-09-28, 02:25 UTC — Formations
- *   - 3-5-2: the wing-backs are now LM and RM.
- *   - New: 4-2-2-2, 4-2-4 and 5-2-3 (seven formations in all).
- *
- *  Squad v7 — 2026-09-28, 02:20 UTC — Sidebar tiles
- *   - Top-left is blank for players not on the pitch (their main position
- *     is already shown bottom-left).
- *
- *  Squad v6 — 2026-09-28, 02:17 UTC — Sidebar tile tweaks
- *   - Top-left shows the position he's playing on the pitch (coloured by
- *     fit), or his main position if he isn't on the pitch; the label on
- *     the tile's edge is gone (it was cut off). Outline kept.
- *   - Bottom-left: main position, then alternative positions.
- *   - Bottom-right: age and squad role (Crucial, Important, Rotation,
- *     Sporadic, Prospect) instead of the development type.
- *
- *  Squad v5 — 2026-09-28, 02:05 UTC — Squad sidebar as tiles
- *   - The squad beside the pitch is now tiles, like the pitch cards with a
- *     bit more: position, rating, team number; flag + name; alternative
- *     positions, age and development type. Players on the pitch get a
- *     maroon outline and their slot. Tiles fill the column (as many per
- *     row as fit) and still drag onto the pitch.
- *   - All flags are drawn (13 more countries in ui.js).
- *
- *  Squad v4 — 2026-09-28, 01:53 UTC — Transfers & Money, Former Players (part 3 of 3)
- *   - Controls: every label sits above its control (consistent alignment).
- *   - Squad tab: list beside the pitch, wider and as tall as the pitch;
- *     on-loan players removed from it (they stay in Roster); Reset always
- *     shown (greyed until you change the lineup).
- *   - Depth Chart: main positions only, grouped Attack (LW/LM, ST, RW/RM),
- *     Midfield (CAM, CM, CDM), Defence (LB, CB, RB), Goalkeeper.
- *   - Development: "All time" (start of his first season at the club to
- *     the end of his latest), now the default, plus each season.
- *   - Transfers & Money (new): spent / received / net / wage bill; money
- *     per season; best sales and sales at a loss; contracts by expiry
- *     year; full transfer ledger (arrivals and sales, by season, by fee).
- *   - Former Players (new): directory of every former player, filter by
- *     season left and how they left, search, sort; fee, joined, seasons
- *     at the club, rating then and at departure, apps, profit.
- *
- *  Squad v3 — 2026-09-28, 01:37 UTC — Pitch: presets, drag and drop, new cards
- *   - Pitch lines back on the green gradient.
- *   - Bigger cards: position top-left (coloured by fit), rating top-middle
- *     (bigger), team number top-right, flag + name underneath.
- *   - Lineup presets: Best XI, Team 1, Team 2, Team 3 (each picks from its
- *     own players; slots nobody fits get the best remaining player, shown
- *     out of position). Drag players from the list onto the pitch, swap slots
- *     by dragging, drag back to the list to empty a slot; "Custom lineup"
- *     with Reset. On-loan players can't be dragged in.
- *   - Slimmer squad list: position, alt, flag, name, rating, development
- *     type, team number; players on the pitch marked with a maroon edge.
- *
- *  Squad v2 — 2026-09-28, 01:23 UTC — Squad tab, Depth Chart, Development (part 2 of 3)
- *   - The Pitch tab is now "Squad": plain green-gradient pitch (no stripes
- *     or lines); new player cards (flag top-left, position top-centre
- *     coloured by fit, rating top-right, name in the middle); best XI from
- *     everyone not on loan ("Pick from" removed); the full squad listed on
- *     the right (All / Team 1 / 2 / 3 / On loan), players on the pitch
- *     first, marked with their position.
- *   - Depth Chart (new): every position laid out like a pitch, natural
- *     options then those who can cover, with Thin (under 2 natural) and
- *     Ageing (top two average 30+) warnings; on-loan players optional.
- *   - Development (new): Growth (rating change in a chosen season),
- *     Room to grow (potential minus rating, with development types), Age
- *     curve (age against rating, line up to potential).
- *
- *  Squad v1 — 2026-09-28, 00:26 UTC — First build (part 1 of 3)
- *   - Pitch: formation picker (4-3-3, 4-2-3-1, 3-5-2, 4-4-2); best XI
- *     picked automatically by rating for each position (main position
- *     first, then alternatives, then close fits); bench of the next best.
- *     Choose who's eligible (all available / first team / first + second).
- *     Striped grass pitch with thin markings.
- *   - Roster: the current squad, filterable by tier (❶ ❷ ❸, on loan,
- *     loaned in), position group and name; sortable columns; this season
- *     or career stats.
- *   - Player profile: identity, development type, playstyles, contract,
- *     rating and value season by season, stats, how he joined (and left).
- *   - Data: everything read by column labels (so new season blocks, e.g.
- *     S8, are picked up automatically). "As of the end of S7" comes from
- *     the data, not typed in.
- *   Coming next: Depth Chart, Development; then Transfers & Money, Former
- *   Players.
+ *  GSL CANVAS — Squad.js (Squad section)
+ *  Version:  Squad v33
+ *  Date:     2026-10-18, 02:05 UTC
+ *  Latest:   Canvas v51.22 code tidy: unused names removed; history in CHANGELOG.md.
+ *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Users, LayoutGrid, List, TrendingUp, Star, Clock, Calendar, Filter, Sparkles, X, ChevronLeft, ChevronRight, Shield, ArrowRight, ArrowLeft, FlaskConical, UserMinus, Eye, Pin, X as CloseIcon } from 'lucide-react';
-import { PAGE_WIDTH, PageHeader, HighlightsBar, HighlightCard, Segmented, FilterPills, ControlLabel, ResetButton, SearchInput, Flag, SvgFlag, HoverProvider, useHover, useTouchCard, useWidth, useScreen, useScrub, Sheet, usePointerTrack, ACCENT_HEX } from './ui.js';
+import { PAGE_WIDTH, PageHeader, HighlightsBar, HighlightCard, Segmented, FilterPills, ControlLabel, ResetButton, SearchInput, Flag, HoverProvider, useHover, useTouchCard, useWidth, useScreen, useScrub, Sheet, ACCENT_HEX } from './ui.js';
 
 // ─── SETTINGS ────────────────────────────────────────────────────────
 const SQUAD_ACCENT = ACCENT_HEX.maroon; // Squad's colour (to become the user's club colour, v51 F13)
@@ -586,7 +168,6 @@ function parseSquad(data) {
 //  - Zero guard: a non-zero number never shows as $0.
 // Section titles: every word capitalised
 const tcWords = (t) => String(t).replace(/(^|[\s(:/])([a-z])/g, (m, a, b) => a + b.toUpperCase());
-const fmt1 = (x) => Number(x).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const numFmt = (x, d) => Number(x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 const bandDec = (a) => (a >= 1000 ? 0 : a >= 10 ? 1 : a >= 1 ? 2 : 3);
 // Checked again after rounding, so 9.996 reads "10.0", not "10.00"
@@ -622,34 +203,6 @@ const niceTicks = (hi, n = 4) => {
     const top = Math.ceil(hi / step - 1e-9) * step;
     return Array.from({ length: Math.round(top / step) + 1 }, (_, i) => Number((i * step).toFixed(6)));
 };
-function TierBadge({ p, size = 'sm' }) {
-    if (!p.tag) return null;
-    const t = p.tag.key;
-    if (t === 1 || t === 2 || t === 3) {
-        const col = t === 1 ? SQUAD_ACCENT : t === 2 ? '#475569' : '#94a3b8';
-        return <span className={`${size === 'lg' ? 'text-lg' : 'text-sm'} font-black leading-none`} style={{ color: col }} title={p.tag.label}>{p.tag.badge}</span>;
-    }
-    // Loan icon rule: where ❶ ❷ ❸ are icons, loan is the → icon too
-    if (t === 'loan') return <span title="On loan" className="inline-flex"><ArrowRight className={`${size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'} text-sky-700`}/></span>;
-    const cls = t === 'loanIn' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200';
-    return <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded border whitespace-nowrap ${cls}`}>{p.tag.badge}</span>;
-}
-function DevChip({ code }) {
-    const d = DEV_TYPES[code];
-    if (!d) return null;
-    return <span className={`text-[11px] font-extrabold px-1.5 py-0.5 rounded border ${d.cls}`} title={`${d.label} (${d.note})`}>{code}</span>;
-}
-// Status as icon + word (Roster)
-function StatusTag({ p }) {
-    const t = p.tier;
-    if (t === 1 || t === 2 || t === 3) {
-        const col = t === 1 ? SQUAD_ACCENT : t === 2 ? '#475569' : '#94a3b8';
-        return <span className="inline-flex items-center gap-1 text-[11px] font-bold whitespace-nowrap" style={{ color: col }}><span className="text-sm leading-none">{p.tag.badge}</span>{t === 1 ? 'First' : t === 2 ? 'Second' : 'Reserves'}</span>;
-    }
-    if (t === 'loan') return <span className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-700 whitespace-nowrap"><ArrowRight className="w-3.5 h-3.5"/>On loan</span>;
-    if (t === 'loanIn') return <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 whitespace-nowrap"><ArrowLeft className="w-3.5 h-3.5"/>Loaned in</span>;
-    return p.tag ? <span className="text-[11px] text-slate-500">{p.tag.label}</span> : null;
-}
 // Clubs from the Pyramid tab: flag, short name, league ("ESL")
 // Club directory. "GSL Clubs" tab: league (M), flag (Q), abbreviation (S),
 // short / medium / full name (T / U / V), EA team name (W). Falls back to
@@ -1191,7 +744,7 @@ function SquadTab({ squad, onOpen, ui, setUI }) {
     </div>
     {/* Tap-to-swap bar: fixed to the bottom of the screen while a player is selected */}
     {selP && (() => {
-        const onSlot = selPlace && selPlace.type === 'slot', onBench = selPlace && selPlace.type === 'bench';
+        const onBench = selPlace && selPlace.type === 'bench';
         const canBench = !onBench; // pool and pitch players can go to the bench
         const ib = 'w-10 h-10 inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-35';
         return (<div className="fixed z-[60] left-3 right-3 bottom-3 mx-auto max-w-md rounded-xl bg-slate-900 text-white shadow-2xl px-3.5 py-2.5 flex items-center gap-3">
@@ -1316,7 +869,6 @@ const remainingPot = (p) => (p.potential == null || p.ovr == null ? null : p.ovr
 const POT_TAG_ORDER = ['SGP', 'AEP', 'PTBS', 'SET', 'OWB', 'HTSS'];
 const NO_GROWTH_TAGS = ['SET', 'OWB', 'HTSS'];
 const routeOf = (p) => { const f = p.joined && p.joined.from ? String(p.joined.from).toUpperCase() : ''; return f === 'YOUTH ACADEMY' ? 'academy' : f === 'FREE AGENT' ? 'free' : f === 'LEGACY' ? 'legacy' : f ? 'transfer' : 'legacy'; };
-const ROUTE_LABELS = { academy: '🎓 Academy', transfer: 'Transfer', free: '🖊️ Free agent', legacy: '📜 Legacy' };
 const TEAM_GROUPS = [
     { value: 'all', label: 'Whole squad', test: () => true },
     { value: '1', label: '❶ First', test: (p) => p.tier === 1 },
@@ -1479,7 +1031,6 @@ function GrowthByAge({ squad, players, ageGroup, route, team = 'all', withFormer
         </g>);
     };
     const greyFirst = [...lines].sort((a, b) => (colourOf(a.p.id) ? 1 : 0) - (colourOf(b.p.id) ? 1 : 0) || (a.p.id === hover) - (b.p.id === hover));
-    const lastAvg = avgPts[avgPts.length - 1];
     return (<div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
     {/* Touch screens: the player under your finger (fixed height, so nothing moves) */}
     {touchScreen && (<div data-gba-bar="" className="h-[60px] px-3 rounded-lg bg-slate-100 border border-slate-200 flex items-center gap-2">
@@ -1853,7 +1404,7 @@ function RosterTab({ squad, clubOf = () => null, interactions = {}, onOpen }) {
     </thead>
     <tbody className="whitespace-nowrap">
         {sorted.map(p => { const ch = lastChange(p); const s = st(p); const since = ovrSinceJoining(p); const vs = valueSinceJoining(p); const vSince = vs ? vs.d : null;
-            const from = p.joined && p.joined.from; const special = SPECIAL_SOURCES[from]; const club = !special && from ? clubOf(from) : null;
+            const from = p.joined && p.joined.from;
             const fee = from === 'YOUTH ACADEMY' || from === 'FREE AGENT' ? 0 : from === 'LEGACY' ? null : (p.joined && p.joined.fee != null ? p.joined.fee : null);
             const B = 'border-l border-slate-100';
             return (<tr key={p.id} onClick={() => onOpen(p)} className="group cursor-pointer hover:bg-rose-50 [&>td]:border-b [&>td]:border-slate-100">
@@ -2634,7 +2185,6 @@ function PlayerProfile({ p, list, squad, cstats, interactions = {}, clubOf, onOp
     // where he stands at his position (Depth Chart order)
     const mates = squad.current.filter(x => x.pos === p.pos).sort((a, b) => teamRank(a) - teamRank(b) || (b.ovr || 0) - (a.ovr || 0) || roleRank(a) - roleRank(b) || (b.age || 0) - (a.age || 0));
     const depthRank = mates.findIndex(x => x.id === p.id) + 1;
-    const rankOf = (f) => { const v = [...squad.current].sort((a, b) => (f(b) || 0) - (f(a) || 0)); return v.findIndex(x => x.id === p.id) + 1; };
     const segs = p.seasons.filter(x => x.change != null);
     const segScale = Math.max(1, segs.reduce((a, x) => a + Math.abs(x.change), 0));
     const lo = Math.floor((Math.min(startOvr(p), p.ovr || 99) - 3) / 5) * 5, hi = Math.min(99, Math.max(p.ovr || 0, p.potential || 0) + 2);

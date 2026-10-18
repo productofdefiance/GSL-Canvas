@@ -1,203 +1,10 @@
 /*
  * ════════════════════════════════════════════════════════════════════
- *  GSL CANVAS — Cups.js
- *  Version:  Cups v19
- *  Date:     2026-10-17, 07:45 UTC
- *  Reads the "Cups" tab (passed in by App.js), using real sheet row numbers.
- * ════════════════════════════════════════════════════════════════════
- *
- *  CHANGELOG (newest first)
- *
- *  Cups v19 — 2026-10-17, 07:45 UTC — Canvas v51.18
- *   - Removed Flag from the lucide-react import: it clashed with ui.js's
- *     Flag (a duplicate import that stops react-scripts compiling). Every
- *     use is ui.js's <Flag emoji=…>, so nothing on the page changes.
- *
- *  Cups v18 — 2026-10-05, 09:00 UTC — Canvas v51.05
- *   - Highlights records now show numbers only (shared change), so their
- *     labels carry the "W • D • L" hint: both Record cards and the
- *     Domestic, Continental and Super Cups records (Competitions).
- *
- *  Cups v17 — 2026-10-04, 23:30 UTC — Canvas v51.01 (design tokens, step 1)
- *   - Tier Matrix tones come from ui.js (MARGIN_TONES, shared with League);
- *     the local copy is gone. Same colours.
- *
- *  Cups v16 — 2026-10-03, 15:45 UTC — Canvas v50.06 (audit fix)
- *   - A3 Competitions trajectory: one column per season (no built-in 10).
- *
- *  Cups v15 — 2026-10-03, 15:19 UTC — Canvas v50.05
- *   - Stacked Visualizer and Two-Leg Ties: Show / Hide legend (hidden on
- *     phones); bars scrub; season header on phones in two lines (Season ·
- *     year / record · matches).
- *
- *  Cups v14 — 2026-10-03, 07:43 UTC — Canvas v50.04 (mobile phase 3b)
- *   - 21 browser tooltips that carried numbers now open the hover card on
- *     tap (W/D/L splits on Rivalries, Leagues and Competitions bars,
- *     shootouts won/lost, margin labels, average opponent rank, campaign
- *     progress). Cups sits inside ui.js's HoverProvider. Full names of
- *     truncated clubs and cups stay as browser tooltips (the drawers show
- *     them on tap).
- *   - Form & Margins highlights: Record full width on phones (it already
- *     leads), like Campaigns.
- *   - Campaign, match and group editors: full screen on phones (the small
- *     delete confirmation stays centred).
- *   - 11px floor: 111 pieces of 9–10px text raised to 11px.
- *
- *  Cups v13 — 2026-10-03, 06:41 UTC — Canvas v50.01
- *   - Campaigns highlights: Record first on every screen; full width on phones.
- *
- *  Cups v12 — 2026-09-27, 17:28 UTC — Wider canvas
- *   - Page width comes from ui.js (PAGE_WIDTH, now 1800px; was 1280px).
- *
- *  Cups v11 — 2026-09-26, 15:48 UTC — Standard search
- *   - Search boxes use the Cups gold focus colour.
- *
- *  Cups v10 — 2026-09-26, 15:40 UTC — Drawn flags
- *   - Every flag emoji is now a drawn flag (ui.js Flag), sized to match
- *     the old emoji. Non-flag symbols (🪩, 🏴‍☠️) show as they are.
- *   - Dropdown options show club names only (browser dropdowns can't draw
- *     flags); labels no longer have flags glued into the text.
- *
- *  Cups v9 — 2026-09-26, 00:39 UTC — Lab tab, path difficulty
- *   - New last tab: Lab (CupsLab.js), with its own crash protection.
- *     SHOW_LAB = false hides it.
- *   - Campaign cards show the average opponent rank ("Opp 29.0"),
- *     coloured by how tough the path was compared with all campaigns
- *     (quarters: toughest, tougher, easier, easiest).
- *   - Campaign drawer: "My rank • Opp rank • RSI" (RSI as the sheet has
- *     it: my rank minus average opponent rank).
- *   - The "#" before average opponent ranks is gone everywhere.
- *   - openRivalry(): jumps to a club in Rivalries (used by the Lab).
- *
- *  Cups v8 — 2026-09-25, 18:21 UTC — Hover card lists
- *   - Margin Distribution hover lists show the competition (short name:
- *     UCL, UEL, FAC, CAC, BSM, SC, CS) instead of the season, which the
- *     card already shows. Two-Leg aggregate lists show both (e.g. "S8
- *     UCL"), since they can span seasons.
- *   - Card subtitle says "All matches" instead of "All".
- *
- *  Cups v7 — 2026-09-25, 17:43 UTC — Hover cards, tag rename
- *   - Hover cards now come from ui.js (shared with League). Match lists
- *     are one line each (flag, club, season, score) and only appear
- *     when a segment has 8 or fewer; above that, just the count.
- *   - Outcomes hover cards: no match list.
- *   - Two-leg tag "Won it in leg 2" renamed "Decider".
- *
- *  Cups v6 — 2026-09-25, 16:37 UTC — Review fixes
- *   - Control icons (Season, Competition, Matches, Tags, Split by) are
- *     Cups gold instead of League purple, on every tab.
- *   - Form & Margins: every bar has a hover card (like League's): count,
- *     share, and the matches or ties behind it when there are 8 or fewer.
- *   - Margin Distribution and Two-Leg Ties: new Competition filter.
- *   - Two-Leg Ties: game states are now 14 tags; a tie can have several.
- *     Slimmer tag chips; tap one to filter. Tie cards show their tags
- *     (the "after leg 1 -> final" line is gone). New tags: Merciless,
- *     Clean, Nailbiter, Heavyweight (ESL top 10 that season), Deadlocked,
- *     Gasp, Humiliated. "Knocked out" now means any lost tie.
- *
- *  Cups v5 — 2026-09-25, 16:04 UTC — New tab: Form & Margins
- *   - New tab after Eliminations, with four dashboards, top to bottom:
- *     1. Outcomes: every match (each leg of a two-leg tie counts as one).
- *        Wins and losses on pens have their own striped colours.
- *     2. Margin Distribution: Stacked Visualizer and Tier Matrix (as in
- *        League), filtered by season and match type (All / Group Stage /
- *        One-Leg Ties / Two-Leg Ties, each leg). Pens get their own tiers.
- *     3. Two-Leg Ties: game states (tap one to filter), aggregate margins,
- *        and every tie with its legs and aggregate. The tie is the unit.
- *     4. Shootouts: key numbers, a split (competition / round / season /
- *        score before pens), and every shootout.
- *   - Opens with the shared highlights strip. Everything is calculated.
- *   - Pens colours, game-state names and the Coast threshold live in the
- *     "FORM & MARGINS" block (PEN_WIN_STYLE, TIE_TAGS, COAST_LEG1_MARGIN).
- *   - No changes to any other tab.
- *
- *  Cups v4 — 2026-09-25, 04:22 UTC — Card layout tweaks
- *   - Campaigns: the result badge moved down to the season line (right
- *     side, just above the end of the progress bar), so competition names
- *     get the full width.
- *   - Rivalries: competition tags removed; the record (MP, W, D, L, PKs)
- *     and goal difference now sit below the bar, as in Leagues.
- *   - Leagues: the EA FC league handle (e.g. BEL) is back, small and grey,
- *     next to the flags on each card and in the drawer title.
- *   - Fixed broken hover text on the win/loss bars (Rivalries, Leagues).
- *
- *  Cups v3 — 2026-09-25, 04:04 UTC — Review fixes and tab-by-tab design pass
- *   Everywhere
- *   - Unplayed seasons (nothing played yet, e.g. Season 10) are hidden.
- *   - Opening a card's drawer (Campaigns, Rivalries, Leagues) no longer
- *     pushes the other cards in its row below the drawer.
- *   - Round names read naturally ("Round of 16", "Quarter-Final").
- *   - Cup colours: Champions gold, Finalists silver, Exits red.
- *   - Season pills in Cups gold.
- *   Campaigns
- *   - Campaign card redesigned: one result badge instead of "WON" +
- *     "CHAMPIONS"; competition and season on the left.
- *   - Campaign banner reworked: title and result on top, then one row of
- *     six stats (record, goals, goal difference, entered, avg opponent
- *     rank, winner).
- *   - Bracket arrows point right-to-left (Final on the left).
- *   Finals
- *   - Competition switch; the stats, foes and archive follow it.
- *   - Stats in the shared highlights strip. "vs" removed from cards.
- *     Runner-up badges silver. "(ESL Foes from Archive)" removed.
- *   Eliminations
- *   - Exit rate counts only played cup runs. "Nemesis" line removed.
- *   Rivalries
- *   - Stats in the shared highlights strip; filters use shared controls.
- *   - "ESL Only" badge and rules text removed.
- *   - A club's matches open as chips (like Campaigns), not a list.
- *   Leagues
- *   - Matches open as chips. League names no longer cut off.
- *   - League slot codes (BEL, ROM, ...) hidden.
- *   Competitions
- *   - Banner replaced by the shared highlights strip (removes the
- *     "Cups!HS:LX" note). Controls use the shared switches and search.
- *     "1 Cups" fixed to "1 Cup". Made-up "71.1%" fallback removed.
- *   Trophies
- *   - Banner replaced by the shared highlights strip. Filters use the
- *     shared controls. "Quintuple Era (S6-S8)" now calculated.
- *
- *  Cups v2 — 2026-09-25, 02:51 UTC — Design pass: in line with League
- *   - Header and tab bar now use the shared PageHeader (same layout,
- *     spacing and full-size tabs as League), in Cups gold.
- *   - Removed the "Synced to Cups Sheet" badge and the three header stats
- *     (Trophies, Finals Win %, Total Matches).
- *   - New highlights strip at the top of Campaigns, built like League's:
- *     Trophies, Record, Finals, Goals, Shootouts.
- *   - Campaigns filters use the shared controls: season pills, a standard
- *     dropdown for competition, a result switch (Champions / Finalists /
- *     Exits), the shared search box and a Reset button.
- *   - Section titles use League's section-title style (Finals archive,
- *     Leagues, Silverware collection).
- *   - Smallest text raised from 8-9px to 10px (League's smallest size).
- *   - Page font and content spacing now match League.
- *   - Removed developer notes from titles ("Cups!HS:LX Grounded",
- *     "Computed from Log").
- *
- *  Cups v1 — 2026-09-24, 23:19 UTC — Correctness pass (no visual changes)
- *   - Two-legged ties now count as two matches, each leg with its own
- *     score and result, as the sheet's match totals count them. Affects
- *     club records (Rivalries) and the matches log. The Leagues tab still
- *     counts a tie once, because the sheet's league table does. Rivalries
- *     labels now explain this ("Each leg counts as a match").
- *   - Finals and Eliminations lists no longer stop at 33 and 5 entries
- *     (the counts on the day they were built). New finals now show up;
- *     empty numbered slots in the sheet are ignored.
- *   - Removed made-up fallback numbers (218 played, GF 479, 81.8% finals
- *     win rate, "Man City 6x"...). Blank sheet values now show as 0.
- *   - Removed out-of-date fallback column positions. If a header the
- *     canvas looks for is missing, a yellow warning explains what's wrong
- *     instead of silently reading the wrong columns.
- *   - Reads real sheet row numbers (App.js no longer shifts the rows).
- *   - Typed-in text now calculated from the data: season counts and
- *     ranges, Quintuple Era seasons, finals record, finals goals and
- *     clean sheets, trophy breakdowns, number of leagues. Our club's name
- *     is set once in CUPS SETTINGS.
- *   - Editing switched off (ENABLE_EDITING); edit buttons hidden.
- *   - Faster: rows are looked up by number instead of searching all rows.
- *
- *  Cups v0 — the code as built in Google Sheets (Gemini), re-indented,
- *   with "export default App" added so StackBlitz can load it.
+ *  GSL CANVAS — Cups.js (Cups section)
+ *  Version:  Cups v20
+ *  Date:     2026-10-18, 02:05 UTC
+ *  Latest:   Canvas v51.22 code tidy: unused names removed; history in CHANGELOG.md.
+ *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
 
@@ -224,8 +31,7 @@ import {
   MARGIN_TONES,
   RecordKey,
 } from './ui.js';
-import * as d3 from 'd3';
-import { Trophy, Medal, Shield, Award, Calendar, Flame, TrendingUp, Search, Filter, CheckCircle2, XCircle, Edit3, Plus, Trash2, ChevronLeft, ChevronRight, ChevronDown, BarChart3, Layers, Globe, Target, Users, ArrowUpRight, Activity, Sparkles, RefreshCw, Star, X, Check, Zap, Clock, Swords, History, ArrowUpDown, MinusCircle, Hash, FlaskConical } from 'lucide-react';
+import { Trophy, Medal, Shield, Calendar, TrendingUp, Filter, CheckCircle2, XCircle, Edit3, Plus, Trash2, ChevronLeft, ChevronRight, ChevronDown, BarChart3, Layers, Globe, Target, Users, ArrowUpRight, Activity, Sparkles, X, Zap, Swords, History, ArrowUpDown, MinusCircle, Hash, FlaskConical } from 'lucide-react';
 import CupsLab from './CupsLab.js';
 // Tab bar: order and names. (The 'id' must match the tab's content block.)
 const CUPS_TABS = [
@@ -813,22 +619,6 @@ const LEAGUE_MAPPING_RULES = {
         clubs: ['HAMMARBY IF', 'HAMMARBY', 'MIDTJYLLAND']
     }
 };
-// ESL teams have a number 1-92 under their flag; non-ESL teams have a league acronym like FRA/ITA/ESP
-function isEslTeam(rankVal) {
-    if (rankVal == null)
-        return false;
-    if (typeof rankVal === 'string') {
-        const trimmed = rankVal.trim();
-        if (/^[A-Za-z]+$/.test(trimmed))
-            return false; // League acronym like FRA, ITA, ESP, TUR, BEL, etc.
-        const num = Number(trimmed);
-        return !isNaN(num) && num >= 1 && num <= 92;
-    }
-    if (typeof rankVal === 'number') {
-        return !isNaN(rankVal) && rankVal >= 1 && rankVal <= 92;
-    }
-    return false;
-}
 function parseTeamRankOrLeague(rankVal, oppName = '') {
     if (rankVal != null) {
         const str = String(rankVal).trim();
@@ -904,18 +694,6 @@ function normalizeClubName(name) {
     if (s.includes('BRAGA') || s === 'SCB')
         return 'BRAGA';
     return s;
-}
-function matchesClub(opponentName, club) {
-    if (!opponentName || !club)
-        return false;
-    const normOp = normalizeClubName(opponentName);
-    const normClub = normalizeClubName(club.name || club.code);
-    if (normOp === normClub)
-        return true;
-    const op = String(opponentName).trim().toUpperCase();
-    const cCode = String(club.code || '').trim().toUpperCase();
-    const cName = String(club.name || '').trim().toUpperCase();
-    return op === cCode || op === cName;
 }
 // W/L/D logic: left score is Wrexham and right score is opponent (left > right is win, right > left is loss)
 // Knockout games: tied scores resolved via penalty shootout (penLeft vs penRight) into win or loss.
@@ -1053,11 +831,6 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
     const [cabinetCategoryFilter, setCabinetCategoryFilter] = useState('ALL'); // 'ALL' | 'CONTINENTAL' | 'DOMESTIC' | 'SUPERCUP' | 'QUINTUPLE'
     const [cabinetSeasonFilter, setCabinetSeasonFilter] = useState('ALL');
     const [cabinetSearchQuery, setCabinetSearchQuery] = useState('');
-    // Head-to-Head Club details modal state
-    const [selectedClubCode, setSelectedClubCode] = useState(null);
-    const [clubModalTab, setClubModalTab] = useState('matches'); // 'matches' | 'competitions'
-    const [clubSearchQuery, setClubSearchQuery] = useState('');
-    const [clubFilter, setClubFilter] = useState('ALL'); // 'ALL' | 'DOMINANT' | 'FREQUENT' | 'TOP10'
     // Standalone H2H Dashboard exact layout & interactive state
     const [h2hSubTab, setH2hSubTab] = useState('byClub'); // 'byClub' | 'allMatches' | 'tournaments'
     const [h2hSearch, setH2hSearch] = useState('');
@@ -1156,7 +929,6 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                 continue;
             // Find subrows (r+1 and r+2)
             const subrow1 = rowAt(i + 1);
-            const subrow2 = rowAt(i + 2);
             // Knockout stages matches
             const rounds = [];
             KNOCKOUT_ROUNDS.forEach(rnd => {
@@ -2238,23 +2010,6 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
     const totalCupsWon = useMemo(() => {
         return Object.values(trophyCounts).reduce((acc, v) => acc + v, 0);
     }, [trophyCounts]);
-    // Dynamically computed finals foes distribution (ESL finals only)
-    const dynamicFinalsFoes = useMemo(() => {
-        const foesMap = {};
-        finals.forEach(f => {
-            if (!f.opponent || !f.isEsl)
-                return;
-            if (!foesMap[f.opponent]) {
-                foesMap[f.opponent] = { name: f.opponent, flag: f.flag, p: 0, w: 0, l: 0 };
-            }
-            foesMap[f.opponent].p += 1;
-            if (f.isWon)
-                foesMap[f.opponent].w += 1;
-            else
-                foesMap[f.opponent].l += 1;
-        });
-        return Object.values(foesMap).sort((a, b) => b.p - a.p || b.w - a.w).slice(0, 6);
-    }, [finals]);
     // Dynamically computed elimination stage breakdown
     const dynamicEliminationStages = useMemo(() => {
         const stagesMap = {};
@@ -2304,13 +2059,6 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
         });
         return Array.from(map.values()).sort((a, b) => a.season - b.season);
     }, [filteredCampaigns]);
-    // Selected Campaign Details (for editing modal)
-    const activeCampaign = useMemo(() => {
-        if (selectedCampaignIndex != null) {
-            return campaigns.find(c => c.rowIndex === selectedCampaignIndex) || null;
-        }
-        return null;
-    }, [selectedCampaignIndex, campaigns]);
     // MUTATION HANDLERS (Bi-directional Sync)
     const handleSaveCampaign = (updatedCampaign) => {
         if (!updateItem || !updatedCampaign)
@@ -3537,7 +3285,6 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                         const openClubIdx = filteredClubs.findIndex(c => c.code === expandedClubCode);
                         const clubDrawerHere = clubIdx === drawerRowEnd(openClubIdx, rivalryCols, filteredClubs.length);
                         const pensInClub = club.matches.filter(m => m.penScore).length;
-                        const clubTournaments = Array.from(new Set(club.matches.map(m => m.competition)));
                         // Ratio bar percentages
                         const winPctBar = club.played > 0 ? (club.won / club.played) * 100 : 0;
                         const drawPctBar = club.played > 0 ? (club.drawn / club.played) * 100 : 0;
@@ -4548,8 +4295,6 @@ function App({ data = [], updateItem, deleteItem, insertItem, moveItem, followLi
                 .map(([n, label]) => `${n}x ${label}`)
                 .join(' • ') || 'None yet';
             // Aggregate total goals scored in trophy winning campaigns
-            const winningCampaignsGf = winningCampaigns.reduce((acc, c) => acc + (c.gf || 0), 0);
-            const winningCampaignsGa = winningCampaigns.reduce((acc, c) => acc + (c.ga || 0), 0);
             // Unique trophies aggregated by Competition for Silverware Hall
             const distinctTrophyTypes = [
                 { key: 'FA CUP', name: 'FA Cup', type: 'Domestic Major', icon: '🏆', border: 'border-emerald-300', bg: 'bg-emerald-50', text: 'text-emerald-800', desc: 'Historic English Cup' },

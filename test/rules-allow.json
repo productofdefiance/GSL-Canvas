@@ -1,0 +1,277 @@
+{
+  "about": "Allowed exceptions to test/rules.js (v51.22). Each entry: file, rule, kind, reason; plus either \"in\" (a function or variable the break sits inside, optionally \"text\": the string that matched) or, for page debt only, \"page\" and \"count\" (how many breaks that page may still have). New kinds or entries are agreed with the user first. The \"empty\" list is for test/empty.js: club names allowed in the visible text of an empty save, by page.",
+  "kinds": {
+    "rule-home": "The one place a rule is implemented (e.g. ui.js viewport() itself, ScrollRow's own sideways box).",
+    "page-debt": "Pages not yet converted (Cups, Pyramid, Squad): the count may only go down, and the entry goes when the page converts.",
+    "not-a-club": "The same letters as a club in the directory, but not a club (agreed 18 Oct: country codes, plain words).",
+    "wide-table": "A wide table (ledger) that scrolls sideways; exempt from ScrollRow (CLAUDE.md).",
+    "standards-review": "A sideways row that isn't a ScrollRow yet; converting it would change the screen, so it waits for the standards review (agreed 18 Oct)."
+  },
+  "allow": [
+    {
+      "file": "src/ui.js",
+      "rule": "screen-px",
+      "in": "viewport",
+      "text": "window.innerWidth",
+      "kind": "rule-home",
+      "reason": "viewport() is the one place the window's pixel size is read, for placing fixed hover cards inside the screen."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "screen-px",
+      "in": "viewport",
+      "text": "window.innerHeight",
+      "kind": "rule-home",
+      "reason": "As above, the height."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "overflow-row",
+      "in": "ScrollRow",
+      "kind": "rule-home",
+      "reason": "ScrollRow's own sideways box, with the edge fades."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "overflow-row",
+      "in": "ScopeStepper",
+      "kind": "standards-review",
+      "reason": "Main bar season switch (League Matchdays): a sideways season row without edge fades."
+    },
+    {
+      "file": "src/App.js",
+      "rule": "overflow-row",
+      "in": "App",
+      "kind": "standards-review",
+      "reason": "Top Bar page links, which scroll sideways on phones."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "club-name",
+      "in": "ISO2_TO_FLAG",
+      "text": "ESP",
+      "kind": "not-a-club",
+      "reason": "Country code for Spain's flag."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "club-name",
+      "in": "ISO2_TO_FLAG",
+      "text": "POR",
+      "kind": "not-a-club",
+      "reason": "Country code for Portugal's flag."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "club-name",
+      "in": "ISO2_TO_FLAG",
+      "text": "BEL",
+      "kind": "not-a-club",
+      "reason": "Country code for Belgium's flag."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "club-name",
+      "in": "ISO2_TO_FLAG",
+      "text": "NOR",
+      "kind": "not-a-club",
+      "reason": "Country code for Norway's flag."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "club-name",
+      "in": "ISO2_TO_FLAG",
+      "text": "CAN",
+      "kind": "not-a-club",
+      "reason": "Country code for Canada's flag."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "club-name",
+      "in": "ISO2_TO_FLAG",
+      "text": "BRA",
+      "kind": "not-a-club",
+      "reason": "Country code for Brazil's flag."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "club-name",
+      "in": "ISO2_TO_FLAG",
+      "text": "CHI",
+      "kind": "not-a-club",
+      "reason": "Country code for Chile's flag."
+    },
+    {
+      "file": "src/ui.js",
+      "rule": "club-name",
+      "in": "ISO2_TO_FLAG",
+      "text": "ALB",
+      "kind": "not-a-club",
+      "reason": "Country code for Albania's flag."
+    },
+    {
+      "file": "src/League.js",
+      "rule": "overflow-row",
+      "in": "CampaignsLedger",
+      "kind": "wide-table",
+      "reason": "Seasons: Campaigns ledger."
+    },
+    {
+      "file": "src/League.js",
+      "rule": "overflow-row",
+      "in": "OpponentsLedger",
+      "kind": "wide-table",
+      "reason": "Opponents ledger."
+    },
+    {
+      "file": "src/LeagueTabs.js",
+      "rule": "overflow-row",
+      "in": "FormMarginsTab",
+      "kind": "wide-table",
+      "reason": "Form & Margins: Streaks ledger and the two Dropped points ledgers."
+    },
+    {
+      "file": "src/LeagueTabs.js",
+      "rule": "overflow-row",
+      "in": "PointsTab",
+      "kind": "wide-table",
+      "reason": "Points: Matchday benchmarks ledger."
+    },
+    {
+      "file": "src/LeagueTabs.js",
+      "rule": "overflow-row",
+      "in": "HomeAwayTab",
+      "kind": "wide-table",
+      "reason": "Home vs Away: Venue ledger."
+    },
+    {
+      "file": "src/LeagueTabs.js",
+      "rule": "overflow-row",
+      "in": "SpiderTab",
+      "kind": "wide-table",
+      "reason": "Spider Matrix: Group table."
+    },
+    {
+      "file": "src/Cups.js",
+      "rule": "club-name",
+      "page": "Cups",
+      "count": 216,
+      "kind": "page-debt",
+      "reason": "Club names and codes typed into Cups (club lists, rival tables)."
+    },
+    {
+      "file": "src/Cups.js",
+      "rule": "overflow-row",
+      "page": "Cups",
+      "count": 5,
+      "kind": "page-debt",
+      "reason": "Sideways rows and tables not yet sorted into ScrollRow / wide table."
+    },
+    {
+      "file": "src/Cups.js",
+      "rule": "typed-count",
+      "page": "Cups",
+      "count": 2,
+      "kind": "page-debt",
+      "reason": "92 as a club count; a loop to 8."
+    },
+    {
+      "file": "src/CupsLab.js",
+      "rule": "overflow-row",
+      "page": "Cups",
+      "count": 2,
+      "kind": "page-debt",
+      "reason": "Cups Lab (hidden): two sideways boxes."
+    },
+    {
+      "file": "src/Pyramid.js",
+      "rule": "club-name",
+      "page": "Pyramid",
+      "count": 11,
+      "kind": "page-debt",
+      "reason": "Club names and codes typed into Pyramid, and country codes / words that match a club."
+    },
+    {
+      "file": "src/Pyramid.js",
+      "rule": "overflow-row",
+      "page": "Pyramid",
+      "count": 11,
+      "kind": "page-debt",
+      "reason": "Sideways rows and tables not yet sorted into ScrollRow / wide table."
+    },
+    {
+      "file": "src/Pyramid.js",
+      "rule": "screen-px",
+      "page": "Pyramid",
+      "count": 1,
+      "kind": "page-debt",
+      "reason": "Progression chart reads window.innerHeight."
+    },
+    {
+      "file": "src/Pyramid.js",
+      "rule": "typed-count",
+      "page": "Pyramid",
+      "count": 4,
+      "kind": "page-debt",
+      "reason": "92 clubs (TOTAL_CLUBS, a rank range); a loop to 30."
+    },
+    {
+      "file": "src/Squad.js",
+      "rule": "club-name",
+      "page": "Squad",
+      "count": 11,
+      "kind": "page-debt",
+      "reason": "Club codes typed into Squad, and position codes that match a club (MID)."
+    },
+    {
+      "file": "src/Squad.js",
+      "rule": "overflow-row",
+      "page": "Squad",
+      "count": 6,
+      "kind": "page-debt",
+      "reason": "Sideways rows and tables not yet sorted into ScrollRow / wide table."
+    },
+    {
+      "file": "src/Squad.js",
+      "rule": "hover-none",
+      "page": "Squad",
+      "count": 1,
+      "kind": "page-debt",
+      "reason": "Growth By Age decides touch from (hover: none)."
+    },
+    {
+      "file": "src/Squad.js",
+      "rule": "typed-count",
+      "page": "Squad",
+      "count": 1,
+      "kind": "page-debt",
+      "reason": "91 in a formation's pitch position (a percentage, not a count)."
+    }
+  ],
+  "empty": [
+    {
+      "page": "cups",
+      "text": "Wrexham",
+      "kind": "page-debt",
+      "reason": "Cups types the managed club's name into its Eliminations and Timeline text."
+    },
+    {
+      "page": "pyramid",
+      "text": "Wrexham",
+      "kind": "page-debt",
+      "reason": "Pyramid Progression has a 'Wrexham Ascent' preset typed in."
+    },
+    {
+      "page": "pyramid",
+      "text": "Reading",
+      "kind": "not-a-club",
+      "reason": "The word in 'Reading the grid' (Analytics), not the club."
+    },
+    {
+      "page": "pyramid",
+      "text": "Standard",
+      "kind": "not-a-club",
+      "reason": "The 'Standard' chart view (Progression), not the club."
+    }
+  ]
+}
