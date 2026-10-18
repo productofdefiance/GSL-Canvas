@@ -1,8 +1,10 @@
 // Pixel comparison (v51.22): screenshots every page and tab at 390 and 1440, light and dark,
-// then compares two such sets pixel by pixel. The footer is hidden (its version line changes every build).
+// then compares two such sets pixel by pixel. The footer is hidden (its version line changes every build);
+// animations, transitions and smooth scrolling are off, so a shot never catches a row mid-scroll.
 //   node pixel.js shoot <dir>          (needs ../cssC.css and app.bundle.js: npm run css && npm run bundle)
 //   node pixel.js diff <dirA> <dirB>   (prints every shot that differs, with the count of changed pixels)
-// PX_BUNDLE / PX_CSS point a shoot at another build (e.g. main's, for the "before" set).
+// PX_BUNDLE / PX_CSS point a shoot at another build (e.g. main's, for the "before" set); PX_ONLY=league-fixtures,…
+// shoots only those tabs (to re-check a difference).
 // No fixed waits: each shot polls until the page has rendered and fonts have settled. Hard timeout: --max seconds.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -28,11 +30,12 @@ async function settle(p) {
 
 async function shoot(dir) {
   fs.mkdirSync(dir, { recursive: true });
-  const css = fs.readFileSync(process.env.PX_CSS || path.join(__dirname, '../cssC.css'), 'utf8') + '\nfooter{visibility:hidden!important}\n*{caret-color:transparent!important;animation:none!important;transition:none!important}';
+  const css = fs.readFileSync(process.env.PX_CSS || path.join(__dirname, '../cssC.css'), 'utf8') + '\nfooter{visibility:hidden!important}\n*{caret-color:transparent!important;animation:none!important;transition:none!important;scroll-behavior:auto!important}';
   const bundle = fs.readFileSync(process.env.PX_BUNDLE || path.join(__dirname, 'app.bundle.js'), 'utf8');
   const br = await chromium.launch();
   let n = 0;
   for (const w of [390, 1440]) for (const dark of [false, true]) for (const page of Object.keys(TABS)) for (const tab of TABS[page]) {
+    if (process.env.PX_ONLY && !process.env.PX_ONLY.split(',').includes(`${page}-${tab}`)) continue;
     const ov = { 'App:sectionId': page, [PAGEKEY[page]]: tab };
     const p = await br.newPage({ viewport: { width: w, height: 900 } });
     const errs = [];

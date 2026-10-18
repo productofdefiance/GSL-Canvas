@@ -170,10 +170,6 @@ const TABS = [
   { id: 'spider', label: 'Spider Matrix', icon: Target },
 ];
 
-// One cell of the margin matrix. The biggest number in each group (wins,
-// draws, losses) gets the highlight; ties all get it; zeros show as "-".
-// MARGIN_TONES: from ui.js (v23).
-
 // ─────────────────────────────────────────────────────────────────────
 
 // Points per game. The only fair way to compare seasons of different lengths
