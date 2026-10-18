@@ -1,5 +1,5 @@
 // Tiny CommonJS bundler: packs entry + test/out + node_modules into one script.
-// d3 and lucide-react always come from test/stubs (real d3 is ESM-only and can't be bundled here).
+// d3 always comes from test/stubs (real d3 is ESM-only and can't be bundled here); lucide-react is the real one.
 const fs=require('fs'),path=require('path');
 const STUBS=path.join(__dirname,'../stubs'),NM=[path.join(__dirname,'../node_modules')];
 const mods={};let id=0;const ids={};

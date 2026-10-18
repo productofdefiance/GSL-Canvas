@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "d3": "^7.9.0",
-    "lucide-react": "^1.47.0",
+    "d3": "7.9.0",
+    "lucide-react": "1.59.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
@@ -29,5 +29,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "overrides": {
+    "typescript": "4.9.5"
   }
 }
