@@ -6,6 +6,51 @@ and each file now keeps a short header (version, date, latest change). From v51.
 
 <!-- NEW ENTRIES GO BELOW THIS LINE -->
 
+## Canvas v51.24
+
+### App.js: Canvas v51.24 — 2026-10-18, 07:30 UTC — Doctype · Cups v21, Cups Lab v4, Pyramid v32
+
+- Version line updated. No other changes to this file.
+
+### public/index.html: Canvas v51.24 — 2026-10-18, 07:30 UTC — Doctype
+
+- `<!doctype html>` is the first line: browsers now draw the live site in standards mode, as the test kit always
+  has. League and every table take the look the kit showed (and the design chat approved): table text slate-900
+  instead of black, table rows 1.5–4.5px taller, League's icon rows and Home vs Away headers a few pixels taller.
+
+### Cups.js: Cups v21 — 2026-10-18, 07:30 UTC — Canvas v51.24 (doctype)
+
+- Lines that standards mode made taller keep their old (quirks-mode) spacing; the user chose to keep Cups as it looks
+  live. Each fix makes the one element alone on its line take its own height:
+  - Opponent lines (Finals, Eliminations, Form): the "ESL #n" or league-code line under a club name is
+    `block` (the bordered code chip `block w-fit -my-px`), so a row is 36.5px again, not 44px.
+  - Competitions tiles: the small line under each number ("86% W", "Runs", "Exits") is `block` (98.5px tiles, not 106).
+  - Rivalries: the flag beside each club is `!flex` inside its `text-3xl` holder (11px, not 36px): the page is 648px
+    shorter at 390 than plain standards mode would make it, as it is live today.
+  - Finals "most-faced" tiles: the flag is `!flex mx-auto` (76.5px tiles, not 84.5).
+  - Filter blocks whose label sits above pills (Season, Competition, Tags): `flex flex-col`, as the newer filters
+    already are; the label line is 16px, not 24px. "Matches" and "Split by" (label beside a switch on wide screens):
+    `flex flex-col items-start` on phones only (`sm:block`), so wide screens keep label and switch on one line.
+
+### CupsLab.js: Cups Lab v4 — 2026-10-18, 07:30 UTC — Canvas v51.24 (doctype)
+
+- The two Competition filter blocks: `flex flex-col` (label line 16px, not 24px).
+
+### Pyramid.js: Pyramid v32 — 2026-10-18, 07:30 UTC — Canvas v51.24 (doctype)
+
+- Filter blocks with a label above pills (Division, Presets, Season, Current division, Nation size, Trophies):
+  `flex flex-col`. With a label above a switch (Competition, Sort, After): `flex flex-col items-start sm:block`.
+- Progression's season ticks: the label is `block` (16px, not 24px), so the chart keeps its height.
+
+### Test kit — Canvas v51.24
+
+- compile.js fails if public/index.html doesn't start with `<!doctype html>`.
+- New browser/layout.js: lists, view by view, the elements whose size or text colour changed between two production
+  builds (the evidence for this build's list of differences).
+- pixel.js: the kit's page loads the site's web fonts (index.html's font links), so kit and production shots compare.
+- CLAUDE.md: the doctype rule and check; how to keep a lone inline element from growing its line. Brief saved as
+  briefs/v51.24.md.
+
 ## Canvas v51.23
 
 ### App.js: Canvas v51.23 — 2026-10-18, 04:30 UTC — Page build · UI v35, Index v1, Config v1, CSS v1

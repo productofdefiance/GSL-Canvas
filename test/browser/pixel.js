@@ -42,6 +42,9 @@ async function shoot(dir) {
   const SITE = process.env.PX_SITE && path.resolve(process.env.PX_SITE);
   const css = SITE ? '' : fs.readFileSync(process.env.PX_CSS || path.join(__dirname, '../cssC.css'), 'utf8') + '\n' + FREEZE;
   const bundle = SITE ? '' : fs.readFileSync(process.env.PX_BUNDLE || path.join(__dirname, 'app.bundle.js'), 'utf8');
+  // v51.24: the kit's page loads the same web fonts as the site (index.html's font links), so a kit shot and a
+  // production shot can be compared.
+  const fontLinks = (fs.readFileSync(path.join(__dirname, '../../public/index.html'), 'utf8').match(/<link [^>]*fonts\.(googleapis|gstatic)\.com[^>]*>/g) || []).join('');
   const CDN = process.env.PX_PLAYCDN;
   const cdnCss = SITE && CDN && CDN !== '1' ? await playCdnCss(fs.readFileSync(path.join(SITE, 'index.html'), 'utf8'), fs.readFileSync(CDN, 'utf8')) : null;
   const seenAll = new Set();
@@ -60,7 +63,7 @@ async function shoot(dir) {
       else if (CDN) await playCdn(p);
       await p.addInitScript(`${pre}globalThis.__OV=${JSON.stringify(ov)};document.addEventListener('DOMContentLoaded',()=>{const s=document.createElement('style');s.textContent=${JSON.stringify(FREEZE)};document.head.appendChild(s);});`);
     } else {
-      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><script>${pre}globalThis.__OV=${JSON.stringify(ov)}</script></head><body><div id="root"></div><script>${bundle}</script></body></html>`;
+      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${fontLinks}<style>${css}</style><script>${pre}globalThis.__OV=${JSON.stringify(ov)}</script></head><body><div id="root"></div><script>${bundle}</script></body></html>`;
       await p.route('http://gsl.test/', (r) => r.fulfill({ body: html, contentType: 'text/html; charset=utf-8' }));
     }
     await p.goto('http://gsl.test/');

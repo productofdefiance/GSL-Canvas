@@ -29,7 +29,8 @@ cd browser && node shots6.js '[{"w":1440,"ov":{"App:sectionId":"league","League:
 
 `compile.js` (from v51.18) parses every file in `src/` with Babel's parser, the one react-scripts
 compiles with. It fails on errors a plain syntax check misses, such as the same name imported twice. It also fails if
-`public/index.html` has `<html…>` text inside a comment, because react-scripts injects its script there.
+`public/index.html` has `<html…>` text inside a comment, because react-scripts injects its script there, and (v51.24)
+if the file doesn't start with `<!doctype html>` (without it the live site draws in quirks mode, unlike the kit).
 
 `render.js` prints any page with React errors or text under 11px, then a total, and (v51.22) compares the
 sub-11px count of every page and tab (both widths, extra views included) with `baseline.json`. It fails on a
@@ -72,8 +73,14 @@ with the static stand-in instead (those classes compiled ahead, in place before 
 misses scrolling its chip into view). Either way it shows the CDN's styles, not its cost.
 On production builds three views differ between two runs of the same build (squad-former and squad-contracts at
 390 near y=127, pyramid-progression by 12–23 pixels); re-shoot them before calling a difference real.
-`PX_DOCTYPE=1` (diagnosis) puts a doctype in front of a page that has none: the live page has no doctype and draws in
-quirks mode, while the kit's own pages draw in standards mode (v51.23 found this; the doctype is a later build).
+`PX_DOCTYPE=1` (diagnosis) puts a doctype in front of a page that has none (v51.23 used it to show that the doctype
+alone explained the quirks / standards differences; from v51.24 the page has one).
+
+`browser/layout.js` (v51.24): explains a pixel difference. `node layout.js <buildA> <buildB> [page-tab-width …]`
+loads each view from two production builds (prod.js output) and lists the deepest elements whose height, width or
+text colour changed, grouped by tag and class, with counts and sizes (`--dark`, `--top N`, `--json <file>`). The
+same build against itself can show a button mid-transition (League Fixtures season strip): re-run before trusting a
+one-off.
 
 `browser/load.js` (v51.23): load numbers. `node prod.js <ref | .> <outDir> --plain` makes the build exactly as
 Netlify does (no hook); `node load.js <outDir> [--playcdn]` loads it at 390 with 4x CPU slowdown, three runs, and

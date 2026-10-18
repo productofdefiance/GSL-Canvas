@@ -1,9 +1,9 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  *  GSL CANVAS — CupsLab.js (Cups Lab: experimental views, hidden)
- *  Version:  Cups Lab v3
- *  Date:     2026-10-18, 02:05 UTC
- *  Latest:   Canvas v51.22 code tidy: an unused import removed; history in CHANGELOG.md.
+ *  Version:  Cups Lab v4
+ *  Date:     2026-10-18, 07:30 UTC
+ *  Latest:   Canvas v51.24 doctype: filter labels keep their old spacing.
  *  History:  CHANGELOG.md (every build, newest first)
  * ════════════════════════════════════════════════════════════════════
  */
@@ -97,7 +97,7 @@ function RoundFunnel({ campaigns, rounds, compName }) {
       title="Round Survival Funnel"
       sub="How many runs reached each round, and where they ended. A run that entered late counts as having reached the earlier rounds."
     >
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 flex flex-col">
         <ControlLabel accent="amber" icon={Trophy}>Competition</ControlLabel>
         <FilterPills accent="amber" value={active.comp} onChange={setComp} options={comps.map((c) => ({ value: c.comp, label: compName(c.comp), badge: c.runs.length }))} />
       </div>
@@ -365,7 +365,7 @@ function ExtremesWall({ matches, ties, compName }) {
   };
   return (
     <Section icon={Flame} title="Margin Extremes Wall" sub="The records: widest margins, wildest games, tightest escapes. Every leg counts as a match.">
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 flex flex-col">
         <ControlLabel accent="amber" icon={Trophy}>Competition</ControlLabel>
         <FilterPills accent="amber" value={comp} onChange={setComp} options={[{ value: 'all', label: 'All competitions' }, ...comps.map((c) => ({ value: c, label: compName(c) }))]} />
       </div>
