@@ -19,7 +19,7 @@ Claude Code cloud sessions already have Chromium (`PLAYWRIGHT_BROWSERS_PATH=/opt
 ```
 cd test
 npm run check        # syntax, compile, build, rules, lint, render (every page x tab at 390 and 1440), empty save
-npm run css          # Tailwind CSS for the browser, prefixed with public/index.html's <style>
+npm run css          # Tailwind CSS from ../tailwind.config.js, prefixed with index.html's <style>; fails on a runtime class the build lacks
 npm run bundle       # browser/app.bundle.js
 npm run overflow     # phone overflow check on every League tab (scrollWidth must equal 390)
 npm run tap -- --full <tabs the build changes>   # hover cards on touch at 390: full on those tabs, sample elsewhere (see below)
@@ -59,6 +59,26 @@ or "NaN", "undefined", "null" or a club name in the visible text; allowed names 
 tab at 390 and 1440, light and dark (120 shots, footer hidden), and compares two sets pixel by pixel. For a build
 that must not change the screen: shoot main's bundle first (`PX_BUNDLE`, `PX_CSS`), then the branch's, then diff.
 Two runs of the same build come out identical, so any difference is real.
+
+`browser/prod.js` and `browser/site.js` (v51.23): the pixel sweep against the real production build. `node prod.js
+<ref | .> <outDir>` runs react-scripts build on a git ref (e.g. `origin/main`) or the working tree, with one test
+hook (each `useState` reads `__OV` first, as build.js does, so every tab can be opened; ESLint off for that build).
+`PX_SITE=<outDir> npm run pixel -- shoot <dir>` then shoots the served build. `PX_PLAYCDN=1` answers a build's play
+CDN request (cdn.tailwindcss.com is unreachable from cloud sessions) with site.js's stand-in: it watches the page's
+class names and keeps one style at the end of the head, compiled by Tailwind 3.4.17 with the page's own config, as
+the play CDN does, and with `PX_CLASSES=<file>` writes every class the pages used. `PX_PLAYCDN=<that file>` answers
+with the static stand-in instead (those classes compiled ahead, in place before the page draws): use it for the
+"before" set, because the dynamic one's styles land after the page's first measurements (a season strip then
+misses scrolling its chip into view). Either way it shows the CDN's styles, not its cost.
+On production builds three views differ between two runs of the same build (squad-former and squad-contracts at
+390 near y=127, pyramid-progression by 12–23 pixels); re-shoot them before calling a difference real.
+`PX_DOCTYPE=1` (diagnosis) puts a doctype in front of a page that has none: the live page has no doctype and draws in
+quirks mode, while the kit's own pages draw in standards mode (v51.23 found this; the doctype is a later build).
+
+`browser/load.js` (v51.23): load numbers. `node prod.js <ref | .> <outDir> --plain` makes the build exactly as
+Netlify does (no hook); `node load.js <outDir> [--playcdn]` loads it at 390 with 4x CPU slowdown, three runs, and
+prints first paint, League drawn (the page's last change before 1.5s of quiet), bytes downloaded and CSS bytes,
+and the middle run. With `--playcdn` the CDN's download and in-page compile are left out.
 
 Output (`out/`, `snap*/`, `cssC.css`, `browser/app.bundle.js`, screenshots) is git-ignored.
 

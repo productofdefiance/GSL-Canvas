@@ -15,12 +15,14 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 | --- | --- |
 | package.json | Project settings |
 | netlify.toml | Netlify build for pull-request previews: `CI=false npm run build`, publishes `build/`, Node 20 |
-| public/index.html | Tailwind CDN, Google Fonts, colour variables, division and dark-mode CSS |
+| public/index.html | The page: head (title, Google Fonts, colour variables, division and dark-mode CSS) and the root div. No doctype yet: browsers draw it in quirks mode (the test kit draws standards mode) |
+| tailwind.config.js | Tailwind's config (colours as `--c-*` variables, page font, safelist); compiled ahead of time by react-scripts. The test kit reads the same file |
+| src/index.css | The three `@tailwind` lines, imported once in index.js |
 | src/App.js | Shell: Top Bar, page switching, dark-mode switch, footer, `VERSION_TAG` / `PUBLISHED` |
 | src/ui.js | Shared layer: controls, Highlights bar, hover provider, flags, `useSort`, `ownClubInfo`, club colours |
 | src/League.js + src/LeagueTabs.js | League page shell + its redesigned tabs (convention C1) |
 | src/Cups.js, src/CupsLab.js, src/Pyramid.js, src/Squad.js | Other pages |
-| src/index.js, src/sheetData.js, src/style.css | Entry point; the exported workbook data; leftover stylesheet |
+| src/index.js, src/sheetData.js, src/style.css | Entry point (imports index.css); the exported workbook data; leftover stylesheet |
 | test/ | Test kit: `test/setup.sh`, then `cd test && npm run check` (see test/README.md). Test-only dependencies live in test/package.json |
 | briefs/ | One build brief per build (`v51.xx.md`), mock images in `briefs/img/`; `TEMPLATE.md` is the format |
 | CHANGELOG.md | Every build's changes, newest first, grouped by canvas version (one entry per file) |
@@ -29,7 +31,8 @@ Standard React layout (StackBlitz's file panel shows it as one flat list, but th
 Any restructure is one deliberate step, agreed with the user, checked in StackBlitz (the user's preview), then recorded
 here and in the living handoff.
 
-Libraries: React, d3, lucide-react only. Ask before adding anything.
+Libraries: React, d3, lucide-react only. Ask before adding anything. Tailwind (pinned, exact version) is a build step,
+not a library the code imports.
 
 ## How work runs
 
@@ -89,6 +92,10 @@ Code receives one brief per build, the locked decisions only.
   on a tap anywhere else or on scroll; only one overlay (hover card, [i], sheet) is open at a time.
 - Any chip or switch row that scrolls sideways uses ui.js `ScrollRow` (its edge fades where more is hidden; set
   `surface` to the card or page behind it); no plain `overflow-x-auto` rows. Wide tables (ledgers) are exempt.
+- Tailwind is compiled ahead of time from `tailwind.config.js` (no play CDN): it only sees class names written whole in
+  the source. Write class names whole (never assembled at runtime, like `` `bg-${tone}-500` ``), or add them to the
+  config's `safelist` with a comment saying where they're used. The kit (`test/css.js`) and the site share that one
+  config; `npm run css` fails if a rendered page uses a class the build lacks.
 - Flags are always drawn vectors (ui.js `Flag`, or `SvgFlag` inside charts), never emoji text, anywhere in the canvas.
 - Text floor 11px (SVG too); the small-text baseline may never rise. R10 match order: flag, club, result chip, score. R11: tables sort by headers.
   R12: "us" cards get a top accent strip, "them" cards a left strip.

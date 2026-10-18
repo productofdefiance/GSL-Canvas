@@ -5,12 +5,18 @@
 //   node pixel.js diff <dirA> <dirB>   (prints every shot that differs, with the count of changed pixels)
 // PX_BUNDLE / PX_CSS point a shoot at another build (e.g. main's, for the "before" set); PX_ONLY=league-fixtures,…
 // shoots only those tabs (to re-check a difference).
+// v51.23: PX_SITE=<dir> shoots a real production build instead (prod.js output: the site's own index.html, CSS and
+// script, served as Netlify serves them); PX_PLAYCDN=1 answers a build's play CDN request with site.js's dynamic
+// stand-in and writes every class the pages used to PX_CLASSES (a file); PX_PLAYCDN=<that file> then answers with
+// the static stand-in compiled from those classes (styles in place before the page draws). Use the static one for
+// the "before" set.
 // No fixed waits: each shot polls until the page has rendered and fonts have settled. Hard timeout: --max seconds.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
 const { TABS, PAGEKEY } = require('../pages');
+const { serveSite, playCdn, playCdnStatic, playCdnCss } = require('./site');
 const [mode, a, b] = process.argv.slice(2);
 const maxArg = process.argv.indexOf('--max');
 const MAX = (maxArg > 0 ? Number(process.argv[maxArg + 1]) : 900) * 1000;
@@ -22,6 +28,8 @@ async function settle(p) {
   await p.evaluate(() => document.fonts && document.fonts.ready);
   let last = -1;
   for (let i = 0; i < 60; i++) {
+    // The play CDN stand-in (site.js) compiles out of the page: wait until its styles are in.
+    await p.waitForFunction(() => !window.__twBusy, null, { polling: 'raf', timeout: 15000 });
     const h = await p.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(document.documentElement.scrollHeight)))));
     if (h === last) return;
     last = h;
@@ -30,8 +38,13 @@ async function settle(p) {
 
 async function shoot(dir) {
   fs.mkdirSync(dir, { recursive: true });
-  const css = fs.readFileSync(process.env.PX_CSS || path.join(__dirname, '../cssC.css'), 'utf8') + '\nfooter{visibility:hidden!important}\n*{caret-color:transparent!important;animation:none!important;transition:none!important;scroll-behavior:auto!important}';
-  const bundle = fs.readFileSync(process.env.PX_BUNDLE || path.join(__dirname, 'app.bundle.js'), 'utf8');
+  const FREEZE = 'footer{visibility:hidden!important}\n*{caret-color:transparent!important;animation:none!important;transition:none!important;scroll-behavior:auto!important}';
+  const SITE = process.env.PX_SITE && path.resolve(process.env.PX_SITE);
+  const css = SITE ? '' : fs.readFileSync(process.env.PX_CSS || path.join(__dirname, '../cssC.css'), 'utf8') + '\n' + FREEZE;
+  const bundle = SITE ? '' : fs.readFileSync(process.env.PX_BUNDLE || path.join(__dirname, 'app.bundle.js'), 'utf8');
+  const CDN = process.env.PX_PLAYCDN;
+  const cdnCss = SITE && CDN && CDN !== '1' ? await playCdnCss(fs.readFileSync(path.join(SITE, 'index.html'), 'utf8'), fs.readFileSync(CDN, 'utf8')) : null;
+  const seenAll = new Set();
   const br = await chromium.launch();
   let n = 0;
   for (const w of [390, 1440]) for (const dark of [false, true]) for (const page of Object.keys(TABS)) for (const tab of TABS[page]) {
@@ -41,17 +54,26 @@ async function shoot(dir) {
     const errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
     const pre = `localStorage.setItem('gsl-theme','${dark ? 'dark' : 'light'}');`;
-    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><script>${pre}globalThis.__OV=${JSON.stringify(ov)}</script></head><body><div id="root"></div><script>${bundle}</script></body></html>`;
-    await p.route('http://gsl.test/', (r) => r.fulfill({ body: html, contentType: 'text/html; charset=utf-8' }));
+    if (SITE) {
+      await serveSite(p, SITE);
+      if (cdnCss) await playCdnStatic(p, cdnCss);
+      else if (CDN) await playCdn(p);
+      await p.addInitScript(`${pre}globalThis.__OV=${JSON.stringify(ov)};document.addEventListener('DOMContentLoaded',()=>{const s=document.createElement('style');s.textContent=${JSON.stringify(FREEZE)};document.head.appendChild(s);});`);
+    } else {
+      const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><script>${pre}globalThis.__OV=${JSON.stringify(ov)}</script></head><body><div id="root"></div><script>${bundle}</script></body></html>`;
+      await p.route('http://gsl.test/', (r) => r.fulfill({ body: html, contentType: 'text/html; charset=utf-8' }));
+    }
     await p.goto('http://gsl.test/');
     await settle(p);
     const out = path.join(dir, `${page}-${tab}-${w}-${dark ? 'dark' : 'light'}.png`);
     await p.screenshot({ path: out, fullPage: true });
+    if (CDN === '1') (await p.evaluate(() => [...(window.__twSeen || [])])).forEach((c) => seenAll.add(c));
     if (errs.length) console.log(out, 'errors', JSON.stringify(errs));
     n++;
     await p.close();
   }
   await br.close();
+  if (CDN === '1' && process.env.PX_CLASSES) fs.writeFileSync(process.env.PX_CLASSES, [...seenAll].sort().join(' '));
   console.log(`shot ${n}`);
 }
 
