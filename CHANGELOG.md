@@ -25,7 +25,8 @@ and each file now keeps a short header (version, date, latest change). From v51.
 ### FLAGS.md — Canvas v51.25 (new, review layer 1)
 
 - The flags log: F1–F14 carried over from the design chat (F14 fixed in this build), F15–F17 opened by the future-save
-  check.
+  check, F18 by the Safari engine check (a ResizeObserver loop on League Spider at 390 in WebKit; reported as a note,
+  not a failure).
 
 ### .github — Canvas v51.25 (new, review layers 2 and 3)
 

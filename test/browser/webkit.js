@@ -1,6 +1,9 @@
 // Safari engine check (v51.25): every page and tab of a production build (prod.js output, the site's own index.html,
 // CSS and script) in Playwright's WebKit at 390 and 1440. Fails on a page error, a page that draws nothing, or a page
 // that scrolls sideways. The rest of the kit runs Chromium; this catches Safari-only breakage.
+// One message is printed as a note, not a failure: "ResizeObserver loop …" (the browser saying a size-watcher's
+// change was delivered a frame late; nothing stops working). Each one seen is a flag in FLAGS.md (F18: League Spider
+// at 390 in WebKit).
 //   node webkit.js [buildDir]        (default ../out/prod; build it first: node prod.js . ../out/prod)
 //   ENGINE=chromium node webkit.js   (the same check in Chromium, where WebKit can't be installed)
 // No fixed waits: each view polls until the page has drawn and its height holds still. Hard timeout: --max seconds (480).
@@ -18,6 +21,8 @@ setTimeout(() => { console.log(`timeout after ${MAX / 1000}s`); process.exit(2);
 (async () => {
   const br = await pw[ENGINE].launch();
   const fails = [];
+  const notes = [];
+  const NOTE = /^ResizeObserver loop/;
   let n = 0;
   for (const w of [390, 1440]) for (const page of Object.keys(TABS)) for (const tab of TABS[page]) {
     const p = await br.newPage({ viewport: { width: w, height: 900 } });
@@ -36,13 +41,16 @@ setTimeout(() => { console.log(`timeout after ${MAX / 1000}s`); process.exit(2);
       if (r[0] === last) break;
       last = r[0];
     }
-    if (errs.length) fails.push(`${tag}: page error: ${errs[0].slice(0, 200)}`);
+    errs.filter((e) => NOTE.test(e)).forEach((e) => notes.push(`${tag}: ${e.slice(0, 120)}`));
+    const real = errs.filter((e) => !NOTE.test(e));
+    if (real.length) fails.push(`${tag}: page error: ${real[0].slice(0, 200)}`);
     if (sw > w) fails.push(`${tag}: page scrolls sideways (${sw}px wide at ${w})`);
     n++;
     await p.close();
   }
   await br.close();
+  notes.forEach((x) => console.log(`${ENGINE.toUpperCase()} note (not a failure; see FLAGS.md): ${x}`));
   fails.forEach((f) => console.log(`${ENGINE.toUpperCase()} ${f}`));
-  console.log(`${ENGINE}: ${n} views; ${fails.length} failures`);
+  console.log(`${ENGINE}: ${n} views; ${fails.length} failures; ${notes.length} notes`);
   process.exitCode = fails.length ? 1 : 0;
 })().catch((e) => { console.error(e.message); process.exit(1); });

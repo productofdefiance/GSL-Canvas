@@ -9,6 +9,13 @@ rolled back) · where it was resolved (pull request or version). The repo is pub
 
 ---
 
+### F18 · League Spider, phone, Safari engine: a ResizeObserver loop
+- **Raised by:** Code (v51.25 Safari engine check) · **Date:** 2026-10-18 · **Status:** open
+- At 390 in WebKit, League → Spider reports "ResizeObserver loop completed with undelivered notifications": a
+  size-watcher there changes the size it watches within one frame. Nothing visible breaks and Chromium doesn't report
+  it. webkit.js prints these as notes, not failures, so each new one is seen; this flag stays open until the loop is
+  traced (likely a ScrollRow or useKeepInView observer on the phone layout).
+
 ### F17 · Pyramid Progression, desktop: a long name runs into its change figure
 - **Raised by:** Code (v51.25 future-save check) · **Date:** 2026-10-18 · **Status:** open
 - In the ranked list to the right of the chart (1440), "WOLVERHAMPTON W…" overlaps its change figure ("+16"). Seen
