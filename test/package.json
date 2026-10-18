@@ -3,7 +3,7 @@
   "private": true,
   "description": "Checks for every GSL Canvas build: syntax, server render, browser. Not part of the app.",
   "scripts": {
-    "check": "node syntax.js && node compile.js && node build.js && node rules.js && node lint.js && node render.js snap && node empty.js",
+    "check": "node syntax.js && node compile.js && node build.js && node rules.js && node lint.js && node render.js snap && node golden.js && node empty.js && node future.js",
     "css": "node css.js snap cssC.css",
     "bundle": "cd browser && node bundle.js entry.js app.bundle.js",
     "overflow": "cd browser && node ow.js",
@@ -12,18 +12,20 @@
     "lint": "node lint.js",
     "rules": "node build.js && node rules.js",
     "empty": "node build.js && node empty.js",
-    "pixel": "cd browser && node pixel.js"
+    "pixel": "cd browser && node pixel.js",
+    "future": "node build.js && node future.js",
+    "webkit": "cd browser && node webkit.js"
   },
   "devDependencies": {
     "@babel/parser": "7.29.0",
     "eslint": "9.17.0",
     "eslint-plugin-react": "7.37.2",
     "eslint-plugin-react-hooks": "5.1.0",
+    "lucide-react": "1.59.0",
     "playwright": "1.56.1",
     "postcss": "8.4.49",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-icons": "5.5.0",
     "tailwindcss": "3.4.17",
     "typescript": "5.6.3"
   }

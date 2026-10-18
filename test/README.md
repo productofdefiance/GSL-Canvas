@@ -18,7 +18,7 @@ Claude Code cloud sessions already have Chromium (`PLAYWRIGHT_BROWSERS_PATH=/opt
 
 ```
 cd test
-npm run check        # syntax, compile, build, rules, lint, render (every page x tab at 390 and 1440), empty save
+npm run check        # syntax, compile, build, rules, lint, render (every page x tab at 390 and 1440), golden numbers, empty save, future save
 npm run css          # Tailwind CSS from ../tailwind.config.js, prefixed with index.html's <style>; fails on a runtime class the build lacks
 npm run bundle       # browser/app.bundle.js
 npm run overflow     # phone overflow check on every League tab (scrollWidth must equal 390)
@@ -89,11 +89,44 @@ and the middle run. With `--playcdn` the CDN's download and in-page compile are 
 
 Output (`out/`, `snap*/`, `cssC.css`, `browser/app.bundle.js`, screenshots) is git-ignored.
 
+## Review checks (v51.25)
+
+`golden.js` (inside `npm run check`, after render.js): the golden numbers in `golden.json`, read from the rendered
+pages (render.js's snapshots, desktop width). Each entry names its value, where it shows and its kind: **golden**
+(verified by the user against the sheet; a change fails) or **pinned** (not in the sheet; a change is printed as
+PINNED CHANGED but passes). An entry finds its anchor (the labels just before the value, in the page's text pieces) and
+compares the pieces after it; G20 counts the club cards on Opponents instead (most games against one club, and how many
+clubs share it). Never edit golden.json without the design chat and the user.
+
+`future.js` (inside `npm run check`; alone: `npm run future`): the future-save fixture. It builds a workbook from
+today's (S9–S15 in the League sheet's own template rows, S12 a relegation, S13 in Division 2 against the 8 clubs the
+save never met, S15 half played; Pyramid positions for S9–S15; Cups and Winners for S9–S15; the longest names already in
+the data) and renders every page and tab at 390 and 1440, on the server and in Chromium (the kit's bundle with this
+workbook): no React error, no section crash, no "NaN" / "undefined" / "null", no sideways scroll. About 2.5 minutes.
+`node future.js --shots <dir>` saves a screenshot of every view, for spotting things that render but look wrong
+(those become flags in FLAGS.md, not failures).
+
+`gate.js`: the Checklist gate. `node gate.js --body <file>` tries a description saved to a file: it fails unless the
+"The user's checks" section has at least one tick-box and every one is ticked.
+
+`browser/webkit.js` (`npm run webkit`): every page and tab of a production build (`node prod.js . ../out/prod`) in
+Playwright's WebKit at 390 and 1440: no page error, nothing blank, no sideways scroll. WebKit can't be downloaded in
+Claude Code cloud sessions; `ENGINE=chromium node webkit.js ../out/prod` runs the same check in Chromium.
+
+### On GitHub (.github/workflows)
+
+Every pull request and push to main runs five checks, each its own name: **Kit** (`npm run check`), **Browser**
+(render snapshots, `css`, `bundle`, `overflow`, `tap -- --sample`, `fade_t.js`), **Production build** (`npm ci` and
+`CI=false npm run build` from the lockfile), **Safari engine** (prod.js, then webkit.js) and **Checklist gate**
+(gate.js on the pull request description; it runs again when the description is edited). The slow sweeps stay
+manual: `npm run tap:full` (every hover target on every tab) and `npm run pixel` (120 views), run when a brief asks.
+
 ## Stand-ins
 
-`stubs/d3` and `stubs/lucide-react` replace the real libraries in tests (real d3 is ESM-only).
-`stubs/index.js` routes the server render to them; `browser/bundle.js` always picks them first.
-The lucide stand-in draws real Lucide shapes through `react-icons` (a test-only dependency).
+`stubs/d3` replaces the real d3 in tests (real d3 is ESM-only).
+`stubs/index.js` routes the server render to it; `browser/bundle.js` always picks it first.
+Icons are the real lucide-react (v51.25), pinned in test/package.json to the site's exact version; compile.js fails
+if the two differ.
 
 ## Forcing state
 

@@ -34,5 +34,12 @@ if (tag) {
     console.log(`index.html: "${tag[0]}" inside a comment at character ${tag.index}; react-scripts would inject its script there`);
   }
 }
+// v51.25: the kit draws icons with the real lucide-react, at the site's exact version.
+const siteIcons = require('../package.json').dependencies['lucide-react'];
+const kitIcons = require('./package.json').devDependencies['lucide-react'];
+if (siteIcons !== kitIcons) {
+  bad++;
+  console.log(`lucide-react: the site pins ${siteIcons}, the kit ${kitIcons}; set test/package.json to the site's version`);
+}
 console.log(bad ? `COMPILE FAIL in ${bad} file(s)` : 'compile ok');
 process.exit(bad ? 1 : 0);

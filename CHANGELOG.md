@@ -6,6 +6,50 @@ and each file now keeps a short header (version, date, latest change). From v51.
 
 <!-- NEW ENTRIES GO BELOW THIS LINE -->
 
+## Canvas v51.25
+
+### App.js: Canvas v51.25 — 2026-10-18, 10:00 UTC — Review layers
+
+- Version line updated. No other changes to this file; nothing on screen changes in this build.
+
+### package.json, package-lock.json — Canvas v51.25
+
+- Every dependency at an exact version: `d3` 7.9.0 and `lucide-react` 1.59.0 (were ranges; these are the versions the
+  site already installed). A root `package-lock.json` holds the rest, so `npm ci` installs exactly the same code
+  everywhere.
+- `overrides: { typescript: "4.9.5" }`: react-scripts' optional peer. Without it npm writes TypeScript 7 into the
+  lockfile and `npm ci` then refuses the lockfile. The site has no tsconfig.json, so react-scripts never runs
+  TypeScript; the build is unchanged.
+- netlify.toml unchanged: with a lockfile in step with package.json, Netlify's install gives the same versions.
+
+### FLAGS.md — Canvas v51.25 (new, review layer 1)
+
+- The flags log: F1–F14 carried over from the design chat (F14 fixed in this build), F15–F17 opened by the future-save
+  check, F18 by the Safari engine check (a ResizeObserver loop on League Spider at 390 in WebKit; reported as a note,
+  not a failure).
+
+### .github — Canvas v51.25 (new, review layers 2 and 3)
+
+- `pull_request_template.md`: preview link, size, "The user's checks" (tick-boxes), what's in, beyond the brief, checks
+  run, flags, not checked, rollback.
+- `workflows/checks.yml`: four checks on every pull request and push to main: **Kit**, **Browser**, **Production
+  build**, **Safari engine**. Read-only, no secrets, hard timeouts, cached installs.
+- `workflows/checklist-gate.yml`: **Checklist gate**, red while any box under "The user's checks" is unticked; runs
+  again when the description is edited.
+
+### Test kit — Canvas v51.25
+
+- Real icons: the kit uses lucide-react itself (pinned to the site's version; compile.js fails if they differ). The
+  icon stand-in and react-icons are gone. Closes F14.
+- `golden.json` + `golden.js` (review layer 4), inside `npm run check`: 20 golden numbers (a change fails) and 2 pinned
+  (a change is reported), read from the rendered pages.
+- `future.js`, inside `npm run check`: the future-save fixture (S9–S15 with a relegation and a half-played season,
+  every Pyramid club faced, the longest names in the data) rendered on every page and tab at 390 and 1440, on the server
+  and in Chromium.
+- `gate.js` (the Checklist gate) and `browser/webkit.js` (the Safari engine check; `ENGINE=chromium` runs it locally).
+- README.md, test/README.md, CLAUDE.md (review layers), briefs/TEMPLATE.md (Size, "The user's checks", "Carry-over
+  flags"); brief saved as briefs/v51.25.md.
+
 ## Canvas v51.24
 
 ### App.js: Canvas v51.24 — 2026-10-18, 07:30 UTC — Doctype · Cups v21, Cups Lab v4, Pyramid v32
